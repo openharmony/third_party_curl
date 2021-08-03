@@ -141,6 +141,7 @@ curl_source = [
   "//third_party/curl/lib/vauth/spnego_sspi.c",
   "//third_party/curl/lib/vauth/vauth.c",
   "//third_party/curl/lib/version.c",
+  "//third_party/curl/lib/version_win32.c",
   "//third_party/curl/lib/vquic/ngtcp2.c",
   "//third_party/curl/lib/vquic/quiche.c",
   "//third_party/curl/lib/vquic/vquic.c",
@@ -312,6 +313,8 @@ if (defined(ohos_lite)) {
         "AppKit.framework",
         "ApplicationServices.framework",
         "OpenGL.framework",
+        "CoreFoundation.framework",
+        "SystemConfiguration.framework",
       ]
     } else if ("${current_cpu}" == "arm64" || "${current_cpu}" == "arm") {
       cflags = [
