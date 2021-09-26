@@ -176,10 +176,8 @@ if (defined(ohos_lite)) {
       "//third_party/curl/lib",
       "//third_party/mbedtls/include",
     ]
-    if (ohos_kernel_type == "liteos_m" ) {
-      include_dirs += [
-        "//kernel/liteos_m/kal/posix/include",
-      ]
+    if (ohos_kernel_type == "liteos_m") {
+      include_dirs += [ "//kernel/liteos_m/kal/posix/include" ]
     }
     cflags = [
       "-DBUILDING_LIBCURL",
@@ -226,13 +224,12 @@ if (defined(ohos_lite)) {
     ]
   }
 
-
   build_ext_component("patch") {
     command = "sh build.sh ${ohos_kernel_type}"
     exec_path = rebase_path(".", root_build_dir)
   }
 
-  if (ohos_kernel_type == "liteos_m" ) {
+  if (ohos_kernel_type == "liteos_m") {
     static_library("libcurl_static") {
       sources = curl_source
       deps = [ ":patch" ]
