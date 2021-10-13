@@ -266,7 +266,7 @@ if (defined(ohos_lite)) {
     ]
   }
 
-  ohos_source_set("curl") {
+  ohos_static_library("curl") {
     configs = [ "//third_party/curl:curl_config" ]
     configs += [ "//third_party/openssl:ssl_config_public" ]
 
@@ -328,7 +328,7 @@ if (defined(ohos_lite)) {
     }
 
     deps = [
-      "//third_party/openssl:crypto_source",
+      "//third_party/openssl:libcrypto_static",
       "//third_party/openssl:ssl_source",
       "//third_party/zlib:libz",
     ]
