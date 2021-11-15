@@ -234,7 +234,7 @@ if (defined(ohos_lite)) {
       sources = curl_source
       deps = [ ":patch" ]
       deps += [ "//third_party/mbedtls:mbedtls_static" ]
-	  deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
+      deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
       deps += [ "//kernel/liteos_m/kal/posix" ]
       configs += [
         ":curl_config",
@@ -248,7 +248,7 @@ if (defined(ohos_lite)) {
       sources = curl_source
       deps = [ ":patch" ]
       deps += [ "//third_party/mbedtls:mbedtls_shared" ]
-	  deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
+      deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
       configs += [
         ":curl_config",
         ":curl_config_public",
