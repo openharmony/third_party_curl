@@ -1,0 +1,40 @@
+{
+    "name": "@ohos/curl",
+    "version": "",
+    "description": "Third-party open-source software Curl | 三方开源软件Curl",
+    "homePage": "https://gitee.com/openharmony",
+    "license": "Curl License",
+    "repository": "https://gitee.com/openharmony/third_party_curl",
+    "domain": "os",
+    "language": "",
+    "publishAs": "code-segment",
+    "private": false,
+    "scripts": {},
+    "tags": [
+        "third_party"
+    ],
+    "keywords": [
+        "third-party",
+        "curl"
+    ],
+    "envs": {},
+    "dirs": {},
+    "licensePath": "COPYING",
+    "segment": {
+        "destPath": "third_party/curl"
+    },
+    "component": {
+        "name": "thirdparty_curl",
+        "subsystem": "",
+        "syscap": [],
+        "features": [],
+        "adapted_system_type": [],
+        "rom": "",
+        "ram": "",
+        "build": {
+            "sub_component": [],
+            "inner_kits": [],
+            "test": []
+        }
+    }
+}
