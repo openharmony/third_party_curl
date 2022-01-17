@@ -331,10 +331,10 @@ if (defined(ohos_lite)) {
     }
 
     deps = [
+      "//third_party/nghttp2/lib:nghttp2",
       "//third_party/openssl:libcrypto_static",
       "//third_party/openssl:ssl_source",
       "//third_party/zlib:libz",
-      "//third_party/nghttp2/lib:nghttp2",
     ]
   }
 }
