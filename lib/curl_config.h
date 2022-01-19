@@ -999,7 +999,7 @@
 /* #undef USE_METALINK */
 
 /* if nghttp2 is in use */
-/* #undef USE_NGHTTP2 */
+#define USE_NGHTTP2 1
 
 /* if nghttp3 is in use */
 /* #undef USE_NGHTTP3 */
