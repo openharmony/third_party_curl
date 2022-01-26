@@ -172,10 +172,7 @@ if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
 
   config("curl_config") {
-    include_dirs = [
-      "//third_party/curl/lib",
-      "//third_party/mbedtls/include",
-    ]
+    include_dirs = [ "//third_party/curl/lib" ]
     if (ohos_kernel_type == "liteos_m") {
       include_dirs += [ "//kernel/liteos_m/kal/posix/include" ]
     }
@@ -233,7 +230,7 @@ if (defined(ohos_lite)) {
     static_library("libcurl_static") {
       sources = curl_source
       deps = [ ":patch" ]
-      deps += [ "//third_party/mbedtls:mbedtls_static" ]
+      deps += [ "//third_party/mbedtls" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
       configs += [
         ":curl_config",
@@ -246,7 +243,7 @@ if (defined(ohos_lite)) {
     shared_library("libcurl_shared") {
       sources = curl_source
       deps = [ ":patch" ]
-      deps += [ "//third_party/mbedtls:mbedtls_shared" ]
+      deps += [ "//third_party/mbedtls" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
       configs += [
         ":curl_config",
