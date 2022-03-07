@@ -212,6 +212,11 @@ if (defined(ohos_lite)) {
       "-fno-unwind-tables",
       "-fno-asynchronous-unwind-tables",
     ]
+    if (ohos_kernel_type == "liteos_m") {
+      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
+    } else {
+      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_a.h\"" ]
+    }
   }
 
   config("curl_config_public") {
@@ -221,16 +226,10 @@ if (defined(ohos_lite)) {
     ]
   }
 
-  build_ext_component("patch") {
-    command = "sh build.sh ${ohos_kernel_type}"
-    exec_path = rebase_path(".", root_build_dir)
-  }
-
   if (ohos_kernel_type == "liteos_m") {
     static_library("libcurl_static") {
       sources = curl_source
-      deps = [ ":patch" ]
-      deps += [ "//third_party/mbedtls" ]
+      deps = [ "//third_party/mbedtls" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
       configs += [
         ":curl_config",
@@ -242,8 +241,7 @@ if (defined(ohos_lite)) {
   } else {
     shared_library("libcurl_shared") {
       sources = curl_source
-      deps = [ ":patch" ]
-      deps += [ "//third_party/mbedtls" ]
+      deps = [ "//third_party/mbedtls" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
       configs += [
         ":curl_config",
@@ -326,6 +324,7 @@ if (defined(ohos_lite)) {
         "-DHAVE_CONFIG_H",
       ]
     }
+    cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
     deps = [
       "//third_party/nghttp2/lib:nghttp2",
