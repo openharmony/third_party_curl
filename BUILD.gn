@@ -292,7 +292,7 @@ if (defined(ohos_lite)) {
         "//prebuilts/mingw-w64/ohos/linux-x86_64/clang-mingw/x86_64-w64-mingw32/lib/libwsock32.a",
         "//prebuilts/mingw-w64/ohos/linux-x86_64/clang-mingw/x86_64-w64-mingw32/lib/libmincore.a",
       ]
-    } else if (host_os == "mac") {
+    } else if (host_os == "mac" && current_os == "mac") {
       cflags = [
         "-DHAVE_CONFIG_H",
         "-Qunused-arguments",
