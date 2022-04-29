@@ -263,7 +263,7 @@ if (defined(ohos_lite)) {
     ]
   }
 
-  ohos_static_library("curl") {
+  ohos_source_set("curl") {
     configs = [ "//third_party/curl:curl_config" ]
     configs += [ "//third_party/openssl:ssl_config_public" ]
 
@@ -301,6 +301,7 @@ if (defined(ohos_lite)) {
         "-Werror=partial-availability",
         "-fvisibility=hidden",
         "-DBUILDING_LIBCURL",
+        "-DCURL_HIDDEN_SYMBOLS",
         "-c",
       ]
       libs = [
@@ -345,6 +346,16 @@ if (defined(ohos_lite)) {
       "//third_party/zlib:libz",
     ]
   }
+
+  ohos_shared_library("curl_shared") {
+    deps = [ ":curl" ]
+    public_configs = [ ":curl_config" ]
+
+    install_images = [ "system" ]
+
+    subsystem_name = "thirdparty"
+    part_name = "curl"
+  }
 }
 
 group("curl_target") {
@@ -355,6 +366,9 @@ group("curl_target") {
       deps = [ ":libcurl_shared" ]
     }
   } else {
-    deps = [ ":curl" ]
+    deps = [
+      ":curl",
+      ":curl_shared",
+    ]
   }
 }
