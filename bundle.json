@@ -11,8 +11,8 @@
     "scripts": {},
     "licensePath": "COPYING",
     "component": {
-        "name": "thirdparty_curl",
-        "subsystem": "",
+        "name": "curl",
+        "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
         "adapted_system_type": [],
@@ -23,7 +23,9 @@
             "third_party": []
         },
         "build": {
-            "sub_component": [],
+            "sub_component": [
+                "//third_party/curl:curl"
+            ],
             "inner_kits": [],
             "test": []
         }
