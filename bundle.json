@@ -24,7 +24,7 @@
         },
         "build": {
             "sub_component": [
-                "//third_party/curl:curl"
+                "//third_party/curl:curl_target"
             ],
             "inner_kits": [],
             "test": []
