@@ -334,3 +334,15 @@ if (defined(ohos_lite)) {
     ]
   }
 }
+
+group("curl_target") {
+  if (defined(ohos_lite)) {
+    if (ohos_kernel_type == "liteos_m") {
+      deps = [ ":libcurl_static" ]
+    } else {
+      deps = [ ":libcurl_shared" ]
+    }
+  } else {
+    deps = [ ":curl" ]
+  }
+}
