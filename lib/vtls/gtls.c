@@ -431,8 +431,9 @@ gtls_connect_step1(struct Curl_easy *data,
   }
 
 #ifdef HAVE_GNUTLS_SRP
-  if(SSL_SET_OPTION(authtype) == CURL_TLSAUTH_SRP) {
-    infof(data, "Using TLS-SRP username: %s", SSL_SET_OPTION(username));
+  if(SSL_SET_OPTION(primary.authtype) == CURL_TLSAUTH_SRP) {
+    infof(data, "Using TLS-SRP username: %s",
+          SSL_SET_OPTION(primary.username));
 
     rc = gnutls_srp_allocate_client_credentials(
            &backend->srp_client_cred);
@@ -443,8 +444,8 @@ gtls_connect_step1(struct Curl_easy *data,
     }
 
     rc = gnutls_srp_set_client_credentials(backend->srp_client_cred,
-                                           SSL_SET_OPTION(username),
-                                           SSL_SET_OPTION(password));
+                                           SSL_SET_OPTION(primary.username),
+                                           SSL_SET_OPTION(primary.password));
     if(rc != GNUTLS_E_SUCCESS) {
       failf(data, "gnutls_srp_set_client_cred() failed: %s",
             gnutls_strerror(rc));
@@ -500,19 +501,19 @@ gtls_connect_step1(struct Curl_easy *data,
   }
 #endif
 
-  if(SSL_SET_OPTION(CRLfile)) {
+  if(SSL_SET_OPTION(primary.CRLfile)) {
     /* set the CRL list file */
     rc = gnutls_certificate_set_x509_crl_file(backend->cred,
-                                              SSL_SET_OPTION(CRLfile),
+                                              SSL_SET_OPTION(primary.CRLfile),
                                               GNUTLS_X509_FMT_PEM);
     if(rc < 0) {
       failf(data, "error reading crl file %s (%s)",
-            SSL_SET_OPTION(CRLfile), gnutls_strerror(rc));
+            SSL_SET_OPTION(primary.CRLfile), gnutls_strerror(rc));
       return CURLE_SSL_CRL_BADFILE;
     }
     else
       infof(data, "found %d CRL in %s",
-            rc, SSL_SET_OPTION(CRLfile));
+            rc, SSL_SET_OPTION(primary.CRLfile));
   }
 
   /* Initialize TLS session as a client */
@@ -585,7 +586,7 @@ gtls_connect_step1(struct Curl_easy *data,
 #ifdef HAVE_GNUTLS_SRP
   /* Only add SRP to the cipher list if SRP is requested. Otherwise
    * GnuTLS will disable TLS 1.3 support. */
-  if(SSL_SET_OPTION(authtype) == CURL_TLSAUTH_SRP) {
+  if(SSL_SET_OPTION(primary.authtype) == CURL_TLSAUTH_SRP) {
     size_t len = strlen(prioritylist);
 
     char *prioritysrp = malloc(len + sizeof(GNUTLS_SRP) + 1);
@@ -677,7 +678,7 @@ gtls_connect_step1(struct Curl_easy *data,
 
 #ifdef HAVE_GNUTLS_SRP
   /* put the credentials to the current session */
-  if(SSL_SET_OPTION(authtype) == CURL_TLSAUTH_SRP) {
+  if(SSL_SET_OPTION(primary.authtype) == CURL_TLSAUTH_SRP) {
     rc = gnutls_credentials_set(session, GNUTLS_CRD_SRP,
                                 backend->srp_client_cred);
     if(rc != GNUTLS_E_SUCCESS) {
@@ -858,8 +859,8 @@ gtls_connect_step3(struct Curl_easy *data,
        SSL_CONN_CONFIG(verifyhost) ||
        SSL_CONN_CONFIG(issuercert)) {
 #ifdef HAVE_GNUTLS_SRP
-      if(SSL_SET_OPTION(authtype) == CURL_TLSAUTH_SRP
-         && SSL_SET_OPTION(username) != NULL
+      if(SSL_SET_OPTION(primary.authtype) == CURL_TLSAUTH_SRP
+         && SSL_SET_OPTION(primary.username)
          && !SSL_CONN_CONFIG(verifypeer)
          && gnutls_cipher_get(session)) {
         /* no peer cert, but auth is ok if we have SRP user and cipher and no
@@ -917,7 +918,8 @@ gtls_connect_step3(struct Curl_easy *data,
         failf(data, "server certificate verification failed. CAfile: %s "
               "CRLfile: %s", SSL_CONN_CONFIG(CAfile) ? SSL_CONN_CONFIG(CAfile):
               "none",
-              SSL_SET_OPTION(CRLfile)?SSL_SET_OPTION(CRLfile):"none");
+              SSL_SET_OPTION(primary.CRLfile) ?
+              SSL_SET_OPTION(primary.CRLfile) : "none");
         return CURLE_PEER_FAILED_VERIFICATION;
       }
       else
@@ -1530,8 +1532,8 @@ static int gtls_shutdown(struct Curl_easy *data, struct connectdata *conn,
   gnutls_certificate_free_credentials(backend->cred);
 
 #ifdef HAVE_GNUTLS_SRP
-  if(SSL_SET_OPTION(authtype) == CURL_TLSAUTH_SRP
-     && SSL_SET_OPTION(username) != NULL)
+  if(SSL_SET_OPTION(primary.authtype) == CURL_TLSAUTH_SRP
+     && SSL_SET_OPTION(primary.username) != NULL)
     gnutls_srp_free_client_credentials(backend->srp_client_cred);
 #endif
 
