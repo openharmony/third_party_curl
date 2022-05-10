@@ -312,8 +312,6 @@ if (defined(ohos_lite)) {
         "SystemConfiguration.framework",
       ]
     } else if ("${current_cpu}" == "arm64" || "${current_cpu}" == "arm") {
-      print("host current_cpu_os == arm64 && current_cpu == arm")
-
       cflags = [
         "-fPIC",
         "-g",
@@ -326,8 +324,6 @@ if (defined(ohos_lite)) {
         "-DHAVE_CONFIG_H",
       ]
     }else if (current_cpu == "x64" && current_os == "ios") {
-      print("host current_cpu_os == arm64 && current_cpu == arm")
-
       cflags = [
         "-fPIC",
         "-g",
