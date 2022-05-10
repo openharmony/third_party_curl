@@ -167,7 +167,7 @@
 #define HAVE_CONNECT 1
 
 /* Define to 1 if you have the <crypto.h> header file. */
-#undef HAVE_CRYPTO_H 1
+#undef HAVE_CRYPTO_H
 
 /*Define to 1 if you have the <des.h> header file. */
 #define HAVE_DES_H 1
