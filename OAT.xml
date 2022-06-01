@@ -105,6 +105,10 @@ Note:If the text contains special characters, please escape them according to th
 	    <filefilter name="binaryFileTypePolicyFilter" desc="File not used">
 		<filteritem type="filepath" name="tests/.*" desc=""/>
 	    </filefilter>
+	    <filefilter name="publicCAFilePolicyFilter" desc="Filters for public CA file policies">
+		<filteritem type="filepath" name="cacert.pem" desc="This is a bundle of X.509 certificates of public
+			Certificate Authorities(CA) downloaded from https://curl.se/docs/caextract.html"/>
+	    </filefilter>
 	</filefilterlist>
     </oatconfig>
 </configuration>
