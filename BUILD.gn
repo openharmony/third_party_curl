@@ -314,7 +314,8 @@ if (defined(ohos_lite)) {
         "CoreFoundation.framework",
         "SystemConfiguration.framework",
       ]
-    } else if ("${current_cpu}" == "arm64" || "${current_cpu}" == "arm") {
+    } else if ("${current_cpu}" == "arm64" || "${current_cpu}" == "arm" ||
+               "${current_cpu}" == "x86_64") {
       cflags = [
         "-fPIC",
         "-g",
