@@ -69,6 +69,8 @@ test409 test410 \
 \
 test430 test431 test432 test433 test434 \
 \
+test442 test443 \
+\
 test490 test491 test492 test493 test494 \
 \
 test500 test501 test502 test503 test504 test505 test506 test507 test508 \
