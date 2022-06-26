@@ -2707,12 +2707,14 @@ CURLcode Curl_http_bodysend(struct Curl_easy *data, struct connectdata *conn,
 }
 
 #if !defined(CURL_DISABLE_COOKIES)
+
 CURLcode Curl_http_cookies(struct Curl_easy *data,
                            struct connectdata *conn,
                            struct dynbuf *r)
 {
   CURLcode result = CURLE_OK;
   char *addcookies = NULL;
+  bool linecap = FALSE;
   if(data->set.str[STRING_COOKIE] && !Curl_checkheaders(data, "Cookie"))
     addcookies = data->set.str[STRING_COOKIE];
 
@@ -2722,7 +2724,7 @@ CURLcode Curl_http_cookies(struct Curl_easy *data,
 
     if(data->cookies && data->state.cookie_engine) {
       Curl_share_lock(data, CURL_LOCK_DATA_COOKIE, CURL_LOCK_ACCESS_SINGLE);
-      co = Curl_cookie_getlist(data->cookies,
+      co = Curl_cookie_getlist(data, data->cookies,
                                data->state.aptr.cookiehost?
                                data->state.aptr.cookiehost:
                                conn->host.name,
@@ -2741,6 +2743,13 @@ CURLcode Curl_http_cookies(struct Curl_easy *data,
             if(result)
               break;
           }
+          if((Curl_dyn_len(r) + strlen(co->name) + strlen(co->value) + 1) >=
+             MAX_COOKIE_HEADER_LEN) {
+            infof(data, "Restricted outgoing cookies due to header size, "
+                  "'%s' not sent", co->name);
+            linecap = TRUE;
+            break;
+          }
           result = Curl_dyn_addf(r, "%s%s=%s", count?"; ":"",
                                  co->name, co->value);
           if(result)
@@ -2751,7 +2760,7 @@ CURLcode Curl_http_cookies(struct Curl_easy *data,
       }
       Curl_cookie_freelist(store);
     }
-    if(addcookies && !result) {
+    if(addcookies && !result && !linecap) {
       if(!count)
         result = Curl_dyn_add(r, "Cookie: ");
       if(!result) {
