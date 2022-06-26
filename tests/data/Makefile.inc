@@ -69,7 +69,7 @@ test409 test410 \
 \
 test430 test431 test432 test433 test434 \
 \
-test442 test443 \
+test442 test443 test444 \
 \
 test490 test491 test492 test493 test494 \
 \
