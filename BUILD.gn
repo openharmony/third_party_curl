@@ -51,6 +51,7 @@ curl_source = [
   "//third_party/curl/lib/escape.c",
   "//third_party/curl/lib/file.c",
   "//third_party/curl/lib/fileinfo.c",
+  "//third_party/curl/lib/fopen.c",
   "//third_party/curl/lib/formdata.c",
   "//third_party/curl/lib/ftp.c",
   "//third_party/curl/lib/ftplistparser.c",
