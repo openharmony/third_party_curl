@@ -131,6 +131,7 @@ LIB_CFILES =         \
   escape.c           \
   file.c             \
   fileinfo.c         \
+  fopen.c            \
   formdata.c         \
   ftp.c              \
   ftplistparser.c    \
@@ -263,6 +264,7 @@ LIB_HFILES =         \
   escape.h           \
   file.h             \
   fileinfo.h         \
+  fopen.h            \
   formdata.h         \
   ftp.h              \
   ftplistparser.h    \
