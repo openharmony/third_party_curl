@@ -340,6 +340,18 @@ if (defined(ohos_lite)) {
         "-c",
         "-DHAVE_CONFIG_H",
       ]
+    } else if (current_cpu == "x64" && current_os == "linux") {
+      cflags = [
+        "-fPIC",
+        "-g",
+        "-O2",
+        "-Wall",
+        "-w",
+        "-fno-strict-aliasing",
+        "-DBUILDING_LIBCURL",
+        "-c",
+        "-DHAVE_CONFIG_H",
+      ]
     }
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
