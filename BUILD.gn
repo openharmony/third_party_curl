@@ -231,6 +231,7 @@ if (defined(ohos_lite)) {
     static_library("libcurl_static") {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
+      deps += [ "//third_party/mbedtls/tests" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
       configs += [
         ":curl_config",
@@ -243,6 +244,7 @@ if (defined(ohos_lite)) {
     shared_library("libcurl_shared") {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
+      deps += [ "//third_party/mbedtls/tests" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
       configs += [
         ":curl_config",
