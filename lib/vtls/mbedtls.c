@@ -41,7 +41,7 @@
 #include <mbedtls/net.h>
 #endif
 #include <mbedtls/ssl.h>
-#include <mbedtls/certs.h>
+#include <test/certs.h>
 #include <mbedtls/x509.h>
 
 #include <mbedtls/error.h>
