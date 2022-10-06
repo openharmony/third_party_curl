@@ -209,7 +209,6 @@ static void connect_done(struct Curl_easy *data)
 
     /* retore the protocol pointer */
     data->req.p.http = s->prot_save;
-    s->prot_save = NULL;
     infof(data, "CONNECT phase completed!");
   }
 }
