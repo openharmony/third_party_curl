@@ -1069,7 +1069,7 @@ static CURLcode mbedtls_sha256sum(const unsigned char *input,
   mbedtls_sha256(input, inputlen, sha256sum, 0);
 #else
   /* returns 0 on success, otherwise failure */
-  if(mbedtls_sha256_ret(input, inputlen, sha256sum, 0) != 0)
+  if(mbedtls_sha256(input, inputlen, sha256sum, 0) != 0)
     return CURLE_BAD_FUNCTION_ARGUMENT;
 #endif
   return CURLE_OK;
