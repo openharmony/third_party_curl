@@ -355,7 +355,7 @@ mbed_connect_step1(struct Curl_easy *data, struct connectdata *conn,
   if(SSL_SET_OPTION(key) || SSL_SET_OPTION(key_blob)) {
     if(SSL_SET_OPTION(key)) {
       ret = mbedtls_pk_parse_keyfile(&backend->pk, SSL_SET_OPTION(key),
-                                     SSL_SET_OPTION(key_passwd), NULL, NULL);
+                                     SSL_SET_OPTION(key_passwd), mbedtls_ctr_drbg_random, &backend->ctr_drbg);
 
       if(ret) {
         mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
@@ -371,7 +371,7 @@ mbed_connect_step1(struct Curl_easy *data, struct connectdata *conn,
       const char *passwd = SSL_SET_OPTION(key_passwd);
       ret = mbedtls_pk_parse_key(&backend->pk, key_data, ssl_key_blob->len,
                                  (const unsigned char *)passwd,
-                                 passwd ? strlen(passwd) : 0, NULL, NULL);
+                                 passwd ? strlen(passwd) : 0, mbedtls_ctr_drbg_random, &backend->ctr_drbg);
 
       if(ret) {
         mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
