@@ -40,8 +40,8 @@
 #else
 #include <mbedtls/net.h>
 #endif
+#include "ssl_misc.h"
 #include <mbedtls/ssl.h>
-#include <mbedtls/certs.h>
 #include <mbedtls/x509.h>
 
 #include <mbedtls/error.h>
@@ -355,7 +355,7 @@ mbed_connect_step1(struct Curl_easy *data, struct connectdata *conn,
   if(SSL_SET_OPTION(key) || SSL_SET_OPTION(key_blob)) {
     if(SSL_SET_OPTION(key)) {
       ret = mbedtls_pk_parse_keyfile(&backend->pk, SSL_SET_OPTION(key),
-                                     SSL_SET_OPTION(key_passwd));
+                                     SSL_SET_OPTION(key_passwd), mbedtls_ctr_drbg_random, &backend->ctr_drbg);
 
       if(ret) {
         mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
@@ -371,7 +371,7 @@ mbed_connect_step1(struct Curl_easy *data, struct connectdata *conn,
       const char *passwd = SSL_SET_OPTION(key_passwd);
       ret = mbedtls_pk_parse_key(&backend->pk, key_data, ssl_key_blob->len,
                                  (const unsigned char *)passwd,
-                                 passwd ? strlen(passwd) : 0);
+                                 passwd ? strlen(passwd) : 0, mbedtls_ctr_drbg_random, &backend->ctr_drbg);
 
       if(ret) {
         mbedtls_strerror(ret, errorbuf, sizeof(errorbuf));
@@ -1069,7 +1069,7 @@ static CURLcode mbedtls_sha256sum(const unsigned char *input,
   mbedtls_sha256(input, inputlen, sha256sum, 0);
 #else
   /* returns 0 on success, otherwise failure */
-  if(mbedtls_sha256_ret(input, inputlen, sha256sum, 0) != 0)
+  if(mbedtls_sha256(input, inputlen, sha256sum, 0) != 0)
     return CURLE_BAD_FUNCTION_ARGUMENT;
 #endif
   return CURLE_OK;
