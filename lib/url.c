@@ -735,15 +735,6 @@ static void conn_shutdown(struct Curl_easy *data, struct connectdata *conn)
   DEBUGASSERT(data);
   infof(data, "Closing connection %ld", conn->connection_id);
 
-#ifndef USE_HYPER
-  if(conn->connect_state && conn->connect_state->prot_save) {
-    /* If this was closed with a CONNECT in progress, cleanup this temporary
-       struct arrangement */
-    data->req.p.http = NULL;
-    Curl_safefree(conn->connect_state->prot_save);
-  }
-#endif
-
   /* possible left-overs from the async name resolvers */
   Curl_resolver_cancel(data);
 
@@ -1994,9 +1985,56 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
       return CURLE_OUT_OF_MEMORY;
   }
 
+  hostname = data->state.up.hostname;
+
+  if(hostname && hostname[0] == '[') {
+    /* This looks like an IPv6 address literal. See if there is an address
+       scope. */
+    size_t hlen;
+    conn->bits.ipv6_ip = TRUE;
+    /* cut off the brackets! */
+    hostname++;
+    hlen = strlen(hostname);
+    hostname[hlen - 1] = 0;
+
+    zonefrom_url(uh, data, conn);
+  }
+
+  /* make sure the connect struct gets its own copy of the host name */
+  conn->host.rawalloc = strdup(hostname ? hostname : "");
+  if(!conn->host.rawalloc)
+    return CURLE_OUT_OF_MEMORY;
+  conn->host.name = conn->host.rawalloc;
+
+  /*************************************************************
+   * IDN-convert the hostnames
+   *************************************************************/
+  result = Curl_idnconvert_hostname(data, &conn->host);
+  if(result)
+    return result;
+  if(conn->bits.conn_to_host) {
+    result = Curl_idnconvert_hostname(data, &conn->conn_to_host);
+    if(result)
+      return result;
+  }
+#ifndef CURL_DISABLE_PROXY
+  if(conn->bits.httpproxy) {
+    result = Curl_idnconvert_hostname(data, &conn->http_proxy.host);
+    if(result)
+      return result;
+  }
+  if(conn->bits.socksproxy) {
+    result = Curl_idnconvert_hostname(data, &conn->socks_proxy.host);
+    if(result)
+      return result;
+  }
+#endif
+
 #ifndef CURL_DISABLE_HSTS
+  /* HSTS upgrade */
   if(data->hsts && strcasecompare("http", data->state.up.scheme)) {
-    if(Curl_hsts(data->hsts, data->state.up.hostname, TRUE)) {
+    /* This MUST use the IDN decoded name */
+    if(Curl_hsts(data->hsts, conn->host.name, TRUE)) {
       char *url;
       Curl_safefree(data->state.up.scheme);
       uc = curl_url_set(uh, CURLUPART_SCHEME, "https", 0);
@@ -2098,26 +2136,6 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
   }
 
   (void)curl_url_get(uh, CURLUPART_QUERY, &data->state.up.query, 0);
-
-  hostname = data->state.up.hostname;
-  if(hostname && hostname[0] == '[') {
-    /* This looks like an IPv6 address literal. See if there is an address
-       scope. */
-    size_t hlen;
-    conn->bits.ipv6_ip = TRUE;
-    /* cut off the brackets! */
-    hostname++;
-    hlen = strlen(hostname);
-    hostname[hlen - 1] = 0;
-
-    zonefrom_url(uh, data, conn);
-  }
-
-  /* make sure the connect struct gets its own copy of the host name */
-  conn->host.rawalloc = strdup(hostname ? hostname : "");
-  if(!conn->host.rawalloc)
-    return CURLE_OUT_OF_MEMORY;
-  conn->host.name = conn->host.rawalloc;
 
   if(data->set.scope_id)
     /* Override any scope that was set above.  */
@@ -3671,29 +3689,6 @@ static CURLcode create_conn(struct Curl_easy *data,
   if(result)
     goto out;
 
-  /*************************************************************
-   * IDN-convert the hostnames
-   *************************************************************/
-  result = Curl_idnconvert_hostname(data, &conn->host);
-  if(result)
-    goto out;
-  if(conn->bits.conn_to_host) {
-    result = Curl_idnconvert_hostname(data, &conn->conn_to_host);
-    if(result)
-      goto out;
-  }
-#ifndef CURL_DISABLE_PROXY
-  if(conn->bits.httpproxy) {
-    result = Curl_idnconvert_hostname(data, &conn->http_proxy.host);
-    if(result)
-      goto out;
-  }
-  if(conn->bits.socksproxy) {
-    result = Curl_idnconvert_hostname(data, &conn->socks_proxy.host);
-    if(result)
-      goto out;
-  }
-#endif
 
   /*************************************************************
    * Check whether the host and the "connect to host" are equal.
