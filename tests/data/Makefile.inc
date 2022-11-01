@@ -69,7 +69,7 @@ test409 test410 \
 \
 test430 test431 test432 test433 test434 \
 \
-test442 test443 test444 \
+test442 test443 test444 test445 \
 \
 test490 test491 test492 test493 test494 \
 \
@@ -217,7 +217,7 @@ test1800 test1801 \
 test1908 test1909 test1910 test1911 test1912 test1913 test1914 test1915 \
 test1916 test1917 test1918 \
 \
-test1933 test1934 test1935 test1936 \
+test1933 test1934 test1935 test1936 test1948 \
 \
 test2000 test2001 test2002 test2003 test2004 \
 \
