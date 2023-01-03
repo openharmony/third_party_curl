@@ -324,7 +324,9 @@ if (defined(ohos_lite)) {
         "-Wall",
         "-w",
         "-fno-strict-aliasing",
+        "-fvisibility=hidden",
         "-DBUILDING_LIBCURL",
+        "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
       ]
@@ -336,7 +338,9 @@ if (defined(ohos_lite)) {
         "-Wall",
         "-w",
         "-fno-strict-aliasing",
+        "-fvisibility=hidden",
         "-DBUILDING_LIBCURL",
+        "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
       ]
@@ -348,7 +352,9 @@ if (defined(ohos_lite)) {
         "-Wall",
         "-w",
         "-fno-strict-aliasing",
+        "-fvisibility=hidden",
         "-DBUILDING_LIBCURL",
+        "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
       ]
@@ -356,10 +362,9 @@ if (defined(ohos_lite)) {
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
     deps = [
-      "//third_party/nghttp2/lib:nghttp2",
-      "//third_party/openssl:libcrypto_static",
-      "//third_party/openssl:ssl_source",
-      "//third_party/zlib:libz",
+      "//third_party/nghttp2/lib:libnghttp2_shared",
+      "//third_party/openssl:libssl_shared",
+      "//third_party/zlib:shared_libz",
     ]
   }
 
