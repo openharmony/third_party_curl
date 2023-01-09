@@ -3671,7 +3671,7 @@ CURLcode Curl_http_header(struct Curl_easy *data, struct connectdata *conn,
   else if(data->hsts && checkprefix("Strict-Transport-Security:", headp) &&
           (conn->handler->flags & PROTOPT_SSL)) {
     CURLcode check =
-      Curl_hsts_parse(data->hsts, data->state.up.hostname,
+      Curl_hsts_parse(data->hsts, conn->host.name,
                       headp + strlen("Strict-Transport-Security:"));
     if(check)
       infof(data, "Illegal STS header skipped");
