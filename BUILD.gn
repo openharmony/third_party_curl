@@ -363,6 +363,7 @@ if (defined(ohos_lite)) {
 
     deps = [
       "//third_party/nghttp2/lib:libnghttp2_shared",
+      "//third_party/openssl:libcrypto_shared",
       "//third_party/openssl:libssl_shared",
       "//third_party/zlib:shared_libz",
     ]
