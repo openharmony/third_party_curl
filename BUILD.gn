@@ -361,12 +361,21 @@ if (defined(ohos_lite)) {
     }
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
-    deps = [
-      "//third_party/nghttp2/lib:libnghttp2_shared",
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
-      "//third_party/zlib:shared_libz",
-    ]
+    if (current_os == "ios") {
+      deps = [
+        "//third_party/nghttp2/lib:nghttp2",
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:ssl_source",
+        "//third_party/zlib:libz",
+      ]
+    } else {
+      deps = [
+        "//third_party/nghttp2/lib:libnghttp2_shared",
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+        "//third_party/zlib:shared_libz",
+      ]
+    }
   }
 
   ohos_shared_library("curl_shared") {
