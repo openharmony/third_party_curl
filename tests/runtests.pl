@@ -4470,11 +4470,6 @@ sub singletest {
             }
         }
 
-        if($hash{'crlf'} ||
-           ($has_hyper && ($keywords{"HTTP"} || $keywords{"HTTPS"}))) {
-            map subNewlines(0, \$_), @protstrip;
-        }
-
         $res = compare($testnum, $testname, "proxy", \@out, \@protstrip);
         if($res) {
             return $errorreturncode;
