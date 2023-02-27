@@ -527,14 +527,14 @@ changing protocol data such as port numbers or user-agent strings.
 One perl op per line that operates on the protocol dump. This is pretty
 advanced. Example: `s/^EPRT .*/EPRT stripped/`.
 
-### `<protocol [nonewline="yes"][crlf="yes"]>`
+### `<protocol [nonewline="yes"]>`
 
 the protocol dump curl should transmit, if 'nonewline' is set, we will cut off
 the trailing newline of this given data before comparing with the one actually
 sent by the client The `<strip>` and `<strippart>` rules are applied before
 comparisons are made.
 
-### `<proxy [nonewline="yes"][crlf="yes"]>`
+### `<proxy [nonewline="yes"]>`
 
 The protocol dump curl should transmit to a HTTP proxy (when the http-proxy
 server is used), if 'nonewline' is set, we will cut off the trailing newline
