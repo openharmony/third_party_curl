@@ -1468,9 +1468,6 @@ CURLcode Curl_pretransfer(struct Curl_easy *data)
   if(data->state.resolve)
     result = Curl_loadhostpairs(data);
 
-  /* If there is a list of hsts files to read */
-  Curl_hsts_loadfiles(data);
-
   if(!result) {
     /* Allow data->set.use_port to set which port to use. This needs to be
      * disabled for example when we follow Location: headers to URLs using
