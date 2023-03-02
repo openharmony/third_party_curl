@@ -34,6 +34,9 @@
 /* to disable Gopher */
 #define CURL_DISABLE_GOPHER 1
 
+/* disable alt-svc */
+#define CURL_DISABLE_HSTS 1
+
 /* to disable HTTP */
 /* #undef CURL_DISABLE_HTTP */
 
