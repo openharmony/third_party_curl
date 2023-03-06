@@ -768,6 +768,17 @@ static void printsub(struct Curl_easy *data,
   }
 }
 
+static bool str_is_nonascii(const char *str)
+{
+  size_t len = strlen(str);
+  while(len--) {
+    if(*str & 0x80)
+      return TRUE;
+    str++;
+  }
+  return FALSE;
+}
+
 static CURLcode check_telnet_options(struct Curl_easy *data)
 {
   struct curl_slist *head;
@@ -782,6 +793,8 @@ static CURLcode check_telnet_options(struct Curl_easy *data)
   /* Add the user name as an environment variable if it
      was given on the command line */
   if(conn->bits.user_passwd) {
+    if(str_is_nonascii(conn->user))
+      return CURLE_BAD_FUNCTION_ARGUMENT;
     msnprintf(option_arg, sizeof(option_arg), "USER,%s", conn->user);
     beg = curl_slist_append(tn->telnet_vars, option_arg);
     if(!beg) {
@@ -796,6 +809,9 @@ static CURLcode check_telnet_options(struct Curl_easy *data)
   for(head = data->set.telnet_options; head; head = head->next) {
     if(sscanf(head->data, "%127[^= ]%*[ =]%255s",
               option_keyword, option_arg) == 2) {
+
+      if(str_is_nonascii(option_arg))
+        continue;
 
       /* Terminal type */
       if(strcasecompare(option_keyword, "TTYPE")) {
