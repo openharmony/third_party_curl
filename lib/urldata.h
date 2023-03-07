@@ -706,7 +706,8 @@ struct SingleRequest {
   struct dohdata *doh; /* DoH specific data for this request */
 #endif
   unsigned char setcookies;
-  BIT(header);       /* incoming data has HTTP header */
+  unsigned char writer_stack_depth; /* Unencoding stack depth. */
+  BIT(header);        /* incoming data has HTTP header */
   BIT(content_range); /* set TRUE if Content-Range: was found */
   BIT(upload_done);  /* set to TRUE when doing chunked transfer-encoding
                         upload and we're uploading the last chunk */
@@ -1669,6 +1670,8 @@ struct UserDefined {
   /* function to convert from UTF-8 encoding: */
   curl_conv_callback convfromutf8;
 #ifndef CURL_DISABLE_HSTS
+  struct curl_slist *hstslist; /* list of HSTS files set by
+                                  curl_easy_setopt(HSTS) calls */
   curl_hstsread_callback hsts_read;
   void *hsts_read_userp;
   curl_hstswrite_callback hsts_write;
