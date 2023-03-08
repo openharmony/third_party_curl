@@ -212,6 +212,8 @@ if (defined(ohos_lite)) {
       "-fdata-sections",
       "-fno-unwind-tables",
       "-fno-asynchronous-unwind-tables",
+      "-Wno-deprecated-declarations",
+      "-Wimplicit-fallthrough",
     ]
     if (ohos_kernel_type == "liteos_m") {
       cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
@@ -289,6 +291,8 @@ if (defined(ohos_lite)) {
         "-DHAVE_ENGINE_LOAD_BUILTIN_ENGINES",
         "-DOPENSSL_NO_KRB5",
         "-DCURL_CA_BUNDLE=${curl_https_ca_file_path}",
+        "-Wno-deprecated-declarations",
+        "-Wimplicit-fallthrough",
       ]
 
       libs = [
@@ -306,6 +310,8 @@ if (defined(ohos_lite)) {
         "-DBUILDING_LIBCURL",
         "-DCURL_HIDDEN_SYMBOLS",
         "-c",
+        "-Wno-deprecated-declarations",
+        "-Wimplicit-fallthrough",
       ]
       frameworks = [
         # AppKit symbols NSFontWeightXXX may be dlsym'ed.
@@ -329,6 +335,8 @@ if (defined(ohos_lite)) {
         "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
+        "-Wno-deprecated-declarations",
+        "-Wimplicit-fallthrough",
       ]
     } else if (current_cpu == "x64" && current_os == "ios") {
       cflags = [
@@ -343,6 +351,8 @@ if (defined(ohos_lite)) {
         "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
+        "-Wno-deprecated-declarations",
+        "-Wimplicit-fallthrough",
       ]
     } else if (current_cpu == "x64" && current_os == "linux") {
       cflags = [
@@ -357,6 +367,8 @@ if (defined(ohos_lite)) {
         "-DCURL_HIDDEN_SYMBOLS",
         "-c",
         "-DHAVE_CONFIG_H",
+        "-Wno-deprecated-declarations",
+        "-Wimplicit-fallthrough",
       ]
     }
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
