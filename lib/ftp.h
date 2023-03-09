@@ -115,6 +115,8 @@ struct FTP {
    struct */
 struct ftp_conn {
   struct pingpong pp;
+  char *account;
+  char *alternative_to_user;
   char *entrypath; /* the PWD reply when we logged on */
   char *file;    /* url-decoded file name (or path) */
   char **dirs;   /* realloc()ed array for path components */
@@ -144,6 +146,9 @@ struct ftp_conn {
   ftpstate state; /* always use ftp.c:state() to change state! */
   ftpstate state_saved; /* transfer type saved to be reloaded after
                            data connection is established */
+  unsigned char use_ssl;   /* if AUTH TLS is to be attempted etc, for FTP or
+                              IMAP or POP3 or others! (type: curl_usessl)*/
+  unsigned char ccc;       /* ccc level for this connection */
   curl_off_t retr_size_saved; /* Size of retrieved file saved */
   char *server_os;     /* The target server operating system. */
   curl_off_t known_filesize; /* file size is different from -1, if wildcard
