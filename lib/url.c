@@ -1333,6 +1333,11 @@ ConnectionExists(struct Curl_easy *data,
         }
       }
 
+      /* GSS delegation differences do not actually affect every connection
+         and auth method, but this check takes precaution before efficiency */
+      if(needle->gssapi_delegation != check->gssapi_delegation)
+        continue;
+
       /* If multiplexing isn't enabled on the h2 connection and h1 is
          explicitly requested, handle it: */
       if((needle->handler->protocol & PROTO_FAMILY_HTTP) &&
@@ -1803,6 +1808,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->fclosesocket = data->set.fclosesocket;
   conn->closesocket_client = data->set.closesocket_client;
   conn->lastused = Curl_now(); /* used now */
+  conn->gssapi_delegation = data->set.gssapi_delegation;
 
   return conn;
   error:
