@@ -1126,6 +1126,7 @@ struct connectdata {
   int socks5_gssapi_enctype;
 #endif
   unsigned short localport;
+  long gssapi_delegation; /* inherited from set.gssapi_delegation */
 };
 
 /* The end of connectdata. */
