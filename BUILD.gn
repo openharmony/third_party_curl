@@ -264,6 +264,8 @@ if (defined(ohos_lite)) {
       "//third_party/curl/lib",
       "//third_party/nghttp2/lib/includes",
     ]
+
+    cflags = [ "-Wno-deprecated-declarations" ]
   }
 
   ohos_source_set("curl") {
