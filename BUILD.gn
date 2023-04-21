@@ -268,8 +268,6 @@ if (defined(ohos_lite)) {
   import("//build/ohos.gni")
 
   config("curl_config") {
-    visibility = [ ":*" ]
-
     include_dirs = [
       "$CURL_SOURCE_ROOT/include",
       "$CURL_SOURCE_ROOT/lib",
