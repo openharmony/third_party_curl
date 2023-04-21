@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,7 @@
 # limitations under the License.
 # 
 SCRIPT_HOME=$(cd "$(dirname $0)"; pwd)
+LOG_PATH=$1
 PATCH_TOTAL_NUMBER=0
 PATCH_SUCCESSFUL_NUMBER=0
 PATCH_FAILED_NUMBER=0
@@ -23,7 +24,7 @@ function logInfo()
 
 function logError()
 {
-    echo $(date +'%Y-%m-%d %H:%M:%S') \| ERR  \| OpenEulerCURL \| $*
+    echo $(date +'%Y-%m-%d %H:%M:%S') \| "ERR " \| OpenEulerCURL \| $*
 }
 
 function initCurlRepo()
@@ -36,7 +37,9 @@ function initCurlRepo()
         fi
 
         logInfo unzip curl-7.79.1.tar.xz
+        pushd ${SCRIPT_HOME}
         tar -xvf ${SCRIPT_HOME}/curl-7.79.1.tar.xz
+        popd
 
         if [ -d ${SCRIPT_HOME}/curl-7.79.1 ]; then
             pushd ${SCRIPT_HOME}/curl-7.79.1
@@ -142,10 +145,23 @@ function runAllPatch()
     logInfo run patch ${PATCH_SUCCESSFUL_NUMBER} successful, ${PATCH_FAILED_NUMBER} failed, ${PATCH_TOTAL_NUMBER} total
 }
 
+function initLogPath()
+{
+    logInfo current path is $(pwd)
+    if [ -z "$LOG_PATH" ]; then
+        LOG_PATH=${SCRIPT_HOME}/openEulerCurl
+    fi
+
+    logInfo "create OpenEuler Curl log path ${LOG_PATH}"
+    mkdir ${LOG_PATH}
+}
+
 function main()
 {
     initCurlRepo
     runAllPatch
 }
 
-main 2>&1 | tee ${SCRIPT_HOME}/installOpenEurlCurl.log
+initLogPath
+main 2>&1 | tee ${LOG_PATH}/installOpenEurlCurl.log
+exit 0
