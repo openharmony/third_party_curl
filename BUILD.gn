@@ -13,13 +13,16 @@
 import("//build/ohos.gni")
 import("//third_party/curl/curl.gni")
 
-install_script = rebase_path("//third_party/curl/install.sh")
+install_script = rebase_path("//third_party/curl/install.py")
 curl_log_path = rebase_path("$target_gen_dir")
-install_args = [ "$curl_log_path" ]
+install_args = [
+  "--gen-dir",
+  "$curl_log_path",
+]
 print("Install OpenEuler Curl")
 print(install_script)
 print(install_args)
-exec_script(install_script, install_args)
+print(exec_script(install_script, install_args, "string", []))
 
 curl_source = [
   "$CURL_SOURCE_ROOT/lib/altsvc.c",
