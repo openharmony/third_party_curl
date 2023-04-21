@@ -1,0 +1,19 @@
+diff --git a/lib/fopen.c b/lib/fopen.c
+index 94b87f5..d98610e 100644
+--- a/lib/fopen.c
++++ b/lib/fopen.c
+@@ -77,12 +77,14 @@ CURLcode Curl_fopen(struct Curl_easy *data, const char *filename,
+   if(fd == -1)
+     goto fail;
+ 
++#ifdef HAVE_FCHMOD
+   if((fstat(fd, &nsb) != -1) &&
+      (nsb.st_uid == sb.st_uid) && (nsb.st_gid == sb.st_gid)) {
+     /* if the user and group are the same, clone the original mode */
+     if(fchmod(fd, sb.st_mode) == -1)
+       goto fail;
+   }
++#endif
+ 
+   *fh = fdopen(fd, FOPEN_WRITETEXT);
+   if(!*fh)

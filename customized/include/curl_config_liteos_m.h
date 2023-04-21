@@ -1013,6 +1013,8 @@
 /* if mbedTLS is enabled */
 #define USE_MBEDTLS 1
 
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS 1
+
 /* if MesaLink is enabled */
 /* #undef USE_MESALINK */
 
