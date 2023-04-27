@@ -1126,6 +1126,7 @@ struct connectdata {
   int socks5_gssapi_enctype;
 #endif
   unsigned short localport;
+  long gssapi_delegation; /* inherited from set.gssapi_delegation */
 };
 
 /* The end of connectdata. */
@@ -1745,8 +1746,6 @@ struct UserDefined {
   enum CURL_NETRC_OPTION
        use_netrc;        /* defined in include/curl.h */
 #endif
-  curl_usessl use_ssl;   /* if AUTH TLS is to be attempted etc, for FTP or
-                            IMAP or POP3 or others! */
   long new_file_perms;    /* Permissions to use when creating remote files */
   long new_directory_perms; /* Permissions to use when creating remote dirs */
   long ssh_auth_types;   /* allowed SSH auth types */
@@ -1870,6 +1869,8 @@ struct UserDefined {
   BIT(http09_allowed); /* allow HTTP/0.9 responses */
   BIT(mail_rcpt_allowfails); /* allow RCPT TO command to fail for some
                                 recipients */
+  unsigned char use_ssl;   /* if AUTH TLS is to be attempted etc, for FTP or
+                              IMAP or POP3 or others! (type: curl_usessl)*/
 };
 
 struct Names {
