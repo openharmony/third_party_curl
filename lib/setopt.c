@@ -2321,7 +2321,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     arg = va_arg(param, long);
     if((arg < CURLUSESSL_NONE) || (arg >= CURLUSESSL_LAST))
       return CURLE_BAD_FUNCTION_ARGUMENT;
-    data->set.use_ssl = (unsigned char)arg;
+    data->set.use_ssl = (curl_usessl)arg;
     break;
 
   case CURLOPT_SSL_OPTIONS:
