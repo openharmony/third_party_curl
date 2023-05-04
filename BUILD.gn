@@ -307,6 +307,9 @@ if (defined(ohos_lite)) {
         "-DCURL_HIDDEN_SYMBOLS",
         "-c",
       ]
+      cflags_c = [
+        "-Wno-unused-function",
+      ]
       libs = [
         # AppKit symbols NSFontWeightXXX may be dlsym'ed.
         "AppKit.framework",

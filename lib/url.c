@@ -936,19 +936,10 @@ socks_proxy_info_matches(const struct proxy_info *data,
   /* the user information is case-sensitive
      or at least it is not defined as case-insensitive
      see https://tools.ietf.org/html/rfc3986#section-3.2.1 */
-  if(!data->user != !needle->user)
-    return FALSE;
+
   /* curl_strequal does a case insentive comparison, so do not use it here! */
-  if(data->user &&
-     needle->user &&
-     strcmp(data->user, needle->user) != 0)
-    return FALSE;
-  if(!data->passwd != !needle->passwd)
-    return FALSE;
-  /* curl_strequal does a case insentive comparison, so do not use it here! */
-  if(data->passwd &&
-     needle->passwd &&
-     strcmp(data->passwd, needle->passwd) != 0)
+  if(Curl_timestrcmp(data->user, needle->user) ||
+     Curl_timestrcmp(data->passwd, needle->passwd))
     return FALSE;
   return TRUE;
 }
@@ -1333,14 +1324,19 @@ ConnectionExists(struct Curl_easy *data,
       if(!(needle->handler->flags & PROTOPT_CREDSPERREQUEST)) {
         /* This protocol requires credentials per connection,
            so verify that we're using the same name and password as well */
-        if(strcmp(needle->user, check->user) ||
-           strcmp(needle->passwd, check->passwd) ||
-           !Curl_safecmp(needle->sasl_authzid, check->sasl_authzid) ||
-           !Curl_safecmp(needle->oauth_bearer, check->oauth_bearer)) {
+        if(Curl_timestrcmp(needle->user, check->user) ||
+           Curl_timestrcmp(needle->passwd, check->passwd) ||
+           Curl_timestrcmp(needle->sasl_authzid, check->sasl_authzid) ||
+           Curl_timestrcmp(needle->oauth_bearer, check->oauth_bearer)) {
           /* one of them was different */
           continue;
         }
       }
+
+      /* GSS delegation differences do not actually affect every connection
+         and auth method, but this check takes precaution before efficiency */
+      if(needle->gssapi_delegation != check->gssapi_delegation)
+        continue;
 
       /* If multiplexing isn't enabled on the h2 connection and h1 is
          explicitly requested, handle it: */
@@ -1348,11 +1344,24 @@ ConnectionExists(struct Curl_easy *data,
          (check->httpversion >= 20) &&
          (data->state.httpwant < CURL_HTTP_VERSION_2_0))
         continue;
-
-      if(get_protocol_family(needle->handler) == PROTO_FAMILY_SSH) {
+#ifdef USE_SSH
+      else if(get_protocol_family(needle->handler) & PROTO_FAMILY_SSH) {
         if(!ssh_config_matches(needle, check))
           continue;
       }
+#endif
+#ifndef CURL_DISABLE_FTP
+      else if(get_protocol_family(needle->handler) & PROTO_FAMILY_FTP) {
+        /* Also match ACCOUNT, ALTERNATIVE-TO-USER, USE_SSL and CCC options */
+        if(Curl_timestrcmp(needle->proto.ftpc.account,
+                           check->proto.ftpc.account) ||
+           Curl_timestrcmp(needle->proto.ftpc.alternative_to_user,
+                           check->proto.ftpc.alternative_to_user) ||
+           (needle->proto.ftpc.use_ssl != check->proto.ftpc.use_ssl) ||
+           (needle->proto.ftpc.ccc != check->proto.ftpc.ccc))
+          continue;
+      }
+#endif
 
       if((needle->handler->flags&PROTOPT_SSL)
 #ifndef CURL_DISABLE_PROXY
@@ -1412,8 +1421,8 @@ ConnectionExists(struct Curl_easy *data,
            possible. (Especially we must not reuse the same connection if
            partway through a handshake!) */
         if(wantNTLMhttp) {
-          if(strcmp(needle->user, check->user) ||
-             strcmp(needle->passwd, check->passwd)) {
+          if(Curl_timestrcmp(needle->user, check->user) ||
+             Curl_timestrcmp(needle->passwd, check->passwd)) {
 
             /* we prefer a credential match, but this is at least a connection
                that can be reused and "upgraded" to NTLM */
@@ -1435,8 +1444,10 @@ ConnectionExists(struct Curl_easy *data,
           if(!check->http_proxy.user || !check->http_proxy.passwd)
             continue;
 
-          if(strcmp(needle->http_proxy.user, check->http_proxy.user) ||
-             strcmp(needle->http_proxy.passwd, check->http_proxy.passwd))
+          if(Curl_timestrcmp(needle->http_proxy.user,
+                             check->http_proxy.user) ||
+             Curl_timestrcmp(needle->http_proxy.passwd,
+                             check->http_proxy.passwd))
             continue;
         }
         else if(check->proxy_ntlm_state != NTLMSTATE_NONE) {
@@ -1797,6 +1808,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->fclosesocket = data->set.fclosesocket;
   conn->closesocket_client = data->set.closesocket_client;
   conn->lastused = Curl_now(); /* used now */
+  conn->gssapi_delegation = data->set.gssapi_delegation;
 
   return conn;
   error:
