@@ -329,7 +329,10 @@ if (defined(ohos_lite)) {
         "-Wimplicit-fallthrough",
       ]
 
-      cflags_c = [ "-Wno-unused-function" ]
+      cflags_c = [
+        "-Wno-unused-function",
+        "-Wno-unused-variable",
+      ]
 
       frameworks = [
         # AppKit symbols NSFontWeightXXX may be dlsym'ed.
