@@ -20,13 +20,14 @@ import time
 import traceback
 
 class CurlLog:
-    _isDebug = True
+    IS_DEBUG = True
     _f = None
+
     @staticmethod
-    def initLogger(logPath):
-        if not os.path.exists(logPath):
-            os.makedirs(logPath)
-        CurlLog._f = open(os.path.join(logPath, "installOpenEurlCurl.log"), "w")
+    def init_logger(log_path):
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+        CurlLog._f = open(os.path.join(log_path, "installOpenEurlCurl.log"), "w")
         pass
 
     @staticmethod
@@ -36,39 +37,39 @@ class CurlLog:
         CurlLog._f.close()
 
     @staticmethod
-    def __getCurrentTime():
+    def __get_current_time():
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
     @staticmethod
     def info(info):
-        content = "%s | INFO | OpenEulerCurl | %s"%(CurlLog.__getCurrentTime(), info)
+        content = "%s | INFO | OpenEulerCurl | %s" % (CurlLog.__get_current_time(), info)
         CurlLog._f.write("%s\n" % (content))
-        if CurlLog._isDebug:
+        if CurlLog.IS_DEBUG:
             print(content)
         pass
 
     @staticmethod
     def error(error):
-        content = "%s | ERR  | OpenEulerCurl | %s"%(CurlLog.__getCurrentTime(), error)
+        content = "%s | ERR  | OpenEulerCurl | %s" % (CurlLog.__get_current_time(), error)
         CurlLog._f.write("%s\n" % (content))
-        if CurlLog._isDebug:
+        if CurlLog.IS_DEBUG:
             print(content)
         pass
 
     @staticmethod
     def exception(error):
         stack = traceback.format_exc()
-        content = "%s | ERR  | OpenEulerCurl | %s"%(CurlLog.__getCurrentTime(), stack)
+        content = "%s | ERR  | OpenEulerCurl | %s" % (CurlLog.__get_current_time(), stack)
         CurlLog._f.write("%s\n" % (content))
-        if CurlLog._isDebug:
+        if CurlLog.IS_DEBUG:
             print(content)
         pass
 
 
 class Patch:
-    _patchPath = None
-    _sourcePath = None
-    _allPatchs = [
+    _patch_path = None
+    _source_path = None
+    _all_patchs = [
         "backport-0101-curl-7.32.0-multilib.patch",
         "backport-CVE-2022-22576.patch",
         "backport-CVE-2022-27775.patch",
@@ -109,21 +110,20 @@ class Patch:
         "backport-CVE-2023-28322.patch"
     ]
 
-    _myPatchs = [
-#        "001_add_have_fchmod_macro_for_fopen.patch"
+    _my_patchs = [
     ]
 
     @staticmethod
-    def init(patchPath, sourcePath):
-        Patch._patchPath = patchPath
-        Patch._sourcePath = sourcePath
+    def init(patch_path, source_path):
+        Patch._patch_path = patch_path
+        Patch._source_path = source_path
         pass
 
     @staticmethod
-    def _doPatch(patchPath, patch):
-        patchFile = os.path.join(patchPath, patch)
-        if os.path.exists(patchFile):
-            cmd = "cd %s; patch -p1 < %s 2>&1" % (Patch._sourcePath, patchFile)
+    def _do_patch(patch_path, patch):
+        patch_file = os.path.join(patch_path, patch)
+        if os.path.exists(patch_file):
+            cmd = "cd %s; patch -p1 < %s 2>&1" % (Patch._source_path, patch_file)
             messages = os.popen(cmd).readlines()
             if len(messages) == 0:
                 CurlLog.info("patch result empty")
@@ -131,62 +131,63 @@ class Patch:
             for message in messages:
                 CurlLog.info("patch result [%s]" % (message.rstrip()))
         else:
-            CurlLog.error("patch does not exits %s" % (patchFile))
+            CurlLog.error("patch does not exits %s" % (patch_file))
         pass
 
     @staticmethod
-    def patchAll():
+    def patch_all():
         count = 0
-        for patch in Patch._allPatchs:
+        for patch in Patch._all_patchs:
             count = count + 1
             CurlLog.info("the OpenEuler Curl's %d patch %s" % (count, patch))
-            Patch._doPatch(Patch._patchPath, patch)
+            Patch._do_patch(Patch._patch_path, patch)
             pass
 
-        myPathchPath = os.path.join(Patch._patchPath, "customized", "patch")
-        for patch in Patch._myPatchs:
+        my_pathch_path = os.path.join(Patch._patch_path, "customized", "patch")
+        for patch in Patch._my_patchs:
             count = count + 1
             CurlLog.info("my OpenEuler Curl's %d patch %s" % (count, patch))
-            Patch._doPatch(myPathchPath, patch)
+            Patch._do_patch(my_pathch_path, patch)
         pass
 
 
 class Installer:
-    _tarFileName = "curl-7.79.1.tar.xz"
-    _openEulerCurlSourcePath = "curl-7.79.1"
-    def __init__(self, scriptHome):
-        self.scriptHome = scriptHome
-        Patch.init(self.scriptHome, os.path.join(self.scriptHome, Installer._openEulerCurlSourcePath))
+    _tar_file_name = "curl-7.79.1.tar.xz"
+    _open_euler_curl_source_path = "curl-7.79.1"
+
+    def __init__(self, script_home):
+        self.script_home = script_home
+        Patch.init(self.script_home, os.path.join(self.script_home, Installer._open_euler_curl_source_path))
         pass
 
-    def __unzipOpenCurlTar(self):
-        fileName = os.path.join(self.scriptHome, Installer._tarFileName)
-        sourcePath = os.path.join(self.scriptHome, Installer._openEulerCurlSourcePath)
+    def __unzip_open_curl_tar(self):
+        fileName = os.path.join(self.script_home, Installer._tar_file_name)
+        source_path = os.path.join(self.script_home, Installer._open_euler_curl_source_path)
         try:
-            if os.path.exists(sourcePath):
-                cTime = os.path.getctime(sourcePath)
+            if os.path.exists(source_path):
+                cTime = os.path.getctime(source_path)
                 nowTime = time.time()
                 diffTime = int(abs(nowTime - cTime))
                 if diffTime > 300: # create the directory is too old
-                    CurlLog.info("remove OpenEuler Curl source path %s" % (sourcePath))
-                    shutil.rmtree(sourcePath)
+                    CurlLog.info("remove OpenEuler Curl source path %s" % (source_path))
+                    shutil.rmtree(source_path)
                     CurlLog.info("remove source path successful")
                 else:
-                    CurlLog.info("it's too new so does not need to remove OpenEuler Curl source path %s" % (sourcePath))
+                    CurlLog.info("it's too new, does not need to remove OpenEuler Curl source path %s" % (source_path))
                     return 1
 
-            messages = os.popen("cd %s; tar -xvf %s 2>&1" % (self.scriptHome, Installer._tarFileName)).readlines()
+            messages = os.popen("cd %s; tar -xvf %s 2>&1" % (self.script_home, Installer._tar_file_name)).readlines()
             for message in messages:
                 CurlLog.info("tar result=[%s]" % (message.rstrip()));
 
-            if os.path.exists(sourcePath) is False:
+            if os.path.exists(source_path) is False:
                 CurlLog.error("can not unzip OpenEuler Curl tar %s" % (fileName))
                 return -1
 
             CurlLog.info("unzip OpenEuler Curl tar successful %s" % (fileName))
 
-            srcIncludePath = os.path.join(sourcePath, "include")
-            destIncludePath = os.path.join(self.scriptHome, "include")
+            srcIncludePath = os.path.join(source_path, "include")
+            destIncludePath = os.path.join(self.script_home, "include")
 
             if os.path.exists(destIncludePath):
                 shutil.rmtree(destIncludePath)
@@ -203,34 +204,34 @@ class Installer:
             CurlLog.exception(e)
             return -1
 
-    def __initRepo(self):
-        return self.__unzipOpenCurlTar()
+    def __init_repo(self):
+        return self.__unzip_open_curl_tar()
 
     def install(self):
         CurlLog.info("create OpenEuler Curl repo")
-        ret = self.__initRepo()
+        ret = self.__init_repo()
         if ret == 1:
-            CurlLog.info("reuse the soruce path %s" % (Installer._openEulerCurlSourcePath))
+            CurlLog.info("reuse the soruce path %s" % (Installer._open_euler_curl_source_path))
             return
         elif ret == -1:
             CurlLog.info("create OpenEuler Curl repo failed")
             return
 
         CurlLog.info("patch OpenEuler Curl")
-        Patch.patchAll()
+        Patch.patch_all()
         CurlLog.info("OpenEuler Curl has been install")
         pass
 
 
 def main():
-    scriptHome = os.path.dirname(os.path.realpath(__file__))
+    script_home = os.path.dirname(os.path.realpath(__file__))
     parser = argparse.ArgumentParser()
     parser.add_argument('--gen-dir', help='generate path of log', required=True)
     args = parser.parse_args()
 
-    CurlLog.initLogger(os.path.join(args.gen_dir, "openEulerCurl"))
-    CurlLog.info("script path is %s, log path is %s" % (scriptHome, args.gen_dir))
-    installer = Installer(scriptHome)
+    CurlLog.init_logger(os.path.join(args.gen_dir, "openEulerCurl"))
+    CurlLog.info("script path is %s, log path is %s" % (script_home, args.gen_dir))
+    installer = Installer(script_home)
     installer.install()
     CurlLog.close()
     return 0
