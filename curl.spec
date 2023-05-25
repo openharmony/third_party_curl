@@ -6,7 +6,7 @@
 
 Name:           curl
 Version:        7.79.1
-Release:        15
+Release:        17
 Summary:        Curl is used in command lines or scripts to transfer data
 License:        MIT
 URL:            https://curl.haxx.se/
@@ -47,6 +47,9 @@ Patch32:        backport-CVE-2023-27538.patch
 Patch33:        backport-CVE-2023-27535-pre1.patch
 Patch34:        backport-CVE-2023-27536.patch
 Patch35:        backport-CVE-2023-27535.patch
+Patch36:        backport-after-CVE-2022-32207-to-fix-build-error-when-user-don-t-use-glibc.patch
+Patch37:        backport-CVE-2023-28321.patch 
+Patch38:        backport-CVE-2023-28322.patch
 
 BuildRequires:  automake brotli-devel coreutils gcc groff krb5-devel
 BuildRequires:  libidn2-devel libnghttp2-devel libpsl-devel
@@ -221,6 +224,18 @@ rm -rf ${RPM_BUILD_ROOT}%{_libdir}/libcurl.la
 %{_mandir}/man3/*
 
 %changelog
+* Wed May 24 2023 xingwei <xingwei14@h-partners.com> - 7.79.1-17
+- Type:CVE
+- CVE:CVE-2023-28321,CVE-2023-28322
+- SUG:NA
+- DESC:fix CVE-2023-28321,CVE-2023-28322
+
+* Wed Apr 19 2023 gaihuiying <eaglegai@163.com> - 7.79.1-16
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport to fix build error when user don't use glibc
+
 * Wed Mar 22 2023 xingwei <xingwei14@h-partners.com> - 7.79.1-15
 - Type:cves
 - CVE:CVE-2023-27533 CVE-2023-27534 CVE-2023-27535 CVE-2023-27536 CVE-2023-27538
