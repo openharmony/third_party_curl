@@ -103,11 +103,14 @@ class Patch:
         "backport-CVE-2023-27538.patch",
         "backport-CVE-2023-27535-pre1.patch",
         "backport-CVE-2023-27536.patch",
-        "backport-CVE-2023-27535.patch"
+        "backport-CVE-2023-27535.patch",
+        "backport-after-CVE-2022-32207-to-fix-build-error-when-user-don-t-use-glibc.patch",
+        "backport-CVE-2023-28321.patch",
+        "backport-CVE-2023-28322.patch"
     ]
 
     _myPatchs = [
-        "001_add_have_fchmod_macro_for_fopen.patch"
+#        "001_add_have_fchmod_macro_for_fopen.patch"
     ]
 
     @staticmethod
