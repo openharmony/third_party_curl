@@ -418,6 +418,7 @@ if (defined(ohos_lite)) {
     install_images = [ "system" ]
 
     subsystem_name = "thirdparty"
+    innerapi_tags = [ "platformsdk" ]
     part_name = "curl"
   }
 }
