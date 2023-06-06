@@ -259,6 +259,7 @@ LIB_HFILES =         \
   doh.h              \
   dotdot.h           \
   dynbuf.h           \
+  easy_lock.h        \
   easyif.h           \
   easyoptions.h      \
   escape.h           \
