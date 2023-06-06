@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import fcntl
 import os
 import shutil
 import sys
@@ -154,6 +155,7 @@ class Patch:
 class Installer:
     _tar_file_name = "curl-7.79.1.tar.xz"
     _open_euler_curl_source_path = "curl-7.79.1"
+    _read_me = "README.OpenSource"
 
     def __init__(self, script_home):
         self.script_home = script_home
@@ -207,7 +209,7 @@ class Installer:
     def __init_repo(self):
         return self.__unzip_open_curl_tar()
 
-    def install(self):
+    def __install(self):
         CurlLog.info("create OpenEuler Curl repo")
         ret = self.__init_repo()
         if ret == 1:
@@ -220,6 +222,15 @@ class Installer:
         CurlLog.info("patch OpenEuler Curl")
         Patch.patch_all()
         CurlLog.info("OpenEuler Curl has been install")
+        pass
+
+    def install(self):
+        fileName = os.path.join(self.script_home, Installer._read_me)
+        with open(fileName, "r") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            CurlLog.info("only me to install OpenEuler Curl")
+            self.__install()
+            fcntl.flock(f, fcntl.LOCK_UN)
         pass
 
 
