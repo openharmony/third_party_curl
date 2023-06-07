@@ -185,7 +185,7 @@ class Installer:
         pass
 
     def __unzip_open_curl_tar(self):
-        fileName = os.path.join(self.script_home, Installer._tar_file_name)
+        tar_file = os.path.join(self.script_home, Installer._tar_file_name)
         source_path = os.path.join(self.script_home, Installer._open_euler_curl_source_path)
         try:
             if os.path.exists(source_path):
@@ -205,10 +205,10 @@ class Installer:
                 CurlLog.info("tar result=[%s]" % (message.rstrip()));
 
             if os.path.exists(source_path) is False:
-                CurlLog.error("can not unzip OpenEuler Curl tar %s" % (fileName))
+                CurlLog.error("can not unzip OpenEuler Curl tar %s" % (tar_file))
                 return -1
 
-            CurlLog.info("unzip OpenEuler Curl tar successful %s" % (fileName))
+            CurlLog.info("unzip OpenEuler Curl tar successful %s" % (tar_file))
 
             srcIncludePath = os.path.join(source_path, "include")
             destIncludePath = os.path.join(self.script_home, "include")
@@ -224,7 +224,7 @@ class Installer:
 
             return 0
         except Exception as e:
-            CurlLog.error("can not unzip OpenEuler Curl tar %s" % (fileName))
+            CurlLog.error("can not unzip OpenEuler Curl tar %s" % (tar_file))
             CurlLog.exception(e)
             return -1
 
@@ -247,8 +247,8 @@ class Installer:
         pass
 
     def install(self):
-        fileName = os.path.join(self.script_home, Installer._read_me)
-        with open(fileName, "r") as f:
+        read_me_file = os.path.join(self.script_home, Installer._read_me)
+        with open(read_me_file, "r") as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             CurlLog.warn("only me to install OpenEuler Curl")
             self.__install()
