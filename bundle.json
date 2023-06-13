@@ -15,12 +15,19 @@
         "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
-        "adapted_system_type": [],
+        "adapted_system_type": [
+            "mini",
+            "standard"
+        ],
         "rom": "",
         "ram": "",
         "deps": {
             "components": [],
-            "third_party": []
+            "third_party": [
+                "nghttp2",
+                "openssl",
+                "zlib"
+            ]
         },
         "build": {
             "sub_component": [
