@@ -113,7 +113,10 @@ class Patch:
         "backport-CVE-2023-27535.patch",
         "backport-after-CVE-2022-32207-to-fix-build-error-when-user-don-t-use-glibc.patch",
         "backport-CVE-2023-28321.patch",
-        "backport-CVE-2023-28322.patch"
+        "backport-CVE-2023-28322.patch",
+        "backport-0001-CVE-2023-28320.patch",
+        "backport-0002-CVE-2023-28320.patch",
+        "backport-0003-CVE-2023-28320.patch"
     ]
 
     _my_patchs = [

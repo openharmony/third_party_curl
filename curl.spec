@@ -6,7 +6,7 @@
 
 Name:           curl
 Version:        7.79.1
-Release:        17
+Release:        19
 Summary:        Curl is used in command lines or scripts to transfer data
 License:        MIT
 URL:            https://curl.haxx.se/
@@ -50,6 +50,9 @@ Patch35:        backport-CVE-2023-27535.patch
 Patch36:        backport-after-CVE-2022-32207-to-fix-build-error-when-user-don-t-use-glibc.patch
 Patch37:        backport-CVE-2023-28321.patch 
 Patch38:        backport-CVE-2023-28322.patch
+Patch39:        backport-0001-CVE-2023-28320.patch
+Patch40:        backport-0002-CVE-2023-28320.patch
+Patch41:        backport-0003-CVE-2023-28320.patch
 
 BuildRequires:  automake brotli-devel coreutils gcc groff krb5-devel
 BuildRequires:  libidn2-devel libnghttp2-devel libpsl-devel
@@ -60,12 +63,6 @@ BuildRequires:  perl(Getopt::Long) perl(Pod::Usage) perl(strict) perl(warnings)
 BuildRequires:  perl(Cwd) perl(Digest::MD5) perl(Exporter) perl(File::Basename)
 BuildRequires:  perl(File::Copy) perl(File::Spec) perl(IPC::Open2) perl(MIME::Base64)
 BuildRequires:  perl(Time::Local) perl(Time::HiRes) perl(vars)
-
-%ifarch x86_64
-BuildRequires:  valgrind
-# glibc-debuginfo is needed by valgrind in upstream test-suite
-BuildRequires:  glibc-debuginfo
-%endif
 
 Requires:       libcurl = %{version}-%{release}
 Provides:       curl-full = %{version}-%{release} webclient
@@ -165,7 +162,7 @@ for size in full; do (
     export LD_LIBRARY_PATH="${PWD}/lib/.libs"
  
     cd tests
-    perl -I../../tests ../../tests/runtests.pl -a -p -v '!flaky'
+    perl -I../../tests ../../tests/runtests.pl -a -n -p -v '!flaky'
 )
 done
 
@@ -224,6 +221,18 @@ rm -rf ${RPM_BUILD_ROOT}%{_libdir}/libcurl.la
 %{_mandir}/man3/*
 
 %changelog
+* Sat Jun 10 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-19
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:disable valgrind in tests
+
+* Thu Jun 08 2023 xingwei <xingwei14@h-partners.com> - 7.79.1-18
+- Type:CVE
+- CVE:CVE-2023-28320
+- SUG:NA
+- DESC:fix CVE-2023-28320
+
 * Wed May 24 2023 xingwei <xingwei14@h-partners.com> - 7.79.1-17
 - Type:CVE
 - CVE:CVE-2023-28321,CVE-2023-28322
