@@ -409,6 +409,9 @@ if (defined(ohos_lite)) {
         "//third_party/zlib:shared_libz",
       ]
     }
+
+    subsystem_name = "thirdparty"
+    part_name = "curl"
   }
 
   ohos_shared_library("curl_shared") {
