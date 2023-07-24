@@ -237,7 +237,6 @@ if (defined(ohos_lite)) {
 
   config("curl_config_public") {
     include_dirs = [
-      "$CURL_SOURCE_ROOT/lib",
       "$CURL_SOURCE_ROOT/include",
       "//third_party/curl/customized/include",
     ]
@@ -416,7 +415,10 @@ if (defined(ohos_lite)) {
 
   ohos_shared_library("curl_shared") {
     deps = [ ":curl" ]
-    public_configs = [ ":curl_config" ]
+
+    configs = [ ":curl_config" ]
+
+    public_configs = [ ":curl_config_public" ]
 
     install_images = [ "system" ]
 
