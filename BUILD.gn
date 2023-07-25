@@ -237,7 +237,6 @@ if (defined(ohos_lite)) {
 
   config("curl_config_public") {
     include_dirs = [
-      "$CURL_SOURCE_ROOT/lib",
       "$CURL_SOURCE_ROOT/include",
       "//third_party/curl/customized/include",
     ]
@@ -276,6 +275,15 @@ if (defined(ohos_lite)) {
       "$CURL_SOURCE_ROOT/lib",
       "//third_party/curl/customized/include",
       "//third_party/nghttp2/lib/includes",
+    ]
+
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+
+  config("curl_config_public") {
+    include_dirs = [
+      "$CURL_SOURCE_ROOT/include",
+      "//third_party/curl/customized/include",
     ]
 
     cflags = [ "-Wno-deprecated-declarations" ]
@@ -416,7 +424,10 @@ if (defined(ohos_lite)) {
 
   ohos_shared_library("curl_shared") {
     deps = [ ":curl" ]
-    public_configs = [ ":curl_config" ]
+
+    configs = [ ":curl_config" ]
+
+    public_configs = [ ":curl_config_public" ]
 
     install_images = [ "system" ]
 
