@@ -280,6 +280,15 @@ if (defined(ohos_lite)) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
+  config("curl_config_public") {
+    include_dirs = [
+      "$CURL_SOURCE_ROOT/include",
+      "//third_party/curl/customized/include",
+    ]
+
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
     configs += [ "//third_party/openssl:ssl_config_public" ]
