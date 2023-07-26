@@ -429,7 +429,10 @@ if (defined(ohos_lite)) {
 
     public_configs = [ ":curl_config_public" ]
 
-    install_images = [ "system" ]
+    install_images = [
+      "updater",
+      "system",
+    ]
 
     subsystem_name = "thirdparty"
     innerapi_tags = [ "platformsdk" ]
