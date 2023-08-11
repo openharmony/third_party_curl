@@ -6,7 +6,7 @@
 
 Name:           curl
 Version:        7.79.1
-Release:        19
+Release:        23
 Summary:        Curl is used in command lines or scripts to transfer data
 License:        MIT
 URL:            https://curl.haxx.se/
@@ -30,7 +30,6 @@ Patch15:        backport-fix-configure-disable-http-auth-build-error.patch
 Patch16:        backport-CVE-2022-35252-cookie-reject-cookies-with-control-bytes.patch
 Patch17:        backport-CVE-2022-32221.patch
 Patch18:        backport-CVE-2022-42916.patch
-Patch19:        backport-CVE-2022-42915.patch
 Patch20:        backport-CVE-2022-43551-http-use-the-IDN-decoded-name-in-HSTS-checks.patch
 Patch21:        backport-CVE-2022-43552-smb-telnet-do-not-free-the-protocol-struct-in-_done.patch
 Patch22:        backport-0001-CVE-2023-23914-CVE-2023-23915.patch
@@ -53,6 +52,27 @@ Patch38:        backport-CVE-2023-28322.patch
 Patch39:        backport-0001-CVE-2023-28320.patch
 Patch40:        backport-0002-CVE-2023-28320.patch
 Patch41:        backport-0003-CVE-2023-28320.patch
+Patch42:        backport-curl-tool-erase-some-more-sensitive-command-line-arg.patch
+Patch43:        backport-tool_getparam-repair-cleanarg.patch
+Patch44:        backport-tool_getparam-fix-cleanarg-for-unicode-builds.patch
+Patch45:        backport-getparam-correctly-clean-args.patch
+Patch46:        backport-tool_getparam-fix-hiding-of-command-line-secrets.patch
+Patch47:        backport-multi-shut-down-CONNECT-in-Curl_detach_connnection.patch
+Patch48:        backport-curl_easy_cleanup.3-remove-from-multi-handle-first.patch
+Patch49:        backport-http_proxy-make-Curl_connect_done-work-for-proxy-dis.patch
+Patch50:        backport-Curl_connect_done-handle-being-called-twice.patch
+Patch51:        backport-tftp-mark-protocol-as-not-possible-to-do-over-CONNEC.patch
+Patch52:        backport-test1939-require-proxy-support-to-run.patch
+Patch53:        backport-lib1939-make-it-endure-torture-tests.patch
+Patch54:        backport-CVE-2022-42915.patch
+Patch55:        backport-tests-verify-the-fix-for-CVE-2022-27774.patch
+Patch56:        backport-test442-443-test-cookie-caps.patch
+Patch57:        backport-test444-test-many-received-Set-Cookie.patch
+Patch58:        backport-test8-verify-that-ctrl-byte-cookies-are-ignored.patch
+Patch59:        backport-test1948-verify-PUT-POST-reusing-the-same-handle.patch
+Patch60:        backport-test387-verify-rejection-of-compression-chain-attack.patch
+Patch61:        backport-hostcheck-fix-host-name-wildcard-checking.patch
+Patch62:        backport-CVE-2023-32001.patch
 
 BuildRequires:  automake brotli-devel coreutils gcc groff krb5-devel
 BuildRequires:  libidn2-devel libnghttp2-devel libpsl-devel
@@ -221,6 +241,30 @@ rm -rf ${RPM_BUILD_ROOT}%{_libdir}/libcurl.la
 %{_mandir}/man3/*
 
 %changelog
+* Thu Jul 20 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-23
+- Type:CVE
+- CVE:CVE-2023-32001
+- SUG:NA
+- DESC:fix CVE-2023-32001
+
+* Mon Jul 10 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-22
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:backport some testcases
+
+* Mon Jul 03 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-21
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:fix double-free when using https with tunneling proxy
+
+* Mon Jun 19 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-20
+- Type:bugfix
+- CVE:NA
+- SUG:NA
+- DESC:hide sensitive info in cmdline when ps
+
 * Sat Jun 10 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-19
 - Type:bugfix
 - CVE:NA
