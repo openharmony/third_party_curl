@@ -94,7 +94,6 @@ class Patch:
         "backport-CVE-2022-35252-cookie-reject-cookies-with-control-bytes.patch",
         "backport-CVE-2022-32221.patch",
         "backport-CVE-2022-42916.patch",
-        "backport-CVE-2022-42915.patch",
         "backport-CVE-2022-43551-http-use-the-IDN-decoded-name-in-HSTS-checks.patch",
         "backport-CVE-2022-43552-smb-telnet-do-not-free-the-protocol-struct-in-_done.patch",
         "backport-0001-CVE-2023-23914-CVE-2023-23915.patch",
@@ -116,7 +115,28 @@ class Patch:
         "backport-CVE-2023-28322.patch",
         "backport-0001-CVE-2023-28320.patch",
         "backport-0002-CVE-2023-28320.patch",
-        "backport-0003-CVE-2023-28320.patch"
+        "backport-0003-CVE-2023-28320.patch",
+        "backport-curl-tool-erase-some-more-sensitive-command-line-arg.patch",
+        "backport-tool_getparam-repair-cleanarg.patch",
+        "backport-tool_getparam-fix-cleanarg-for-unicode-builds.patch",
+        "backport-getparam-correctly-clean-args.patch",
+        "backport-tool_getparam-fix-hiding-of-command-line-secrets.patch",
+        "backport-multi-shut-down-CONNECT-in-Curl_detach_connnection.patch",
+        "backport-curl_easy_cleanup.3-remove-from-multi-handle-first.patch",
+        "backport-http_proxy-make-Curl_connect_done-work-for-proxy-dis.patch",
+        "backport-Curl_connect_done-handle-being-called-twice.patch",
+        "backport-tftp-mark-protocol-as-not-possible-to-do-over-CONNEC.patch",
+        "backport-test1939-require-proxy-support-to-run.patch",
+        "backport-lib1939-make-it-endure-torture-tests.patch",
+        "backport-CVE-2022-42915.patch",
+        "backport-tests-verify-the-fix-for-CVE-2022-27774.patch",
+        "backport-test442-443-test-cookie-caps.patch",
+        "backport-test444-test-many-received-Set-Cookie.patch",
+        "backport-test8-verify-that-ctrl-byte-cookies-are-ignored.patch",
+        "backport-test1948-verify-PUT-POST-reusing-the-same-handle.patch",
+        "backport-test387-verify-rejection-of-compression-chain-attack.patch",
+        "backport-hostcheck-fix-host-name-wildcard-checking.patch",
+        "backport-CVE-2023-32001.patch"
     ]
 
     _my_patchs = [
@@ -195,12 +215,14 @@ class Installer:
                 cTime = os.path.getctime(source_path)
                 nowTime = time.time()
                 diffTime = int(abs(nowTime - cTime))
+                CurlLog.info("nowTime=%d, oldTime=%d" % (nowTime, cTime))
                 if diffTime > 300: # create the directory is too old
                     CurlLog.info("remove OpenEuler Curl source path %s" % (source_path))
                     shutil.rmtree(source_path)
                     CurlLog.info("remove source path successful")
                 else:
-                    CurlLog.info("it's too new, does not need to remove OpenEuler Curl source path %s" % (source_path))
+                    CurlLog.info("it's too new, does not need to remove OpenEuler Curl source path %s, diff time %d"
+                                    % (source_path, diffTime))
                     return 1
 
             messages = os.popen("cd %s; tar -xvf %s 2>&1" % (self.script_home, Installer._tar_file_name)).readlines()
