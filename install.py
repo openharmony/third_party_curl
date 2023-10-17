@@ -136,7 +136,9 @@ class Patch:
         "backport-test1948-verify-PUT-POST-reusing-the-same-handle.patch",
         "backport-test387-verify-rejection-of-compression-chain-attack.patch",
         "backport-hostcheck-fix-host-name-wildcard-checking.patch",
-        "backport-CVE-2023-32001.patch"
+        "backport-CVE-2023-32001.patch",
+        "backport-CVE-2023-38545.patch",
+        "backport-CVE-2023-38546.patch"
     ]
 
     _my_patchs = [
