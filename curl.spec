@@ -6,7 +6,7 @@
 
 Name:           curl
 Version:        7.79.1
-Release:        23
+Release:        24
 Summary:        Curl is used in command lines or scripts to transfer data
 License:        MIT
 URL:            https://curl.haxx.se/
@@ -73,6 +73,8 @@ Patch59:        backport-test1948-verify-PUT-POST-reusing-the-same-handle.patch
 Patch60:        backport-test387-verify-rejection-of-compression-chain-attack.patch
 Patch61:        backport-hostcheck-fix-host-name-wildcard-checking.patch
 Patch62:        backport-CVE-2023-32001.patch
+Patch63:	backport-CVE-2023-38545.patch
+Patch64:	backport-CVE-2023-38546.patch
 
 BuildRequires:  automake brotli-devel coreutils gcc groff krb5-devel
 BuildRequires:  libidn2-devel libnghttp2-devel libpsl-devel
@@ -241,6 +243,12 @@ rm -rf ${RPM_BUILD_ROOT}%{_libdir}/libcurl.la
 %{_mandir}/man3/*
 
 %changelog
+* Wed Oct 11 2023 Funda Wang <fundawang@yeah.net> - 7.79.1-24
+- Type:CVE
+- CVE:CVE-2023-38545, CVE-2023-38546
+- SUG:NA
+- DESC:fix CVE-2023-38545, CVE-2023-38546
+
 * Thu Jul 20 2023 zhouyihang <zhouyihang3@h-partners.com> - 7.79.1-23
 - Type:CVE
 - CVE:CVE-2023-32001
