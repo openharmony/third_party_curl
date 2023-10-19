@@ -535,9 +535,9 @@ CURLproxycode Curl_SOCKS5(const char *proxy_user,
 
     /* RFC1928 chapter 5 specifies max 255 chars for domain name in packet */
     if(!socks5_resolve_local && hostname_len > 255) {
-      infof(data, "SOCKS5: server resolving disabled for hostnames of "
-            "length > 255 [actual len=%zu]", hostname_len);
-      socks5_resolve_local = TRUE;
+      failf(data, "SOCKS5: the destination hostname is too long to be "
+            "resolved remotely by the proxy.");
+      return CURLPX_LONG_HOSTNAME;
     }
 
     if(auth & ~(CURLAUTH_BASIC | CURLAUTH_GSSAPI))
@@ -857,7 +857,7 @@ CURLproxycode Curl_SOCKS5(const char *proxy_user,
 
     if(!socks5_resolve_local) {
       socksreq[len++] = 3; /* ATYP: domain name = 3 */
-      socksreq[len++] = (char) hostname_len; /* one byte address length */
+      socksreq[len++] = (unsigned char) hostname_len; /* one byte length */
       memcpy(&socksreq[len], hostname, hostname_len); /* address w/o NULL */
       len += hostname_len;
       infof(data, "SOCKS5 connect to %s:%d (remotely resolved)",
