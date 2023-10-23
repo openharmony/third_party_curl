@@ -1,0 +1,85 @@
+From 7230b19a2e17a164f61f82e4e409a9777ea2421a Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Mon, 16 May 2022 16:29:07 +0200
+Subject: [PATCH] test387: verify rejection of compression chain attack
+
+---
+ tests/data/Makefile.inc |  1 +
+ tests/data/test387      | 53 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+)
+ create mode 100644 tests/data/test387
+
+diff --git a/tests/data/Makefile.inc b/tests/data/Makefile.inc
+index 8b7cc46a3..370727eec 100644
+--- a/tests/data/Makefile.inc
++++ b/tests/data/Makefile.inc
+@@ -64,6 +64,7 @@ test343 test344 test345 test346 test347 test348 test349 test350 test351 \
+ test343 test344 test345 test346 test347 test348 test349 test350 test351 \
+ test352 test353 test354 test355 test356 test357 test358 test359 test360 \
+ test361 test362 test363 test364 test365 test366 \
++test387 \
+ \
+ test392 test393 test394 test395 test396 test397 \
+ \
+diff --git a/tests/data/test387 b/tests/data/test387
+new file mode 100644
+index 000000000..015ec25f1
+--- /dev/null
++++ b/tests/data/test387
+@@ -0,0 +1,53 @@
++<testcase>
++<info>
++<keywords>
++HTTP
++gzip
++</keywords>
++</info>
++
++#
++# Server-side
++<reply>
++<data nocheck="yes">
++HTTP/1.1 200 OK
++Transfer-Encoding: gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip,gzip
++
++-foo-
++</data>
++</reply>
++
++#
++# Client-side
++<client>
++<server>
++http
++</server>
++ <name>
++Response with overly long compression chain
++ </name>
++ <command>
++http://%HOSTIP:%HTTPPORT/%TESTNUMBER -sS
++</command>
++</client>
++
++#
++# Verify data after the test has been "shot"
++<verify>
++<protocol>
++GET /%TESTNUMBER HTTP/1.1
++Host: %HOSTIP:%HTTPPORT
++User-Agent: curl/%VERSION
++Accept: */*
++
++</protocol>
++
++# CURLE_BAD_CONTENT_ENCODING is 61
++<errorcode>
++61
++</errorcode>
++<stderr mode="text">
++curl: (61) Reject response due to more than 5 content encodings
++</stderr>
++</verify>
++</testcase>
+-- 
+2.33.0
+

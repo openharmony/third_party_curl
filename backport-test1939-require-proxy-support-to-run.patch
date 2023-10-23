@@ -1,0 +1,32 @@
+From b7e1443a1d59feea9fc63e5b78276153ac635438 Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Sat, 13 Nov 2021 23:43:24 +0100
+Subject: [PATCH 1/1] test1939: require proxy support to run
+
+Follow-up to f0b7099a10d1a
+
+Closes #8011
+
+Conflict:NA
+Reference:https://github.com/curl/curl/commit/b7e1443a1d59feea9fc63e5b78276153ac635438
+---
+ tests/data/test1939 | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/tests/data/test1939 b/tests/data/test1939
+index 0b9987b5b..19dc74d2b 100644
+--- a/tests/data/test1939
++++ b/tests/data/test1939
+@@ -29,6 +29,9 @@ Content-Length: 0
+ 
+ # Client-side
+ <client>
++<features>
++proxy
++</features>
+ <server>
+ https
+ http-proxy
+-- 
+2.33.0
+
