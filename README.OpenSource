@@ -3,7 +3,7 @@
     "Name": "openEuler:curl",
     "License": "MIT License",
     "License File": "COPYING",
-    "Version Number": "7.79.1-14.oe2203sp1",
+    "Version Number": "8.4.0",
     "Owner": "stesen.ma@huawei.com",
     "Upstream URL": "https://www.openeuler.org",
     "Description": "A command line tool and library for transferring data with URL syntax, supporting HTTP, HTTPS, FTP, FTPS, GOPHER, TFTP, SCP, SFTP, SMB, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3, RTSP and RTMP. libcurl offers a myriad of powerful features."
