@@ -91,12 +91,6 @@ Note:If the text contains special characters, please escape them according to th
     <filefilterlist>
         <filefilter name="defaultPolicyFilter" desc="Filters for compatibility，license header policies">
             <filteritem type="filename" name="macos_main.cpp" desc=""/>
-            <filteritem type="filename" name="config.guess" desc=""/>
-            <filteritem type="filename" name="config.sub" desc=""/>
-            <filteritem type="filename" name="depcomp" desc=""/>
-            <filteritem type="filename" name="missing" desc=""/>
-            <filteritem type="filename" name="test-driver" desc=""/>
-            <filteritem type="filename" name="compile" desc=""/>
             <filteritem type="filename" name="test17" desc=""/>
             <filteritem type="filename" name="*.sh" desc=""/>
             <filteritem type="filename" name="*.bat" desc=""/>
