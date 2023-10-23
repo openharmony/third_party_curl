@@ -1,0 +1,36 @@
+From 11a46d6d66c32e4be7015aca92008d979f8b90a2 Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Wed, 10 Nov 2021 08:41:51 +0100
+Subject: [PATCH] curl_easy_cleanup.3: remove from multi handle first
+
+Easy handles that are used by the multi interface should be removed from
+the multi handle before they are cleaned up.
+
+Reported-by: Stephen M. Coakley
+Ref: #7982
+Closes #7983
+
+Conflict:context adapt
+Reference:https://github.com/curl/curl/commit/f0b7099a10d1a7cfbbe8f67b0ecdff5846f9805b
+---
+ docs/libcurl/curl_easy_cleanup.3 | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/docs/libcurl/curl_easy_cleanup.3 b/docs/libcurl/curl_easy_cleanup.3
+index 3c3425624..c62f4e073 100644
+--- a/docs/libcurl/curl_easy_cleanup.3
++++ b/docs/libcurl/curl_easy_cleanup.3
+@@ -47,6 +47,10 @@ Any use of the \fBhandle\fP after this function has been called and have
+ returned, is illegal. \fIcurl_easy_cleanup(3)\fP kills the handle and all
+ memory associated with it!
+ 
++To close an easy handle that has been used with the multi interface, make sure
++to call \fIcurl_multi_remove_handle(3)\fP first to remove it from the multi
++handle before it is closed.
++
+ Passing in a NULL pointer in \fIhandle\fP will make this function return
+ immediately with no action.
+ .SH "OLD TIMES"
+-- 
+2.33.0
+
