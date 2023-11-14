@@ -267,6 +267,7 @@ if (defined(ohos_lite)) {
     }
   }
 } else {
+  import("//build/config/config.gni")
   import("//build/ohos.gni")
 
   config("curl_config") {
@@ -404,9 +405,9 @@ if (defined(ohos_lite)) {
 
     if (current_os == "ios") {
       deps = [
-        "//third_party/nghttp2/lib:nghttp2",
-        "//third_party/openssl:libcrypto_static",
-        "//third_party/openssl:ssl_source",
+        "//third_party/nghttp2/lib:libnghttp2_shared",
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
         "//third_party/zlib:libz",
       ]
     } else {
@@ -423,20 +424,32 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("curl_shared") {
+    if (current_os == "ios") {
+      ldflags = [
+        "-Wl",
+        "-install_name",
+        "@rpath/libcurl_shared.framework/libcurl_shared",
+      ]
+    }
     deps = [ ":curl" ]
-
     configs = [ ":curl_config" ]
-
     public_configs = [ ":curl_config_public" ]
 
     install_images = [
       "updater",
       "system",
     ]
-
-    subsystem_name = "thirdparty"
     innerapi_tags = [ "platformsdk" ]
+    subsystem_name = "thirdparty"
     part_name = "curl"
+  }
+
+  if (current_os == "ios") {
+    ohos_combine_darwin_framework("libcurl_shared") {
+      deps = [ ":curl_shared" ]
+      subsystem_name = "thirdparty"
+      part_name = "curl"
+    }
   }
 }
 
