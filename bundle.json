@@ -34,7 +34,18 @@
             "sub_component": [
                 "//third_party/curl:curl_target"
             ],
-            "inner_kits": [],
+            "inner_kits": [
+                {
+                    "name":"//third_party/bounds_checking_function:libsec_shared",
+                    "header":{
+                    "header_files":[
+                        "securec.h",
+                        "securectype.h"
+                        ],
+                        "header_base":"//third_party/bounds_checking_function/include"
+                    } 
+                }
+            ],
             "test": []
         }
     }
