@@ -964,9 +964,6 @@
 
 /* Define to enable c-ares support */
 /* #undef USE_ARES */
-#ifndef WINDOWS_PLATFORM
-   #define USE_ARES 1
-#endif // WINDOWS_PLATFORM
 
 /* if BearSSL is enabled */
 /* #undef USE_BEARSSL */
