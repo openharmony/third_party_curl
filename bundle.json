@@ -36,16 +36,26 @@
             ],
             "inner_kits": [
                 {
-                    "name":"//third_party/bounds_checking_function:libsec_shared",
+                    "name":"//third_party/curl:curl",
                     "header":{
                     "header_files":[
-                        "securec.h",
-                        "securectype.h"
+                        "curl.h",
+                        "curlver.h",
+                        "easy.h",
+                        "header.h",
+                        "mprintf.h",
+                        "multi.h",
+                        "options.h",
+                        "stdcheaders.h",
+                        "system.h",
+                        "typecheck-gcc.h",
+                        "urlapi.h",
+                        "websockets.h"
                         ],
-                        "header_base":"//third_party/bounds_checking_function/include"
+                        "header_base":"//third_party/curl/include/curl"
                     } 
                 }
-            ],
+            ],	    
             "test": []
         }
     }
