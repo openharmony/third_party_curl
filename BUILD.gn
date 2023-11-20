@@ -275,9 +275,6 @@ if (defined(ohos_lite)) {
       "//third_party/nghttp2/lib/includes",
       "//third_party/nghttp2/lib/includes/nghttp2",
     ]
-    if (!is_mingw) {
-      include_dirs += [ "//third_party/cares/include" ]
-    }
 
     cflags = [ "-Wno-deprecated-declarations" ]
   }
@@ -419,10 +416,6 @@ if (defined(ohos_lite)) {
         "//third_party/openssl:libssl_shared",
         "//third_party/zlib:shared_libz",
       ]
-      if (!is_mingw) {
-        deps += [ "//third_party/cares:c_ares" ]
-        defines = [ "WINDOWS_PLATFORM" ]
-      }
     }
 
     subsystem_name = "thirdparty"
