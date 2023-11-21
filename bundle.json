@@ -16,7 +16,7 @@
         "syscap": [],
         "features": [],
         "adapted_system_type": [
-            "mini",
+            "small",
             "standard"
         ],
         "rom": "",
@@ -26,7 +26,8 @@
             "third_party": [
                 "nghttp2",
                 "openssl",
-                "zlib"
+                "zlib",
+                "cares"
             ]
         },
         "build": {
