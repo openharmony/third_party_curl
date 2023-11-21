@@ -179,7 +179,8 @@ curl_source = [
   "lib/ws.c",
 ]
 
-is_cares_on = !is_mingw && !is_mac && current_os != "ios" && host_os != "mac" && current_os != "mac"
+is_cares_on = !is_mingw && !is_mac && current_os != "ios" && host_os != "mac" &&
+              current_os != "mac"
 print("Build curl is_cares_on: $is_cares_on")
 
 if (defined(ohos_lite)) {
@@ -279,7 +280,6 @@ if (defined(ohos_lite)) {
       "//third_party/nghttp2/lib/includes/nghttp2",
     ]
     if (is_cares_on) {
-      print("Add include_dirs cares")
       include_dirs += [ "//third_party/cares/include" ]
     }
     cflags = [ "-Wno-deprecated-declarations" ]
@@ -424,9 +424,8 @@ if (defined(ohos_lite)) {
       ]
     }
     if (is_cares_on) {
-      print("Add deps cares")
       deps += [ "//third_party/cares:c_ares" ]
-      defines = [ "CARES_ON" ]
+      defines = [ "USE_ARES" ]
     }
 
     subsystem_name = "thirdparty"

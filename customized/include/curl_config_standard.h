@@ -964,9 +964,6 @@
 
 /* Define to enable c-ares support */
 /* #undef USE_ARES */
-#ifndef CARES_ON
-   #define USE_ARES 1
-#endif // CARES_ON
 
 /* if BearSSL is enabled */
 /* #undef USE_BEARSSL */
