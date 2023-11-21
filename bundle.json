@@ -38,8 +38,8 @@
                 {
                     "name":"//third_party/curl:curl",
                     "header":{
-                    "header_files":[],
-                    "header_base":"//third_party/curl/include/curl"
+                        "header_files":[],
+                        "header_base":"//third_party/curl/include/curl"
                     } 
                 }
             ],	    
