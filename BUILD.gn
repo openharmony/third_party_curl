@@ -179,6 +179,9 @@ curl_source = [
   "lib/ws.c",
 ]
 
+is_cares_on = !is_mingw && !is_mac && current_os != "ios" && host_os != "mac" && current_os != "mac"
+print("Build curl is_cares_on: $is_cares_on")
+
 if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
 
@@ -275,7 +278,10 @@ if (defined(ohos_lite)) {
       "//third_party/nghttp2/lib/includes",
       "//third_party/nghttp2/lib/includes/nghttp2",
     ]
-
+    if (is_cares_on) {
+      print("Add include_dirs cares")
+      include_dirs += [ "//third_party/cares/include" ]
+    }
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
@@ -416,6 +422,11 @@ if (defined(ohos_lite)) {
         "//third_party/openssl:libssl_shared",
         "//third_party/zlib:shared_libz",
       ]
+    }
+    if (is_cares_on) {
+      print("Add deps cares")
+      deps += [ "//third_party/cares:c_ares" ]
+      defines = [ "CARES_ON" ]
     }
 
     subsystem_name = "thirdparty"
