@@ -445,10 +445,10 @@ if (defined(ohos_lite)) {
       "updater",
       "system",
     ]
-    innerapi_tags = [ 
+    innerapi_tags = [
       "platformsdk",
-      "sasdk" 
-      ]
+      "sasdk",
+    ]
     subsystem_name = "thirdparty"
     part_name = "curl"
   }
