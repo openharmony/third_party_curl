@@ -309,6 +309,7 @@ if (defined(ohos_lite)) {
       ]
       cflags_c = [
         "-Wno-unused-function",
+        "-Wno-deprecated-declarations",
       ]
       libs = [
         # AppKit symbols NSFontWeightXXX may be dlsym'ed.
