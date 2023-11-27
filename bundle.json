@@ -22,7 +22,10 @@
         "rom": "",
         "ram": "",
         "deps": {
-            "components": [],
+            "components": [
+                "boringssl",
+                "quiche"
+            ],
             "third_party": [
                 "nghttp2",
                 "openssl",
