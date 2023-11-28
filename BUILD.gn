@@ -12,6 +12,10 @@
 # limitations under the License.
 import("//build/ohos.gni")
 
+declare_args() {
+  netstack_feature_http3 = false
+}
+
 curl_source = [
   "lib/altsvc.c",
   "lib/amigaos.c",
@@ -296,7 +300,13 @@ if (defined(ohos_lite)) {
 
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
-    configs += [ "//third_party/openssl:ssl_config_public" ]
+
+    if (netstack_feature_http3) {
+      configs += [ "//vendor/open_source/quiche/quiche:quiche_config" ]
+      configs += [ "//vendor/open_source/boringssl/boringssl_config" ]
+    } else {
+      configs += [ "//third_party/openssl:ssl_config_public" ]
+    }
 
     sources = curl_source
 
@@ -406,7 +416,12 @@ if (defined(ohos_lite)) {
         "-Wimplicit-fallthrough",
       ]
     }
-    cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
+
+    if (netstack_feature_http3) {
+      configs += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard_http3.h\"" ]
+    } else {
+      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
+    }
 
     if (current_os == "ios") {
       deps = [
@@ -418,10 +433,21 @@ if (defined(ohos_lite)) {
     } else {
       deps = [
         "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
         "//third_party/zlib:shared_libz",
       ]
+
+      if (netstack_feature_http3) {
+        deps += [
+          "//vendor/open_source/boringssl:crypto_boringssl",
+          "//vendor/open_source/boringssl:ssl_boringssl",
+          "//vendor/open_source/quiche/quiche:lib",
+        ]
+      } else {
+        deps += [
+          "//third_party/openssl:libcrypto_shared",
+          "//third_party/openssl:libssl_shared",
+        ]
+      }
     }
     if (is_cares_on) {
       deps += [ "//third_party/cares:c_ares" ]
