@@ -418,7 +418,7 @@ if (defined(ohos_lite)) {
     }
 
     if (netstack_feature_http3) {
-      configs += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard_http3.h\"" ]
+      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard_http3.h\"" ]
     } else {
       cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
     }
