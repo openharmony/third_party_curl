@@ -23,8 +23,7 @@
         "ram": "",
         "deps": {
             "components": [
-                "boringssl",
-                "quiche"
+                "network_communication"
             ],
             "third_party": [
                 "nghttp2",

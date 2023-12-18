@@ -272,7 +272,6 @@ if (defined(ohos_lite)) {
   }
 } else {
   import("//build/config/config.gni")
-  import("//build/ohos.gni")
 
   config("curl_config") {
     include_dirs = [
@@ -436,11 +435,7 @@ if (defined(ohos_lite)) {
       ]
 
       if (netstack_feature_http3) {
-        deps += [
-          "//vendor/open_source/boringssl:crypto_boringssl",
-          "//vendor/open_source/boringssl:ssl_boringssl",
-          "//vendor/open_source/quiche/quiche:lib",
-        ]
+        deps += [ "//vendor/open_source/quiche/quiche:lib" ]
       } else {
         deps += [
           "//third_party/openssl:libcrypto_shared",
@@ -468,6 +463,9 @@ if (defined(ohos_lite)) {
     deps = [ ":curl" ]
     configs = [ ":curl_config" ]
     public_configs = [ ":curl_config_public" ]
+    if (netstack_feature_http3) {
+      version_script = "curl.map"
+    }
 
     install_images = [
       "updater",
