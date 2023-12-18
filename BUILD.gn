@@ -586,11 +586,10 @@ if (defined(ohos_lite)) {
           "//third_party/openssl:libssl_shared",
         ]
       }
-      
-      if (is_cares_on) {
-        deps += [ "//third_party/cares:c_ares" ]
-        defines = [ "USE_ARES" ]
-      }
+    }
+    if (is_cares_on) {
+      deps += [ "//third_party/cares:c_ares" ]
+      defines = [ "USE_ARES" ]
     }
 
     subsystem_name = "thirdparty"
