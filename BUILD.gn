@@ -183,7 +183,8 @@ curl_source = [
   "lib/ws.c",
 ]
 
-is_cares_on = false
+is_cares_on = !is_mingw && !is_mac && current_os != "ios" && host_os != "mac" &&
+              current_os != "mac"
 print("Build curl is_cares_on: $is_cares_on")
 
 if (defined(ohos_lite)) {
