@@ -22,9 +22,7 @@
         "rom": "",
         "ram": "",
         "deps": {
-            "components": [
-                "network_communication"
-            ],
+            "components": [],
             "third_party": [
                 "nghttp2",
                 "openssl",
