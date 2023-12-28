@@ -320,7 +320,7 @@ if (defined(ohos_lite)) {
         "SystemConfiguration.framework",
       ]
     } else if ("${current_cpu}" == "arm64" || "${current_cpu}" == "arm" ||
-               "${current_cpu}" == "x86_64") {
+               "${current_cpu}" == "x86_64" || "${current_cpu}" == "riscv64") {
       cflags = [
         "-fPIC",
         "-g",
