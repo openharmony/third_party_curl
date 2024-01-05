@@ -1055,7 +1055,9 @@
 #define HAVE_SUSECONDS_T 1
 #define HAVE_MSG_NOSIGNAL 1
 #define HAVE_NETINET_UDP_H 1
+#ifndef MAYBE_MAC
 #define HAVE_LINUX_TCP_H 1
+#endif
 #define HAVE_SSL_SET0_WBIO 1
 #define HAVE_SCHED_YIELD 1
 #define HAVE_SENDMSG 1
