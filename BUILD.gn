@@ -430,10 +430,13 @@ if (defined(ohos_lite)) {
         "//third_party/openssl:libcrypto_shared",
         "//third_party/openssl:libssl_shared",
       ]
-
+      defines = []
       if (is_cares_on) {
         deps += [ "//third_party/cares:c_ares" ]
-        defines = [ "USE_ARES" ]
+        defines += [ "USE_ARES" ]
+      }
+      if (product_name == "ohos_sdk") {
+        defines += [ "MAYBE_MAC" ]
       }
     }
 
@@ -588,9 +591,13 @@ if (defined(ohos_lite)) {
         ]
       }
     }
+    defines = []
     if (is_cares_on) {
       deps += [ "//third_party/cares:c_ares" ]
-      defines = [ "USE_ARES" ]
+      defines += [ "USE_ARES" ]
+    }
+    if (product_name == "ohos_sdk") {
+      defines += [ "MAYBE_MAC" ]
     }
 
     subsystem_name = "thirdparty"
