@@ -5,13 +5,13 @@
 /* #undef CURLDEBUG */
 
 /* Location of default ca bundle */
-#define CURL_CA_BUNDLE "/etc/ssl/certs/cacert.pem"
+#define CURL_CA_BUNDLE "/etc/ssl/cert.pem"
 
 /* define "1" to use built in CA store of SSL library */
 /* #undef CURL_CA_FALLBACK */
 
 /* Location of default ca path */
-#define CURL_CA_PATH "/etc/security/certificates"
+/* #undef CURL_CA_PATH */
 
 /* Default SSL backend */
 /* #undef CURL_DEFAULT_SSL_BACKEND */
@@ -544,7 +544,7 @@
 /* #undef HAVE_POLL */
 
 /* If you have a fine poll */
-#define HAVE_POLL_FINE 1
+/* #undef HAVE_POLL_FINE */
 
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
@@ -1043,29 +1043,6 @@
 
 /* Use Unix domain sockets */
 #define USE_UNIX_SOCKETS 1
-
-#define HAVE_ATOMIC 1
-#define HAVE_FCHMOD 1
-#define HAVE_CLOCK_GETTIME_MONOTONIC 1
-#define HAVE_CLOCK_GETTIME_MONOTONIC_RAW 1
-#define HAVE_FSEEKO 1
-#define HAVE_GETHOSTBYNAME_R 1
-#define HAVE_GETHOSTBYNAME_R_6 1
-#define HAVE_SA_FAMILY_T 1
-#define HAVE_SUSECONDS_T 1
-#define HAVE_MSG_NOSIGNAL 1
-#define HAVE_NETINET_UDP_H 1
-#ifndef MAYBE_MAC
-#define HAVE_LINUX_TCP_H 1
-#endif
-#define HAVE_SSL_SET0_WBIO 1
-#define HAVE_SCHED_YIELD 1
-#define HAVE_SENDMSG 1
-#define HAVE_FSETXATTR_5 1
-#define HAVE_SNPRINTF 1
-#define HAVE_STDATOMIC_H 1
-#define HAVE_TERMIO_H 1
-#define HAVE_WRITABLE_ARGV 1
 
 /* Define to 1 if you have the `normaliz' (WinIDN) library (-lnormaliz). */
 /* #undef USE_WIN32_IDN */
