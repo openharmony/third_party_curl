@@ -413,28 +413,15 @@ if (defined(ohos_lite)) {
 
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
-    if (current_os == "ios") {
-      deps = [
-        "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-        "//third_party/zlib:libz",
-      ]
-    } else {
-      deps = [
-        "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/zlib:shared_libz",
-      ]
-
-      deps += [
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-      ]
-
-      if (is_cares_on) {
-        deps += [ "//third_party/cares:c_ares" ]
-        defines = [ "USE_ARES" ]
-      }
+    deps = [
+      "//third_party/nghttp2/lib:libnghttp2_shared",
+      "//third_party/openssl:libcrypto_shared",
+      "//third_party/openssl:libssl_shared",
+      "//third_party/zlib:shared_libz",
+    ]
+    if (current_os != "ios" && is_cares_on) {
+      deps += [ "//third_party/cares:c_ares" ]
+      defines = [ "USE_ARES" ]
     }
 
     subsystem_name = "thirdparty"
@@ -571,7 +558,7 @@ if (defined(ohos_lite)) {
         "//third_party/nghttp2/lib:libnghttp2_shared",
         "//third_party/openssl:libcrypto_shared",
         "//third_party/openssl:libssl_shared",
-        "//third_party/zlib:libz",
+        "//third_party/zlib:shared_libz",
       ]
     } else {
       deps = [
