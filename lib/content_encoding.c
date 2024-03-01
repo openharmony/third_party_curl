@@ -999,8 +999,9 @@ CURLcode Curl_build_unencoding_stack(struct Curl_easy *data,
         return CURLE_OK;
 
       encoding = find_encoding(name, namelen);
-      if(!encoding)
-        encoding = &error_encoding;  /* Defer error at stack use. */
+      if(!encoding) {
+          return CURLE_OK;
+      }
 
       result = Curl_client_create_writer(&writer, data, encoding, order);
       if(result)
