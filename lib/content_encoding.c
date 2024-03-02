@@ -999,6 +999,7 @@ CURLcode Curl_build_unencoding_stack(struct Curl_easy *data,
         return CURLE_OK;
 
       encoding = find_encoding(name, namelen);
+      /* Fix on OHOS: ignore this error when the content-encoding is not recognized. */
       if(!encoding) {
           return CURLE_OK;
       }
