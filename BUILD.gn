@@ -252,6 +252,7 @@ if (defined(ohos_lite)) {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
       deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
+      deps += [ "cares:c_ares" ]
       configs += [
         ":curl_config",
         ":curl_config_public",
@@ -282,9 +283,7 @@ if (defined(ohos_lite)) {
       "//third_party/nghttp2/lib/includes",
       "//third_party/nghttp2/lib/includes/nghttp2",
     ]
-    if (is_cares_on) {
-      include_dirs += [ "//third_party/cares/include" ]
-    }
+
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
@@ -420,7 +419,7 @@ if (defined(ohos_lite)) {
       "//third_party/zlib:shared_libz",
     ]
     if (current_os != "ios" && is_cares_on) {
-      deps += [ "//third_party/cares:c_ares" ]
+      external_deps = [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
@@ -576,7 +575,7 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      deps += [ "//third_party/cares:c_ares" ]
+      external_deps = [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
