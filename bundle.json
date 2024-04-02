@@ -32,7 +32,8 @@
                 "nghttp2",
                 "openssl",
                 "zlib",
-                "cares"
+                "cares",
+                "nghttp2"
             ]
         },
         "build": {
