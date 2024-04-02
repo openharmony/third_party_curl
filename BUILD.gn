@@ -252,7 +252,6 @@ if (defined(ohos_lite)) {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
       external_deps = [ "nghttp2:nghttp2_lib_static" ]
-      external_deps += [ "cares:c_ares" ]
       configs += [
         ":curl_config",
         ":curl_config_public",
