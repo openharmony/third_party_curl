@@ -283,7 +283,9 @@ if (defined(ohos_lite)) {
       "//third_party/nghttp2/lib/includes",
       "//third_party/nghttp2/lib/includes/nghttp2",
     ]
-
+    if (is_cares_on) {
+       include_dirs += [ "//third_party/cares/include" ]
+    }
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
