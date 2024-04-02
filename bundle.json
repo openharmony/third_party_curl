@@ -23,7 +23,10 @@
         "ram": "",
         "deps": {
             "components": [
-                "cares"
+                "cares",
+                "nghttp2",
+                "openssl",
+                "zlib"
             ],
             "third_party": [
                 "nghttp2",
