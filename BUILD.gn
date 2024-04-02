@@ -300,8 +300,8 @@ if (defined(ohos_lite)) {
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
 
-    configs += [ "//third_party/openssl:ssl_config_public" ]
-
+    # configs += [ "//third_party/openssl:ssl_config_public" ]
+    external_deps = [ "openssl:ssl_config_public" ]
     sources = curl_source
 
     if ("${current_os}_${current_cpu}" == "mingw_x86_64") {
@@ -435,7 +435,8 @@ if (defined(ohos_lite)) {
       configs += [ "//vendor/open_source/quiche/quiche:quiche_config" ]
       configs += [ "//vendor/open_source/boringssl:boringssl_config" ]
     } else {
-      configs += [ "//third_party/openssl:ssl_config_public" ]
+      # configs += [ "//third_party/openssl:ssl_config_public" ]
+      external_deps = [ "openssl:ssl_config_public" ]
     }
 
     sources = curl_source
