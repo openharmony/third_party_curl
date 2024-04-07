@@ -251,7 +251,7 @@ if (defined(ohos_lite)) {
     static_library("libcurl_static") {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
-      deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
+      external_deps = [ "nghttp2:nghttp2_lib_static" ]
       configs += [
         ":curl_config",
         ":curl_config_public",
@@ -263,7 +263,7 @@ if (defined(ohos_lite)) {
     shared_library("libcurl_shared") {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
-      deps += [ "//third_party/nghttp2/lib:nghttp2_lib_shared" ]
+      external_deps = [ "nghttp2:nghttp2_lib_shared" ]
       configs += [
         ":curl_config",
         ":curl_config_public",
@@ -413,14 +413,14 @@ if (defined(ohos_lite)) {
 
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
-    deps = [
-      "//third_party/nghttp2/lib:libnghttp2_shared",
-      "//third_party/openssl:libcrypto_shared",
-      "//third_party/openssl:libssl_shared",
-      "//third_party/zlib:shared_libz",
+    external_deps = [
+      "nghttp2:libnghttp2_shared",
+      "openssl:libcrypto_shared",
+      "openssl:libssl_shared",
+      "zlib:shared_libz",
     ]
     if (current_os != "ios" && is_cares_on) {
-      deps += [ "//third_party/cares:c_ares" ]
+      external_deps += [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
@@ -576,7 +576,7 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      deps += [ "//third_party/cares:c_ares" ]
+      external_deps = [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
