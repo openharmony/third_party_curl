@@ -162,6 +162,7 @@ curl_source = [
   "lib/vquic/curl_ngtcp2.c",
   "lib/vquic/curl_quiche.c",
   "lib/vquic/vquic.c",
+  "lib/vquic/vquic-tls.c",
   "lib/vssh/libssh.c",
   "lib/vssh/libssh2.c",
   "lib/vssh/wolfssh.c",
