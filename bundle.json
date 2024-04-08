@@ -22,18 +22,12 @@
         "rom": "",
         "ram": "",
         "deps": {
-            "components": [
-                "cares",
-                "nghttp2",
-                "openssl",
-                "zlib"
-            ],
+            "components": [],
             "third_party": [
                 "nghttp2",
                 "openssl",
                 "zlib",
-                "cares",
-                "nghttp2"
+                "cares"
             ]
         },
         "build": {
