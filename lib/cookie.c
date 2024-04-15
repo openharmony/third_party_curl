@@ -330,7 +330,7 @@ static char *sanitize_cookie_path(const char *cookie_path)
  */
 void Curl_cookie_loadfiles(struct Curl_easy *data)
 {
-  struct curl_slist *list = data->set.cookielist;
+  struct curl_slist *list = data->state.cookielist;
   if(list) {
     Curl_share_lock(data, CURL_LOCK_DATA_COOKIE, CURL_LOCK_ACCESS_SINGLE);
     while(list) {
@@ -365,9 +365,7 @@ static void strstore(char **str, const char *newstr, size_t len)
   DEBUGASSERT(newstr);
   DEBUGASSERT(str);
   free(*str);
-  *str = Curl_memdup(newstr, len + 1);
-  if(*str)
-    (*str)[len] = 0;
+  *str = Curl_memdup0(newstr, len);
 }
 
 /*
@@ -823,10 +821,8 @@ Curl_cookie_add(struct Curl_easy *data,
         endslash = memrchr(path, '/', (queryp - path));
       if(endslash) {
         size_t pathlen = (endslash-path + 1); /* include end slash */
-        co->path = malloc(pathlen + 1); /* one extra for the zero byte */
+        co->path = Curl_memdup0(path, pathlen);
         if(co->path) {
-          memcpy(co->path, path, pathlen);
-          co->path[pathlen] = 0; /* null-terminate */
           co->spath = sanitize_cookie_path(co->path);
           if(!co->spath)
             badcookie = TRUE; /* out of memory bad */
@@ -929,7 +925,7 @@ Curl_cookie_add(struct Curl_easy *data,
         if(!co->spath)
           badcookie = TRUE;
         fields++; /* add a field and fall down to secure */
-        /* FALLTHROUGH */
+        FALLTHROUGH();
       case 3:
         co->secure = FALSE;
         if(strcasecompare(ptr, "TRUE")) {
@@ -1231,7 +1227,7 @@ struct CookieInfo *Curl_cookie_init(struct Curl_easy *data,
 
   if(data) {
     FILE *fp = NULL;
-    if(file) {
+    if(file && *file) {
       if(!strcmp(file, "-"))
         fp = stdin;
       else {
@@ -1355,7 +1351,7 @@ static int cookie_sort_ct(const void *p1, const void *p2)
 
 static struct Cookie *dup_cookie(struct Cookie *src)
 {
-  struct Cookie *d = calloc(sizeof(struct Cookie), 1);
+  struct Cookie *d = calloc(1, sizeof(struct Cookie));
   if(d) {
     CLONE(domain);
     CLONE(path);
