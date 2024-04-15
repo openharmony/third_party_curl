@@ -3,7 +3,7 @@
     "Name": "curl",
     "License": "Apache License V2.0",
     "License File": "COPYING",
-    "Version Number": "8.4.0",
+    "Version Number": "8.6.0",
     "Owner": "hanjing5@huawei.com",
     "Upstream URL": "http://curl.haxx.se/",
     "Description": "A command line tool and library for transferring data with URL syntax, supporting HTTP, HTTPS, FTP, FTPS, GOPHER, TFTP, SCP, SFTP, SMB, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3, RTSP and RTMP. libcurl offers a myriad of powerful features."
