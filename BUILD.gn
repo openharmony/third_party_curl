@@ -301,7 +301,7 @@ if (defined(ohos_lite)) {
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
 
-    external_deps = [ "openssl:ssl_config_public" ]
+    configs += [ "//third_party/openssl:ssl_config_public" ]
 
     sources = curl_source
 
@@ -415,7 +415,7 @@ if (defined(ohos_lite)) {
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
     deps = [ "//third_party/nghttp2/lib:libnghttp2_shared" ]
-    external_deps += [
+    external_deps = [
       "openssl:libcrypto_shared",
       "openssl:libssl_shared",
       "zlib:shared_libz",
@@ -436,7 +436,7 @@ if (defined(ohos_lite)) {
       configs += [ "//vendor/open_source/quiche/quiche:quiche_config" ]
       configs += [ "//vendor/open_source/boringssl:boringssl_config" ]
     } else {
-      external_deps = [ "openssl:ssl_config_public" ]
+      configs += [ "//third_party/openssl:ssl_config_public" ]
     }
 
     sources = curl_source
@@ -577,7 +577,7 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      external_deps += [ "cares:c_ares" ]
+      external_deps = [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
