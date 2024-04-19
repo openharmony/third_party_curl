@@ -271,7 +271,7 @@ static CURLcode http2_data_setup(struct Curl_cfilter *cf,
   return CURLE_OK;
 }
 
-static void free_push_headers(struct h2_stream_ctx *stream)
+static void free_push_headers(struct stream_ctx *stream)
 {
   size_t i;
   for(i = 0; i<stream->push_headers_used; i++)
@@ -326,15 +326,7 @@ static void http2_data_done(struct Curl_cfilter *cf,
   Curl_bufq_free(&stream->recvbuf);
   Curl_h1_req_parse_free(&stream->h1);
   Curl_dynhds_free(&stream->resp_trailers);
-  if(stream->push_headers) {
-    /* if they weren't used and then freed before */
-    for(; stream->push_headers_used > 0; --stream->push_headers_used) {
-      free(stream->push_headers[stream->push_headers_used - 1]);
-    }
-    free(stream->push_headers);
-    stream->push_headers = NULL;
-  }
-
+  free_push_headers(stream);
   free(stream);
   H2_STREAM_LCTX(data) = NULL;
 }
