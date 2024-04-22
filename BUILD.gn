@@ -558,7 +558,7 @@ if (defined(ohos_lite)) {
         "zlib:shared_libz",
       ]
     } else {
-      external_deps += [
+      external_deps = [
         "nghttp2:libnghttp2_shared",
         "zlib:shared_libz",
       ]
