@@ -577,7 +577,7 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      external_deps = [ "cares:c_ares" ]
+      external_deps += [ "cares:c_ares" ]
       defines = [ "USE_ARES" ]
     }
 
