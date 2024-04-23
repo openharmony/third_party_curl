@@ -301,7 +301,7 @@ if (defined(ohos_lite)) {
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
 
-    external_deps = [ "openssl:ssl_config_pub" ]
+    external_deps = [ "openssl:libssl_shared" ]
 
     sources = curl_source
 
@@ -436,7 +436,7 @@ if (defined(ohos_lite)) {
       configs += [ "//vendor/open_source/quiche/quiche:quiche_config" ]
       configs += [ "//vendor/open_source/boringssl:boringssl_config" ]
     } else {
-      external_deps = [ "openssl:ssl_config_pub" ]
+      external_deps = [ "openssl:libssl_shared" ]
     }
 
     sources = curl_source
