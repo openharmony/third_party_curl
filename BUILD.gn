@@ -294,11 +294,13 @@ if (defined(ohos_lite)) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
-  ohos_source_set("curl") {
+  ohos_static_library("curl") {
     configs = [ ":curl_config" ]
 
     external_deps = [ "openssl:libssl_shared" ]
 
+    public_configs = [ ":curl_config_public" ]
+    
     sources = curl_source
 
     if ("${current_os}_${current_cpu}" == "mingw_x86_64") {
