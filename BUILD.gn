@@ -280,12 +280,8 @@ if (defined(ohos_lite)) {
       "include",
       "lib",
       "//third_party/curl/customized/include",
-      "//third_party/nghttp2/lib/includes",
-      "//third_party/nghttp2/lib/includes/nghttp2",
     ]
-    if (is_cares_on) {
-      include_dirs += [ "//third_party/cares/include" ]
-    }
+
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
@@ -298,10 +294,12 @@ if (defined(ohos_lite)) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
-  ohos_source_set("curl") {
+  ohos_static_library("curl") {
     configs = [ ":curl_config" ]
 
     external_deps = [ "openssl:libssl_shared" ]
+
+    public_configs = [ ":curl_config_public" ]
 
     sources = curl_source
 
@@ -414,8 +412,8 @@ if (defined(ohos_lite)) {
 
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
-    deps = [ "//third_party/nghttp2/lib:libnghttp2_shared" ]
     external_deps += [
+      "nghttp2:libnghttp2_shared",
       "openssl:libcrypto_shared",
       "openssl:libssl_shared",
       "zlib:shared_libz",
@@ -555,24 +553,24 @@ if (defined(ohos_lite)) {
     }
 
     if (current_os == "ios") {
-      deps = [
-        "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-        "//third_party/zlib:shared_libz",
+      external_deps = [
+        "nghttp2:libnghttp2_shared",
+        "openssl:libcrypto_shared",
+        "openssl:libssl_shared",
+        "zlib:shared_libz",
       ]
     } else {
-      deps = [
-        "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/zlib:shared_libz",
+      external_deps += [
+        "nghttp2:libnghttp2_shared",
+        "zlib:shared_libz",
       ]
 
       if (netstack_feature_http3) {
         deps += [ "//vendor/open_source/quiche/quiche:lib" ]
       } else {
-        deps += [
-          "//third_party/openssl:libcrypto_shared",
-          "//third_party/openssl:libssl_shared",
+        external_deps += [
+          "openssl:libcrypto_shared",
+          "openssl:libssl_shared",
         ]
       }
     }
