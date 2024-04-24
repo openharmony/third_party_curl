@@ -300,7 +300,7 @@ if (defined(ohos_lite)) {
     external_deps = [ "openssl:libssl_shared" ]
 
     public_configs = [ ":curl_config_public" ]
-    
+
     sources = curl_source
 
     if ("${current_os}_${current_cpu}" == "mingw_x86_64") {
