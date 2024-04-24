@@ -42,6 +42,13 @@
             ],
             "inner_kits": [
                 {
+                    "name":"//third_party/curl:curl",
+                    "header":{
+                        "header_files":[],
+                        "header_base":"//third_party/curl/include"
+                    }
+                },
+                {
                     "name":"//third_party/curl:curl_shared",
                     "header":{
                         "header_files":[],
