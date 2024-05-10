@@ -26,7 +26,8 @@
                 "cares",
                 "nghttp2",
                 "openssl",
-                "zlib"
+                "zlib",
+                "brotli" 
             ],
             "third_party": [
                 "nghttp2",
