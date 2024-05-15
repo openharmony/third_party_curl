@@ -412,17 +412,34 @@ if (defined(ohos_lite)) {
 
     cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_standard.h\"" ]
 
-    external_deps += [
-      "nghttp2:libnghttp2_shared",
-      "openssl:libcrypto_shared",
-      "openssl:libssl_shared",
-      "zlib:shared_libz",
-    ]
-    if (current_os != "ios" && is_cares_on) {
-      external_deps += [
-        "brotli:brotli_shared",
-        "cares:c_ares",
+    if (is_arkui_x) {
+      deps = [
+        "//third_party/nghttp2/lib:libnghttp2_shared",
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+        "//third_party/zlib:shared_libz",
       ]
+    } else {
+      external_deps += [
+        "nghttp2:libnghttp2_shared",
+        "openssl:libcrypto_shared",
+        "openssl:libssl_shared",
+        "zlib:shared_libz",
+      ]
+    }
+
+    if (current_os != "ios" && is_cares_on) {
+      if (is_arkui_x) {
+        deps += [
+          "//third_party/brotli:brotli_shared",
+          "//third_party/cares:c_ares",
+        ]
+      } else {
+        external_deps += [
+          "brotli:brotli_shared",
+          "cares:c_ares",
+        ]
+      }
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
@@ -558,7 +575,7 @@ if (defined(ohos_lite)) {
     }
 
     if (current_os == "ios") {
-      external_deps = [
+      external_deps += [
         "nghttp2:libnghttp2_shared",
         "openssl:libcrypto_shared",
         "openssl:libssl_shared",
@@ -580,10 +597,17 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      external_deps += [
-        "brotli:brotli_shared",
-        "cares:c_ares",
-      ]
+      if (is_arkui_x) {
+        deps += [
+          "//third_party/brotli:brotli_shared",
+          "//third_party/cares:c_ares",
+        ]
+      } else {
+        external_deps += [
+          "brotli:brotli_shared",
+          "cares:c_ares",
+        ]
+      }
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
