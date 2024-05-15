@@ -419,10 +419,15 @@ if (defined(ohos_lite)) {
       "zlib:shared_libz",
     ]
     if (current_os != "ios" && is_cares_on) {
-      external_deps += [ "cares:c_ares" ]
-      defines = [ "USE_ARES" ]
+      external_deps += [
+        "brotli:brotli_shared",
+        "cares:c_ares",
+      ]
+      defines = [
+        "USE_ARES",
+        "HAVE_BROTLI",
+      ]
     }
-
     subsystem_name = "thirdparty"
     part_name = "curl"
   }
@@ -575,10 +580,15 @@ if (defined(ohos_lite)) {
       }
     }
     if (is_cares_on) {
-      external_deps += [ "cares:c_ares" ]
-      defines = [ "USE_ARES" ]
+      external_deps += [
+        "brotli:brotli_shared",
+        "cares:c_ares",
+      ]
+      defines = [
+        "USE_ARES",
+        "HAVE_BROTLI",
+      ]
     }
-
     subsystem_name = "thirdparty"
     part_name = "curl"
   }
