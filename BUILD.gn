@@ -566,7 +566,7 @@ if (defined(ohos_lite)) {
     }
 
     if (current_os == "ios") {
-      external_deps = [
+      external_deps += [
         "nghttp2:libnghttp2_shared",
         "openssl:libcrypto_shared",
         "openssl:libssl_shared",
