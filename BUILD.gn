@@ -634,6 +634,7 @@ if (defined(ohos_lite)) {
       "system",
     ]
     innerapi_tags = [
+      "chipsetsdk",
       "platformsdk",
       "sasdk",
     ]
