@@ -5,7 +5,7 @@
 /* #undef CURLDEBUG */
 
 /* Location of default ca bundle */
-#define CURL_CA_BUNDLE "/etc/ssl/cert.pem"
+#define CURL_CA_BUNDLE ""
 
 /* define "1" to use built in CA store of SSL library */
 /* #undef CURL_CA_FALLBACK */
