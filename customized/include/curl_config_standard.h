@@ -5,13 +5,13 @@
 /* #undef CURLDEBUG */
 
 /* Location of default ca bundle */
-#define CURL_CA_BUNDLE ""
+#define CURL_CA_BUNDLE NULL
 
 /* define "1" to use built in CA store of SSL library */
 /* #undef CURL_CA_FALLBACK */
 
 /* Location of default ca path */
-/* #undef CURL_CA_PATH */
+#define CURL_CA_PATH "/etc/security/certificates"
 
 /* Default SSL backend */
 /* #undef CURL_DEFAULT_SSL_BACKEND */
