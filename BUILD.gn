@@ -414,10 +414,10 @@ if (defined(ohos_lite)) {
 
     if (is_arkui_x) {
       deps = [
-        "//third_party/nghttp2/lib:libnghttp2_shared",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-        "//third_party/zlib:shared_libz",
+        "//third_party/nghttp2/lib:nghttp2",
+        "//third_party/openssl:libcrypto_static",
+        "//third_party/openssl:libssl_static",
+        "//third_party/zlib:libz",
       ]
     } else {
       external_deps += [
