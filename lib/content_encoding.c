@@ -1010,7 +1010,7 @@ CURLcode Curl_build_unencoding_stack(struct Curl_easy *data,
 
       cwt = find_unencode_writer(name, namelen, phase);
       if(!cwt) {
-          failf("ignore this error when the content-encoding is not recognized.");
+          failf(data, "ignore this error when the content-encoding is not recognized.");
           return CURLE_OK;
       }
 
