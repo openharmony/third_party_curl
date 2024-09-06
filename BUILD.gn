@@ -618,6 +618,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("curl_shared") {
+    branch_protector_ret = "pac_ret"
     if (current_os == "ios") {
       ldflags = [
         "-Wl",
@@ -643,6 +644,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("curl_shared_http3") {
+    branch_protector_ret = "pac_ret"
     if (current_os == "ios") {
       ldflags = [
         "-Wl",
