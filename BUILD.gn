@@ -440,6 +440,7 @@ if (defined(ohos_lite)) {
           "cares:c_ares",
         ]
       }
+
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
