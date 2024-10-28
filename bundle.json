@@ -27,7 +27,7 @@
                 "nghttp2",
                 "openssl",
                 "zlib",
-                "brotli"
+                "brotli" 
             ],
             "third_party": [
                 "nghttp2",
