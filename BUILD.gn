@@ -439,10 +439,16 @@ if (defined(ohos_lite)) {
           "brotli:brotli_shared",
           "cares:c_ares",
         ]
+        if (defined(defines)) {
+          defines += [ "DISABLE_GETENV" ]
+        } else {
+          defines = [ "DISABLE_GETENV" ]
+        }
       }
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
+        "DISABLE_GETENV",
       ]
     }
     subsystem_name = "thirdparty"
@@ -607,10 +613,16 @@ if (defined(ohos_lite)) {
           "brotli:brotli_shared",
           "cares:c_ares",
         ]
+        if (defined(defines)) {
+          defines += [ "DISABLE_GETENV" ]
+        } else {
+          defines = [ "DISABLE_GETENV" ]
+        }
       }
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
+        "DISABLE_GETENV",
       ]
     }
     subsystem_name = "thirdparty"
