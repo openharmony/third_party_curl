@@ -69,8 +69,12 @@ static char *GetEnv(const char *variable)
     /* else rc is bytes needed, try again */
   }
 #else
+#ifdef DISABLE_GETENV
+  return NULL;
+#else
   char *env = getenv(variable);
   return (env && env[0])?strdup(env):NULL;
+#endif
 #endif
 }
 
