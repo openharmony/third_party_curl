@@ -443,6 +443,7 @@ if (defined(ohos_lite)) {
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
+        "DISABLE_GETENV",
       ]
     }
     subsystem_name = "thirdparty"
@@ -611,6 +612,7 @@ if (defined(ohos_lite)) {
       defines = [
         "USE_ARES",
         "HAVE_BROTLI",
+        "DISABLE_GETENV",
       ]
     }
     subsystem_name = "thirdparty"
