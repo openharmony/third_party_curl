@@ -57,6 +57,10 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+#ifdef USE_ARES
+#include "ares.h"
+#endif
+
 CURLcode Curl_setstropt(char **charp, const char *s)
 {
   /* Release the previous storage at `charp' and replace by a dynamic storage
@@ -204,6 +208,14 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   curl_off_t bigsize;
 
   switch(option) {
+  case CURLOPT_ARES_SOCKET_FUNCTION:
+#ifdef USE_ARES
+    {
+      curl_ares_socket_functions *funcs = va_arg(param, curl_ares_socket_functions *);
+      ares_set_socket_functions((ares_channel) data->state.async.resolver, funcs->functions, funcs->userp);
+    }
+#endif
+  break;
   case CURLOPT_DNS_CACHE_TIMEOUT:
     arg = va_arg(param, long);
     if(arg < -1)
