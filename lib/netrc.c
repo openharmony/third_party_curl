@@ -238,6 +238,16 @@ static int parsenetrc(const char *host,
             state = HOSTFOUND;
             state_our_login = FALSE;
           }
+          else if(strcasecompare("default", tok)) {
+            state = HOSTVALID;
+            retcode = NETRC_SUCCESS; /* we did find our host */
+            Curl_safefree(password);
+            if(!specific_login)
+              if(login_alloc) {
+                free(login);
+                login_alloc = FALSE;
+              }
+          }
           break;
         } /* switch (state) */
         tok = ++tok_end;
@@ -245,6 +255,12 @@ static int parsenetrc(const char *host,
     } /* while Curl_get_line() */
 
 out:
+    if(!retcode && !password && state_our_login) {
+      /* success without a password, set a blank one */
+      password = strdup("");
+      if(!password)
+        retcode = 1; /* out of memory */
+    }
     if(!retcode) {
       /* success */
       if(login_alloc) {
