@@ -145,6 +145,17 @@ typedef int curl_socket_t;
 #define curl_socket_typedef
 #endif /* curl_socket_typedef */
 
+#ifdef USE_ARES
+
+#include "ares.h"
+
+#define CURL_USE_ARES 1
+typedef struct {
+  struct ares_socket_functions *functions;
+  void *userp;
+} curl_ares_socket_functions;
+#endif
+
 /* enum for the different supported SSL backends */
 typedef enum {
   CURLSSLBACKEND_NONE = 0,
@@ -2205,6 +2216,8 @@ typedef enum {
 
   /* millisecond version */
   CURLOPT(CURLOPT_SERVER_RESPONSE_TIMEOUT_MS, CURLOPTTYPE_LONG, 324),
+
+  CURLOPT(CURLOPT_ARES_SOCKET_FUNCTION, CURLOPTTYPE_OBJECTPOINT, 999),
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
