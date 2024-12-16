@@ -294,14 +294,6 @@ if (defined(ohos_lite)) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
 
-  config("curl_config_public_http3") {
-    include_dirs = [
-      "include",
-      "//third_party/cares/include",
-      "//third_party/curl/customized/include",
-    ]
-  }
-
   ohos_source_set("curl") {
     configs = [ ":curl_config" ]
 
@@ -664,7 +656,7 @@ if (defined(ohos_lite)) {
     }
     deps = [ ":curl_http3" ]
     configs = [ ":curl_config" ]
-    public_configs = [ ":curl_config_public_http3" ]
+    public_configs = [ ":curl_config_public" ]
     if (netstack_feature_http3) {
       version_script = "curl.map"
     }
