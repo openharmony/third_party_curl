@@ -377,6 +377,8 @@ typedef int (*curl_seek_callback)(void *instream,
 /* This is a return code for the read callback that, when returned, will
    signal libcurl to immediately abort the current transfer. */
 #define CURL_READFUNC_ABORT 0x10000000
+#define CURL_MAX_SSL_ERR_LEN 512
+#define CURL_MAX_CIPHER_NUM 512
 /* This is a return code for the read callback that, when returned, will
    signal libcurl to pause sending data on the current transfer. */
 #define CURL_READFUNC_PAUSE 0x10000001
@@ -2845,6 +2847,7 @@ struct curl_tlssessioninfo {
 #define CURLINFO_PTR      0x400000 /* same as SLIST */
 #define CURLINFO_SOCKET   0x500000
 #define CURLINFO_OFF_T    0x600000
+#define CURLINFO_P_STRING 0xe00000
 #define CURLINFO_MASK     0x0fffff
 #define CURLINFO_TYPEMASK 0xf00000
 
@@ -2938,6 +2941,23 @@ typedef enum {
   CURLINFO_XFER_ID          = CURLINFO_OFF_T + 63,
   CURLINFO_CONN_ID          = CURLINFO_OFF_T + 64,
   CURLINFO_QUEUE_TIME_T     = CURLINFO_OFF_T + 65,
+  CURLINFO_SSL_ERROR        = CURLINFO_STRING + 999,
+  CURLINFO_MIN_TLS_VERSION  = CURLINFO_LONG + 1000,
+  CURLINFO_MAX_TLS_VERSION  = CURLINFO_LONG + 1001,
+  CURLINFO_CIPHER_NUM       = CURLINFO_LONG + 1002,
+  CURLINFO_CIPHERS          = CURLINFO_P_STRING + 1003,
+  CURLINFO_LAST_POLLIN_TIME           = CURLINFO_LONG + 1004,
+  CURLINFO_LAST_OS_POLLIN_TIME        = CURLINFO_LONG + 1005,
+  CURLINFO_LAST_POLLOUT_TIME          = CURLINFO_LONG + 1006,
+  CURLINFO_LAST_OS_POLLOUT_TIME       = CURLINFO_LONG + 1007,
+  CURLINFO_LAST_SSL_RECV_SIZE         = CURLINFO_LONG + 1008,
+  CURLINFO_LAST_SSL_SEND_SIZE         = CURLINFO_LONG + 1009,
+  CURLINFO_TOTAL_SSL_RECV_SIZE        = CURLINFO_LONG + 1010,
+  CURLINFO_TOTAL_SSL_SEND_SIZE        = CURLINFO_LONG + 1011,
+  CURLINFO_LAST_RECV_SSL_ERROR        = CURLINFO_STRING + 1012,
+  CURLINFO_LAST_SEND_SSL_ERROR        = CURLINFO_STRING + 1013,
+  CURLINFO_LAST_RECV_ERRNO            = CURLINFO_LONG + 1014,
+  CURLINFO_LAST_SEND_ERRNO            = CURLINFO_LONG + 1015,
   CURLINFO_LASTONE          = 65
 } CURLINFO;
 

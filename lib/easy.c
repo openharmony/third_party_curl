@@ -901,6 +901,31 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
    * the likeliness of us forgetting to init a buffer here in the future.
    */
   outcurl->set.buffer_size = data->set.buffer_size;
+  memset(outcurl->ssl_err, 0, sizeof(outcurl->ssl_err));
+  outcurl->min_tls_version = -1;
+  outcurl->max_tls_version = -1;
+  memset(outcurl->ciphers, 0, sizeof(outcurl->ciphers));
+  outcurl->cipher_num = 0;
+
+  outcurl->last_pollin_time.tv_sec = 0;
+  outcurl->last_pollin_time.tv_usec = 0;
+  outcurl->last_pollout_time.tv_sec = 0;
+  outcurl->last_pollout_time.tv_usec = 0;
+
+  outcurl->last_os_pollin_time.tv_sec = 0;
+  outcurl->last_os_pollin_time.tv_usec = 0;
+  outcurl->last_os_pollout_time.tv_sec = 0;
+  outcurl->last_os_pollout_time.tv_usec = 0;
+
+  outcurl->last_ssl_recv_size = 0;
+  outcurl->last_ssl_send_size = 0;
+  outcurl->total_ssl_recv_size = 0;
+  outcurl->total_ssl_send_size = 0;
+
+  memset(outcurl->last_ssl_recv_err, 0, sizeof(outcurl->last_ssl_recv_err));
+  memset(outcurl->last_ssl_send_err, 0, sizeof(outcurl->last_ssl_send_err));
+  outcurl->last_recv_errno = 0;
+  outcurl->last_send_errno = 0;
 
   /* copy all userdefined values */
   if(dupset(outcurl, data))
