@@ -1164,6 +1164,7 @@ static CURLcode cf_tcp_connect(struct Curl_cfilter *cf,
     /* Connect TCP socket */
     rc = do_connect(cf, data, cf->conn->bits.tcp_fastopen);
     error = SOCKERRNO;
+    data->tcp_connect_errno = error;
     set_local_ip(cf, data);
     CURL_TRC_CF(data, cf, "local address %s port %d...",
                 ctx->l_ip, ctx->l_port);

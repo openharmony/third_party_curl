@@ -540,6 +540,9 @@ CURLcode Curl_open(struct Curl_easy **curl)
   data->total_ssl_recv_size = 0;
   data->total_ssl_send_size = 0;
 
+  data->ssl_connect_errno = 0;
+  data->tcp_connect_errno = 0;
+
   memset(data->last_ssl_recv_err, 0, sizeof(data->last_ssl_recv_err));
   memset(data->last_ssl_send_err, 0, sizeof(data->last_ssl_send_err));
   data->last_recv_errno = 0;

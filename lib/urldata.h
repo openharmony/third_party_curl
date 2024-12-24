@@ -2036,8 +2036,10 @@ struct Curl_easy {
   ssize_t total_ssl_send_size;
   char last_ssl_recv_err[CURL_MAX_SSL_ERR_LEN];
   char last_ssl_send_err[CURL_MAX_SSL_ERR_LEN];
-  int last_recv_errno;
-  int last_send_errno;
+  long last_recv_errno;
+  long last_send_errno;
+  long ssl_connect_errno;
+  long tcp_connect_errno;
 };
 
 #define LIBCURL_NAME "libcurl"
