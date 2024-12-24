@@ -519,6 +519,31 @@ CURLcode Curl_open(struct Curl_easy **curl)
   }
 
   data->magic = CURLEASY_MAGIC_NUMBER;
+  memset(data->ssl_err, 0, sizeof(data->ssl_err));
+  data->min_tls_version = -1;
+  data->max_tls_version = -1;
+  memset(data->ciphers, 0, sizeof(data->ciphers));
+  data->cipher_num = 0;
+
+  data->last_pollin_time.tv_sec = 0;
+  data->last_pollin_time.tv_usec = 0;
+  data->last_pollout_time.tv_sec = 0;
+  data->last_pollout_time.tv_usec = 0;
+
+  data->last_os_pollin_time.tv_sec = 0;
+  data->last_os_pollin_time.tv_usec = 0;
+  data->last_os_pollout_time.tv_sec = 0;
+  data->last_os_pollout_time.tv_usec = 0;
+
+  data->last_ssl_recv_size = 0;
+  data->last_ssl_send_size = 0;
+  data->total_ssl_recv_size = 0;
+  data->total_ssl_send_size = 0;
+
+  memset(data->last_ssl_recv_err, 0, sizeof(data->last_ssl_recv_err));
+  memset(data->last_ssl_send_err, 0, sizeof(data->last_ssl_send_err));
+  data->last_recv_errno = 0;
+  data->last_send_errno = 0;
 
   result = Curl_resolver_init(data, &data->state.async.resolver);
   if(result) {

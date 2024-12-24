@@ -91,10 +91,31 @@ CURLcode Curl_initinfo(struct Curl_easy *data)
   return CURLE_OK;
 }
 
+static CURLcode getinfo_pchar(struct Curl_easy *data, CURLINFO info,
+                              const char ***param_pcharp) {
+  switch (info) {
+    case CURLINFO_CIPHERS:
+      *param_pcharp = data->ciphers;
+      break;
+    default:
+      break;
+  }
+  return CURLE_OK;
+}
+
 static CURLcode getinfo_char(struct Curl_easy *data, CURLINFO info,
                              const char **param_charp)
 {
   switch(info) {
+  case CURLINFO_LAST_RECV_SSL_ERROR:
+    *param_charp = data->last_ssl_recv_err;
+    break;
+  case CURLINFO_LAST_SEND_SSL_ERROR:
+    *param_charp = data->last_ssl_send_err;
+    break;
+  case CURLINFO_SSL_ERROR:
+    *param_charp = data->ssl_err;
+    break;
   case CURLINFO_EFFECTIVE_URL:
     *param_charp = data->state.url?data->state.url:(char *)"";
     break;
@@ -226,6 +247,45 @@ static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
 #endif
 
   switch(info) {
+  case CURLINFO_LAST_POLLIN_TIME:
+    *param_longp = 1000 * data->last_pollin_time.tv_sec + data->last_pollin_time.tv_usec / 1000;
+    break;
+  case CURLINFO_LAST_OS_POLLIN_TIME:
+    *param_longp = 1000 * data->last_os_pollin_time.tv_sec + data->last_os_pollin_time.tv_usec / 1000;
+    break;
+  case CURLINFO_LAST_POLLOUT_TIME:
+    *param_longp = 1000 * data->last_pollout_time.tv_sec + data->last_pollout_time.tv_usec / 1000;
+    break;
+  case CURLINFO_LAST_OS_POLLOUT_TIME:
+    *param_longp = 1000 * data->last_os_pollout_time.tv_sec + data->last_os_pollout_time.tv_usec / 1000;
+    break;
+  case CURLINFO_LAST_SSL_RECV_SIZE:
+    *param_longp = data->last_ssl_recv_size;
+    break;
+  case CURLINFO_LAST_SSL_SEND_SIZE:
+    *param_longp = data->last_ssl_send_size;
+    break;
+  case CURLINFO_TOTAL_SSL_RECV_SIZE:
+    *param_longp = data->total_ssl_recv_size;
+    break;
+  case CURLINFO_TOTAL_SSL_SEND_SIZE:
+    *param_longp = data->total_ssl_send_size;
+    break;
+  case CURLINFO_LAST_RECV_ERRNO:
+    *param_longp = data->last_recv_errno;
+    break;
+  case CURLINFO_LAST_SEND_ERRNO:
+    *param_longp = data->last_send_errno;
+    break;
+  case CURLINFO_CIPHER_NUM:
+    *param_longp = data->cipher_num;
+    break;
+  case CURLINFO_MIN_TLS_VERSION:
+    *param_longp = data->min_tls_version;
+    break;
+  case CURLINFO_MAX_TLS_VERSION:
+    *param_longp = data->max_tls_version;
+    break;
   case CURLINFO_RESPONSE_CODE:
     *param_longp = data->info.httpcode;
     break;
@@ -576,6 +636,7 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
   double *param_doublep = NULL;
   curl_off_t *param_offt = NULL;
   const char **param_charp = NULL;
+  const char ***param_pcharp = NULL;
   struct curl_slist **param_slistp = NULL;
   curl_socket_t *param_socketp = NULL;
   int type;
@@ -588,6 +649,11 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
 
   type = CURLINFO_TYPEMASK & (int)info;
   switch(type) {
+  case CURLINFO_P_STRING:
+    param_pcharp = va_arg(arg, const char ***);
+    if(param_pcharp)
+      result = getinfo_pchar(data, info, param_pcharp);
+    break;
   case CURLINFO_STRING:
     param_charp = va_arg(arg, const char **);
     if(param_charp)

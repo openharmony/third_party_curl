@@ -295,6 +295,8 @@ CURL_EXTERN const char *curl_multi_strerror(CURLMcode);
 #define CURL_CSELECT_IN   0x01
 #define CURL_CSELECT_OUT  0x02
 #define CURL_CSELECT_ERR  0x04
+#define CURL_CSELECT_OS_EPOLLIN   0x80000000
+#define CURL_CSELECT_OS_EPOLLOUT  0x40000000
 
 typedef int (*curl_socket_callback)(CURL *easy,      /* easy handle */
                                     curl_socket_t s, /* socket */
