@@ -3861,6 +3861,25 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
   ERR_clear_error();
 
   err = SSL_connect(backend->handle);
+  if (backend) {
+    if (backend->ctx && data) {
+      struct stack_st_SSL_CIPHER *ciphers = SSL_CTX_get_ciphers(backend->ctx);
+      data->cipher_num = 0;
+      if (ciphers) {
+        size_t num_ciphers = sk_SSL_CIPHER_num(ciphers);
+        for (size_t i = 0; i < num_ciphers; ++i) {
+          const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+          const char *cipher_name = SSL_CIPHER_get_name(cipher);
+          if (data->cipher_num < CURL_MAX_CIPHER_NUM) {
+            data->ciphers[data->cipher_num] = cipher_name;
+            ++data->cipher_num;
+          }
+        }
+      }
+      data->min_tls_version = (long) SSL_CTX_get_min_proto_version(backend->ctx);
+      data->max_tls_version = (long) SSL_CTX_get_max_proto_version(backend->ctx);
+    }
+  }
 
   if(!backend->x509_store_setup) {
     /* After having send off the ClientHello, we prepare the x509
@@ -3924,6 +3943,10 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
       /* Get the earliest error code from the thread's error queue and remove
          the entry. */
       errdetail = ERR_get_error();
+      if (data) {
+        ERR_error_string_n(errdetail, data->ssl_err, sizeof(data->ssl_err));
+        data->ssl_connect_errno = errno;
+      }
 
       /* Extract which lib and reason */
       lib = ERR_GET_LIB(errdetail);
@@ -4607,6 +4630,10 @@ static ssize_t ossl_send(struct Curl_cfilter *cf,
         goto out;
       }
       sslerror = ERR_get_error();
+      if (data) {
+        ERR_error_string_n(sslerror, data->last_ssl_send_err, sizeof(data->last_ssl_send_err));
+        data->last_send_errno = errno;
+      }
       if(sslerror)
         ossl_strerror(sslerror, error_buffer, sizeof(error_buffer));
       else if(sockerr)
@@ -4643,6 +4670,10 @@ static ssize_t ossl_send(struct Curl_cfilter *cf,
   *curlcode = CURLE_OK;
 
 out:
+  if (data) {
+    data->last_ssl_send_size = rc;
+    data->total_ssl_send_size += rc;
+  }
   return (ssize_t)rc; /* number of bytes */
 }
 
@@ -4699,6 +4730,10 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
         goto out;
       }
       sslerror = ERR_get_error();
+      if (data) {
+        ERR_error_string_n(sslerror, data->last_ssl_recv_err, sizeof(data->last_ssl_recv_err));
+        data->last_recv_errno = errno;
+      }
       if((nread < 0) || sslerror) {
         /* If the return code was negative or there actually is an error in the
            queue */
@@ -4745,6 +4780,10 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
   }
 
 out:
+  if (data) {
+    data->last_ssl_recv_size = nread;
+    data->total_ssl_recv_size += nread;
+  }
   return nread;
 }
 
