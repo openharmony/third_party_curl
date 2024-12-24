@@ -247,6 +247,12 @@ static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
 #endif
 
   switch(info) {
+  case CURLINFO_TCP_CONNECT_ERRNO:
+    *param_longp = data->tcp_connect_errno;
+    break;
+  case CURLINFO_SSL_CONNECT_ERRNO:
+    *param_longp = data->ssl_connect_errno;
+    break;
   case CURLINFO_LAST_POLLIN_TIME:
     *param_longp = 1000 * data->last_pollin_time.tv_sec + data->last_pollin_time.tv_usec / 1000;
     break;

@@ -922,6 +922,9 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
   outcurl->total_ssl_recv_size = 0;
   outcurl->total_ssl_send_size = 0;
 
+  outcurl->ssl_connect_errno = 0;
+  outcurl->tcp_connect_errno = 0;
+
   memset(outcurl->last_ssl_recv_err, 0, sizeof(outcurl->last_ssl_recv_err));
   memset(outcurl->last_ssl_send_err, 0, sizeof(outcurl->last_ssl_send_err));
   outcurl->last_recv_errno = 0;

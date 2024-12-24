@@ -3945,6 +3945,7 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
       errdetail = ERR_get_error();
       if (data) {
         ERR_error_string_n(errdetail, data->ssl_err, sizeof(data->ssl_err));
+        data->ssl_connect_errno = errno;
       }
 
       /* Extract which lib and reason */
