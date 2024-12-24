@@ -2021,6 +2021,25 @@ struct Curl_easy {
 #ifdef USE_HYPER
   struct hyptransfer hyp;
 #endif
+  char ssl_err[CURL_MAX_SSL_ERR_LEN];
+  long min_tls_version;
+  long max_tls_version;
+  const char *ciphers[CURL_MAX_CIPHER_NUM];
+  long cipher_num;
+  struct timeval last_pollin_time;
+  struct timeval last_os_pollin_time;
+  struct timeval last_pollout_time;
+  struct timeval last_os_pollout_time;
+  ssize_t last_ssl_recv_size;
+  ssize_t last_ssl_send_size;
+  ssize_t total_ssl_recv_size;
+  ssize_t total_ssl_send_size;
+  char last_ssl_recv_err[CURL_MAX_SSL_ERR_LEN];
+  char last_ssl_send_err[CURL_MAX_SSL_ERR_LEN];
+  long last_recv_errno;
+  long last_send_errno;
+  long ssl_connect_errno;
+  long tcp_connect_errno;
 };
 
 #define LIBCURL_NAME "libcurl"

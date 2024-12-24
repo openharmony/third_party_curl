@@ -3240,9 +3240,24 @@ static CURLMcode multi_socket(struct Curl_multi *multi,
         DEBUGASSERT(data);
         DEBUGASSERT(data->magic == CURLEASY_MAGIC_NUMBER);
 
-        if(data->conn && !(data->conn->handler->flags & PROTOPT_DIRLOCK))
+        if(data->conn && !(data->conn->handler->flags & PROTOPT_DIRLOCK)) {
           /* set socket event bitmask if they're not locked */
           data->state.select_bits = (unsigned char)ev_bitmask;
+          struct timeval now = {0};
+          gettimeofday(&now, NULL);
+          if (data->state.select_bits & CURL_CSELECT_IN) {
+            data->last_pollin_time = now;
+            if (ev_bitmask & CURL_CSELECT_OS_EPOLLIN) {
+              data->last_os_pollin_time = now;
+            }
+          }
+          if (data->state.select_bits & CURL_CSELECT_OUT) {
+            data->last_pollout_time = now;
+            if (ev_bitmask & CURL_CSELECT_OS_EPOLLOUT) {
+              data->last_os_pollout_time = now;
+            }
+          }
+        }
 
         Curl_expire(data, 0, EXPIRE_RUN_NOW);
       }
