@@ -30,6 +30,8 @@
         curl_strequal;
         curl_strnequal;
         curl_mime_init;
+        curl_mime_init_with_boundary;
+        curl_boundary_max_length;
         curl_mime_free;
         curl_mime_addpart;
         curl_mime_name;

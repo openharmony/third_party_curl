@@ -1273,9 +1273,32 @@ CURLcode Curl_mime_duppart(struct Curl_easy *data,
   return res;
 }
 
+size_t curl_boundary_max_length()
+{
+    return MIME_BOUNDARY_LEN;
+}
+
 /*
  * Mime build functions.
  */
+
+curl_mime *curl_mime_init_with_boundary(struct Curl_easy *easy, const char *boundary, size_t length)
+{
+  if (length > MIME_BOUNDARY_LEN) {
+    length = MIME_BOUNDARY_LEN;
+  }
+  curl_mime *mime;
+  mime = (curl_mime *) malloc(sizeof(struct curl_mime));
+  if (mime) {
+    mime->parent = NULL;
+    mime->firstpart = NULL;
+    mime->lastpart = NULL;
+    memset(mime->boundary, 0, MIME_BOUNDARY_LEN + 1);
+    memcpy(mime->boundary, boundary, length);
+    mimesetstate(&mime->state, MIMESTATE_BEGIN, NULL);
+  }
+  return mime;
+}
 
 /* Create a mime handle. */
 curl_mime *curl_mime_init(struct Curl_easy *easy)
@@ -1923,6 +1946,17 @@ curl_mime *curl_mime_init(CURL *easy)
 {
   (void) easy;
   return NULL;
+}
+
+curl_mime *curl_mime_init_with_boundary(CURL *easy, const unsigned char *boundary, size_t length)
+{
+  (void) easy;
+  return NULL;
+}
+
+size_t curl_boundary_max_length() 
+{
+  return 0;
 }
 
 void curl_mime_free(curl_mime *mime)

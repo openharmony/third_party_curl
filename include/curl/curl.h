@@ -2392,6 +2392,26 @@ typedef struct curl_mimepart  curl_mimepart;  /* Mime part context. */
 CURL_EXTERN curl_mime *curl_mime_init(CURL *easy);
 
 /*
+ * NAME curl_mime_init_with_boundary()
+ *
+ * DESCRIPTION
+ *
+ * Create a mime context and return its handle. The easy parameter is the
+ * target handle. The boundary parameter is a user-defined boundary to separate
+ * the multi-part formdata. the length parameter is the length of boundary.
+ */
+CURL_EXTERN curl_mime *curl_mime_init_with_boundary(CURL *easy, const char *boundary, size_t length);
+
+/*
+ * NAME curl_boundary_max_length()
+ *
+ * DESCRIPTION
+ *
+ * Return the max length of boundary.
+ */
+CURL_EXTERN size_t curl_boundary_max_length();
+
+/*
  * NAME curl_mime_free()
  *
  * DESCRIPTION
