@@ -1954,7 +1954,7 @@ curl_mime *curl_mime_init_with_boundary(CURL *easy, const unsigned char *boundar
   return NULL;
 }
 
-size_t curl_boundary_max_length() 
+size_t curl_boundary_max_length()
 {
   return 0;
 }
