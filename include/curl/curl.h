@@ -2409,7 +2409,7 @@ CURL_EXTERN curl_mime *curl_mime_init_with_boundary(CURL *easy, const char *boun
  *
  * Return the max length of boundary.
  */
-CURL_EXTERN size_t curl_boundary_max_length();
+CURL_EXTERN size_t curl_boundary_max_length(void);
 
 /*
  * NAME curl_mime_free()
