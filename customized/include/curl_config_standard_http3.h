@@ -841,10 +841,10 @@
 /* #undef NEED_THREAD_SAFE */
 
 /* Define to enable NTLM delegation to winbind's ntlm_auth helper. */
-/* #undef NTLM_WB_ENABLED */
+#define NTLM_WB_ENABLED 1
 
 /* Define absolute filename for winbind's ntlm_auth helper. */
-/* #undef NTLM_WB_FILE */
+#define NTLM_WB_FILE "/usr/bin/ntlm_auth"
 
 /* cpu-machine-OS */
 #define OS "x86_64-apple-darwin19.6.0"
