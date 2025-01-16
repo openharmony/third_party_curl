@@ -170,7 +170,7 @@ curl_source = [
   "lib/vssh/libssh2.c",
   "lib/vssh/wolfssh.c",
   "lib/vtls/bearssl.c",
-  "lib/vtls/cipher_suite.c"
+  "lib/vtls/cipher_suite.c",
   "lib/vtls/gtls.c",
   "lib/vtls/hostcheck.c",
   "lib/vtls/keylog.c",
