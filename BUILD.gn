@@ -636,6 +636,10 @@ if (defined(ohos_lite)) {
     configs = [ ":curl_config" ]
     public_configs = [ ":curl_config_public" ]
 
+    if (product_name != "ohos-sdk") {
+      version_script = "curl_without_http3.map"
+    }
+
     install_images = [
       "updater",
       "system",
