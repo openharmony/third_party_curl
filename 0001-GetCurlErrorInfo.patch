@@ -1,0 +1,763 @@
+From 7ec19162ab32d9ad343726be0a1eae4d0524bbb0 Mon Sep 17 00:00:00 2001
+From: m00557507 <m00557507@notesmail.huawei.com/>
+Date: Thu, 27 Feb 2025 14:13:35 +0800
+Subject: [PATCH] TicketNo: DTS2025022404097 Description: generaate curl patch
+ Team:gitee Feature or Bugfix: Binary Source: sync from gitee
+ PrivateCode(Yes/No):No
+
+Change-Id: I30c79f359d83812bbb93b55ada96034ab813dbc2
+---
+ include/curl/curl.h    |  67 ++++++++++++++++++++++++++
+ include/curl/multi.h   |   4 ++
+ lib/cf-socket.c        |  27 +++++++++++
+ lib/content_encoding.c |   6 ++-
+ lib/easy.c             |  36 ++++++++++++++
+ lib/getenv.c           |   4 ++
+ lib/getinfo.c          | 106 +++++++++++++++++++++++++++++++++++++++++
+ lib/mime.c             |  34 +++++++++++++
+ lib/multi.c            |  25 ++++++++--
+ lib/setopt.c           |  12 +++++
+ lib/url.c              |  36 ++++++++++++++
+ lib/urldata.h          |  25 ++++++++++
+ lib/vtls/openssl.c     |  65 +++++++++++++++++++++++++
+ 13 files changed, 442 insertions(+), 5 deletions(-)
+
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index 91e11f62d..a7bfef09e 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -145,6 +145,17 @@ typedef int curl_socket_t;
+ #define curl_socket_typedef
+ #endif /* curl_socket_typedef */
+ 
++#ifdef USE_ARES
++
++#include "ares.h"
++
++#define CURL_USE_ARES 1
++typedef struct {
++  struct ares_socket_functions *functions;
++  void *userp;
++} curl_ares_socket_functions;
++#endif
++
+ /* enum for the different supported SSL backends */
+ typedef enum {
+   CURLSSLBACKEND_NONE = 0,
+@@ -377,6 +388,12 @@ typedef int (*curl_seek_callback)(void *instream,
+ /* This is a return code for the read callback that, when returned, will
+    signal libcurl to immediately abort the current transfer. */
+ #define CURL_READFUNC_ABORT 0x10000000
++#ifdef USE_ARES
++#define CURL_MAX_SSL_ERR_LEN 512
++#define CURL_MAX_CIPHER_NUM 512
++#define CURL_MAX_ISSUER_NAME 256
++#define CURL_MAX_CERT_NUM 4
++#endif
+ /* This is a return code for the read callback that, when returned, will
+    signal libcurl to pause sending data on the current transfer. */
+ #define CURL_READFUNC_PAUSE 0x10000001
+@@ -2213,6 +2230,8 @@ typedef enum {
+   /* set ECH configuration  */
+   CURLOPT(CURLOPT_ECH, CURLOPTTYPE_STRINGPOINT, 325),
+ 
++  CURLOPT(CURLOPT_ARES_SOCKET_FUNCTION, CURLOPTTYPE_OBJECTPOINT, 999),
++
+   CURLOPT_LASTENTRY /* the last unused */
+ } CURLoption;
+ 
+@@ -2392,6 +2411,26 @@ typedef struct curl_mimepart  curl_mimepart;  /* Mime part context. */
+  */
+ CURL_EXTERN curl_mime *curl_mime_init(CURL *easy);
+ 
++/*
++ * NAME curl_mime_init_with_boundary()
++ *
++ * DESCRIPTION
++ *
++ * Create a mime context and return its handle. The easy parameter is the
++ * target handle. The boundary parameter is a user-defined boundary to separate
++ * the multi-part formdata. the length parameter is the length of boundary.
++ */
++CURL_EXTERN curl_mime *curl_mime_init_with_boundary(CURL *easy, const char *boundary, size_t length);
++
++/*
++ * NAME curl_boundary_max_length()
++ *
++ * DESCRIPTION
++ *
++ * Return the max length of boundary.
++ */
++CURL_EXTERN size_t curl_boundary_max_length(void);
++
+ /*
+  * NAME curl_mime_free()
+  *
+@@ -2848,6 +2887,9 @@ struct curl_tlssessioninfo {
+ #define CURLINFO_PTR      0x400000 /* same as SLIST */
+ #define CURLINFO_SOCKET   0x500000
+ #define CURLINFO_OFF_T    0x600000
++#ifdef USE_ARES
++#define CURLINFO_P_STRING 0xe00000
++#endif
+ #define CURLINFO_MASK     0x0fffff
+ #define CURLINFO_TYPEMASK 0xf00000
+ 
+@@ -2942,6 +2984,31 @@ typedef enum {
+   CURLINFO_CONN_ID          = CURLINFO_OFF_T + 64,
+   CURLINFO_QUEUE_TIME_T     = CURLINFO_OFF_T + 65,
+   CURLINFO_USED_PROXY       = CURLINFO_LONG + 66,
++#ifdef USE_ARES
++  CURLINFO_SSL_ERROR        = CURLINFO_STRING + 999,
++  CURLINFO_MIN_TLS_VERSION  = CURLINFO_LONG + 1000,
++  CURLINFO_MAX_TLS_VERSION  = CURLINFO_LONG + 1001,
++  CURLINFO_CIPHER_NUM       = CURLINFO_LONG + 1002,
++  CURLINFO_CIPHERS          = CURLINFO_P_STRING + 1003,
++  CURLINFO_LAST_POLLIN_TIME           = CURLINFO_LONG + 1004,
++  CURLINFO_LAST_OS_POLLIN_TIME        = CURLINFO_LONG + 1005,
++  CURLINFO_LAST_POLLOUT_TIME          = CURLINFO_LONG + 1006,
++  CURLINFO_LAST_OS_POLLOUT_TIME       = CURLINFO_LONG + 1007,
++  CURLINFO_LAST_SSL_RECV_SIZE         = CURLINFO_LONG + 1008,
++  CURLINFO_LAST_SSL_SEND_SIZE         = CURLINFO_LONG + 1009,
++  CURLINFO_TOTAL_SSL_RECV_SIZE        = CURLINFO_LONG + 1010,
++  CURLINFO_TOTAL_SSL_SEND_SIZE        = CURLINFO_LONG + 1011,
++  CURLINFO_LAST_RECV_SSL_ERROR        = CURLINFO_STRING + 1012,
++  CURLINFO_LAST_SEND_SSL_ERROR        = CURLINFO_STRING + 1013,
++  CURLINFO_LAST_RECV_ERRNO            = CURLINFO_LONG + 1014,
++  CURLINFO_LAST_SEND_ERRNO            = CURLINFO_LONG + 1015,
++  CURLINFO_SSL_CONNECT_ERRNO          = CURLINFO_LONG + 1016,
++  CURLINFO_TCP_CONNECT_ERRNO          = CURLINFO_LONG + 1017,
++  CURLINFO_ISSUER_NAMES               = CURLINFO_STRING + 1018,
++  CURLINFO_CERT_NUM                   = CURLINFO_LONG + 1019,
++  CURLINFO_TRY_CONN_IPV4              = CURLINFO_LONG + 1020,
++  CURLINFO_TRY_CONN_IPV6              = CURLINFO_LONG + 1021,
++#endif
+   CURLINFO_LASTONE          = 66
+ } CURLINFO;
+ 
+diff --git a/include/curl/multi.h b/include/curl/multi.h
+index 561470ce7..df5d8c549 100644
+--- a/include/curl/multi.h
++++ b/include/curl/multi.h
+@@ -295,6 +295,10 @@ CURL_EXTERN const char *curl_multi_strerror(CURLMcode);
+ #define CURL_CSELECT_IN   0x01
+ #define CURL_CSELECT_OUT  0x02
+ #define CURL_CSELECT_ERR  0x04
++#ifdef USE_ARES
++#define CURL_CSELECT_OS_EPOLLIN   0x40000000
++#define CURL_CSELECT_OS_EPOLLOUT  0x20000000
++#endif
+ 
+ typedef int (*curl_socket_callback)(CURL *easy,      /* easy handle */
+                                     curl_socket_t s, /* socket */
+diff --git a/lib/cf-socket.c b/lib/cf-socket.c
+index 3e87889f9..f0b3bc034 100644
+--- a/lib/cf-socket.c
++++ b/lib/cf-socket.c
+@@ -1105,6 +1105,13 @@ static int do_connect(struct Curl_cfilter *cf, struct Curl_easy *data,
+       infof(data, "Failed to enable TCP Fast Open on fd %"
+             CURL_FORMAT_SOCKET_T, ctx->sock);
+ 
++#ifdef USE_ARES
++    if (ctx->addr.sa_addr.sa_family == AF_INET) {
++      data->try_connect_ipv4 = 1;
++    } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
++      data->try_connect_ipv6 = 1;
++    }
++#endif
+     rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
+ #elif defined(MSG_FASTOPEN) /* old Linux */
+     if(cf->conn->given->flags & PROTOPT_SSL)
+@@ -1114,6 +1121,13 @@ static int do_connect(struct Curl_cfilter *cf, struct Curl_easy *data,
+ #endif
+   }
+   else {
++#ifdef USE_ARES
++    if (ctx->addr.sa_addr.sa_family == AF_INET) {
++      data->try_connect_ipv4 = 1;
++    } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
++      data->try_connect_ipv6 = 1;
++    }
++#endif
+     rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
+   }
+   return rc;
+@@ -1157,6 +1171,9 @@ static CURLcode cf_tcp_connect(struct Curl_cfilter *cf,
+     CURL_TRC_CF(data, cf, "local address %s port %d...",
+                 ctx->ip.local_ip, ctx->ip.local_port);
+     if(-1 == rc) {
++#ifdef USE_ARES
++        data->tcp_connect_errno = error;
++#endif
+       result = socket_connect_result(data, ctx->ip.remote_ip, error);
+       goto out;
+     }
+@@ -1621,8 +1638,18 @@ static CURLcode cf_udp_setup_quic(struct Curl_cfilter *cf,
+   /* On macOS OpenSSL QUIC fails on connected sockets.
+    * see: <https://github.com/openssl/openssl/issues/23251> */
+ #else
++#ifdef USE_ARES
++  if (ctx->addr.sa_addr.sa_family == AF_INET) {
++    data->try_connect_ipv4 = 1;
++  } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
++    data->try_connect_ipv6 = 1;
++  }
++#endif
+   rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
+   if(-1 == rc) {
++#ifdef USE_ARES
++      data->tcp_connect_errno = SOCKERRNO;
++#endif
+     return socket_connect_result(data, ctx->ip.remote_ip, SOCKERRNO);
+   }
+   ctx->sock_connected = TRUE;
+diff --git a/lib/content_encoding.c b/lib/content_encoding.c
+index d34d3a1f5..1c68c4c32 100644
+--- a/lib/content_encoding.c
++++ b/lib/content_encoding.c
+@@ -1036,8 +1036,10 @@ CURLcode Curl_build_unencoding_stack(struct Curl_easy *data,
+         return CURLE_BAD_CONTENT_ENCODING;
+       }
+ 
+-      if(!cwt)
+-        cwt = &error_writer;  /* Defer error at use. */
++      if(!cwt) {
++          failf(data, "ignore this error when the content-encoding is not recognized.");
++          return CURLE_OK;
++      }
+ 
+       result = Curl_cwriter_create(&writer, data, cwt, phase);
+       if(result)
+diff --git a/lib/easy.c b/lib/easy.c
+index a04dbedd8..8ce849f77 100644
+--- a/lib/easy.c
++++ b/lib/easy.c
+@@ -905,6 +905,42 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
+    * the likeliness of us forgetting to init a buffer here in the future.
+    */
+   outcurl->set.buffer_size = data->set.buffer_size;
++#ifdef USE_ARES
++  memset(outcurl->ssl_err, 0, sizeof(outcurl->ssl_err));
++  outcurl->min_tls_version = -1;
++  outcurl->max_tls_version = -1;
++  memset(outcurl->ciphers, 0, sizeof(outcurl->ciphers));
++  outcurl->cipher_num = 0;
++
++  outcurl->last_pollin_time.tv_sec = 0;
++  outcurl->last_pollin_time.tv_usec = 0;
++  outcurl->last_pollout_time.tv_sec = 0;
++  outcurl->last_pollout_time.tv_usec = 0;
++
++  outcurl->last_os_pollin_time.tv_sec = 0;
++  outcurl->last_os_pollin_time.tv_usec = 0;
++  outcurl->last_os_pollout_time.tv_sec = 0;
++  outcurl->last_os_pollout_time.tv_usec = 0;
++
++  outcurl->last_ssl_recv_size = 0;
++  outcurl->last_ssl_send_size = 0;
++  outcurl->total_ssl_recv_size = 0;
++  outcurl->total_ssl_send_size = 0;
++
++  outcurl->ssl_connect_errno = 0;
++  outcurl->tcp_connect_errno = 0;
++
++  memset(outcurl->last_ssl_recv_err, 0, sizeof(outcurl->last_ssl_recv_err));
++  memset(outcurl->last_ssl_send_err, 0, sizeof(outcurl->last_ssl_send_err));
++  outcurl->last_recv_errno = 0;
++  outcurl->last_send_errno = 0;
++
++  memset(outcurl->cert_issuer_names, 0, sizeof(outcurl->cert_issuer_names));
++  outcurl->cert_num = 0;
++
++  outcurl->try_connect_ipv4 = 0;
++  outcurl->try_connect_ipv6 = 0;
++#endif
+ 
+   /* copy all userdefined values */
+   if(dupset(outcurl, data))
+diff --git a/lib/getenv.c b/lib/getenv.c
+index 48ee97228..f2ca226ad 100644
+--- a/lib/getenv.c
++++ b/lib/getenv.c
+@@ -68,10 +68,14 @@ static char *GetEnv(const char *variable)
+ 
+     /* else rc is bytes needed, try again */
+   }
++#else
++#ifdef DISABLE_GETENV
++  return NULL;
+ #else
+   char *env = getenv(variable);
+   return (env && env[0])?strdup(env):NULL;
+ #endif
++#endif
+ }
+ 
+ char *curl_getenv(const char *v)
+diff --git a/lib/getinfo.c b/lib/getinfo.c
+index e423f0b29..420b76fcf 100644
+--- a/lib/getinfo.c
++++ b/lib/getinfo.c
+@@ -91,10 +91,38 @@ CURLcode Curl_initinfo(struct Curl_easy *data)
+   return CURLE_OK;
+ }
+ 
++#ifdef USE_ARES
++static CURLcode getinfo_pchar(struct Curl_easy *data, CURLINFO info,
++                              const char ***param_pcharp) {
++  switch (info) {
++    case CURLINFO_CIPHERS:
++      *param_pcharp = data->ciphers;
++      break;
++    default:
++      break;
++  }
++  return CURLE_OK;
++}
++#endif
++
+ static CURLcode getinfo_char(struct Curl_easy *data, CURLINFO info,
+                              const char **param_charp)
+ {
+   switch(info) {
++#ifdef USE_ARES
++  case CURLINFO_ISSUER_NAMES:
++    memcpy(param_charp, data->cert_issuer_names, sizeof(data->cert_issuer_names));
++    break;
++  case CURLINFO_LAST_RECV_SSL_ERROR:
++    *param_charp = data->last_ssl_recv_err;
++    break;
++  case CURLINFO_LAST_SEND_SSL_ERROR:
++    *param_charp = data->last_ssl_send_err;
++    break;
++  case CURLINFO_SSL_ERROR:
++    *param_charp = data->ssl_err;
++    break;
++#endif
+   case CURLINFO_EFFECTIVE_URL:
+     *param_charp = data->state.url?data->state.url:(char *)"";
+     break;
+@@ -191,6 +219,14 @@ static CURLcode getinfo_char(struct Curl_easy *data, CURLINFO info,
+   return CURLE_OK;
+ }
+ 
++static inline long convert_time(time_t t)
++{
++  if (t >= INT_MAX) {
++    return INT_MAX;
++  }
++  return t;
++}
++
+ static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
+                              long *param_longp)
+ {
+@@ -229,6 +265,66 @@ static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
+ #endif
+ 
+   switch(info) {
++#ifdef USE_ARES
++  case CURLINFO_TRY_CONN_IPV4:
++    *param_longp = data->try_connect_ipv4;
++    break;
++  case CURLINFO_TRY_CONN_IPV6:
++    *param_longp = data->try_connect_ipv6;
++    break;
++  case CURLINFO_CERT_NUM:
++    *param_longp = data->cert_num;
++    break;
++  case CURLINFO_TCP_CONNECT_ERRNO:
++    *param_longp = data->tcp_connect_errno;
++    break;
++  case CURLINFO_SSL_CONNECT_ERRNO:
++    *param_longp = data->ssl_connect_errno;
++    break;
++  // The time from 19700101.8:0:0:0.0.
++  // UINT32_MAX is enough to show the time.
++  // I add this code at 20250110.19:54:32.5666, now.tv_sec is 1736509984, INT32_MAX is 4294967295 / 2.
++  // about 15 years later, INT32_MAX is not enough.
++  case CURLINFO_LAST_POLLIN_TIME:
++    *param_longp = convert_time(data->last_pollin_time.tv_sec) * 1000 + data->last_pollin_time.tv_usec / 1000;
++    break;
++  case CURLINFO_LAST_OS_POLLIN_TIME:
++    *param_longp = convert_time(data->last_os_pollin_time.tv_sec) * 1000 + data->last_os_pollin_time.tv_usec / 1000;
++    break;
++  case CURLINFO_LAST_POLLOUT_TIME:
++    *param_longp = convert_time(data->last_pollout_time.tv_sec) * 1000 + data->last_pollout_time.tv_usec / 1000;
++    break;
++  case CURLINFO_LAST_OS_POLLOUT_TIME:
++    *param_longp = convert_time(data->last_os_pollout_time.tv_sec) * 1000 + data->last_os_pollout_time.tv_usec / 1000;
++    break;
++  case CURLINFO_LAST_SSL_RECV_SIZE:
++    *param_longp = (long)data->last_ssl_recv_size;
++    break;
++  case CURLINFO_LAST_SSL_SEND_SIZE:
++    *param_longp = (long)data->last_ssl_send_size;
++    break;
++  case CURLINFO_TOTAL_SSL_RECV_SIZE:
++    *param_longp = (long)data->total_ssl_recv_size;
++    break;
++  case CURLINFO_TOTAL_SSL_SEND_SIZE:
++    *param_longp = (long)data->total_ssl_send_size;
++    break;
++  case CURLINFO_LAST_RECV_ERRNO:
++    *param_longp = data->last_recv_errno;
++    break;
++  case CURLINFO_LAST_SEND_ERRNO:
++    *param_longp = data->last_send_errno;
++    break;
++  case CURLINFO_CIPHER_NUM:
++    *param_longp = data->cipher_num;
++    break;
++  case CURLINFO_MIN_TLS_VERSION:
++    *param_longp = data->min_tls_version;
++    break;
++  case CURLINFO_MAX_TLS_VERSION:
++    *param_longp = data->max_tls_version;
++    break;
++#endif
+   case CURLINFO_RESPONSE_CODE:
+     *param_longp = data->info.httpcode;
+     break;
+@@ -588,6 +684,9 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
+   double *param_doublep = NULL;
+   curl_off_t *param_offt = NULL;
+   const char **param_charp = NULL;
++#ifdef USE_ARES
++  const char ***param_pcharp = NULL;
++#endif
+   struct curl_slist **param_slistp = NULL;
+   curl_socket_t *param_socketp = NULL;
+   int type;
+@@ -600,6 +699,13 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
+ 
+   type = CURLINFO_TYPEMASK & (int)info;
+   switch(type) {
++#ifdef USE_ARES
++  case CURLINFO_P_STRING:
++    param_pcharp = va_arg(arg, const char ***);
++    if(param_pcharp)
++      result = getinfo_pchar(data, info, param_pcharp);
++    break;
++#endif
+   case CURLINFO_STRING:
+     param_charp = va_arg(arg, const char **);
+     if(param_charp)
+diff --git a/lib/mime.c b/lib/mime.c
+index a2356c473..2eb231f90 100644
+--- a/lib/mime.c
++++ b/lib/mime.c
+@@ -1274,10 +1274,33 @@ CURLcode Curl_mime_duppart(struct Curl_easy *data,
+   return res;
+ }
+ 
++size_t curl_boundary_max_length()
++{
++    return MIME_BOUNDARY_LEN;
++}
++
+ /*
+  * Mime build functions.
+  */
+ 
++curl_mime *curl_mime_init_with_boundary(struct Curl_easy *easy, const char *boundary, size_t length)
++{
++  if (length > MIME_BOUNDARY_LEN) {
++    length = MIME_BOUNDARY_LEN;
++  }
++  curl_mime *mime;
++  mime = (curl_mime *) malloc(sizeof(struct curl_mime));
++  if (mime) {
++    mime->parent = NULL;
++    mime->firstpart = NULL;
++    mime->lastpart = NULL;
++    memset(mime->boundary, 0, MIME_BOUNDARY_LEN + 1);
++    memcpy(mime->boundary, boundary, length);
++    mimesetstate(&mime->state, MIMESTATE_BEGIN, NULL);
++  }
++  return mime;
++}
++
+ /* Create a mime handle. */
+ curl_mime *curl_mime_init(struct Curl_easy *easy)
+ {
+@@ -2141,6 +2164,17 @@ curl_mime *curl_mime_init(CURL *easy)
+   return NULL;
+ }
+ 
++curl_mime *curl_mime_init_with_boundary(CURL *easy, const unsigned char *boundary, size_t length)
++{
++  (void) easy;
++  return NULL;
++}
++
++size_t curl_boundary_max_length()
++{
++  return 0;
++}
++
+ void curl_mime_free(curl_mime *mime)
+ {
+   (void) mime;
+diff --git a/lib/multi.c b/lib/multi.c
+index 6bbdfe267..0e7b63e4c 100644
+--- a/lib/multi.c
++++ b/lib/multi.c
+@@ -3225,15 +3225,34 @@ static CURLMcode multi_socket(struct Curl_multi *multi,
+ 
+       /* the socket can be shared by many transfers, iterate */
+       Curl_hash_start_iterate(&entry->transfers, &iter);
++#ifdef USE_ARES
++      struct timeval time_now = {0};
++      gettimeofday(&time_now, NULL);
++#endif
+       for(he = Curl_hash_next_element(&iter); he;
+           he = Curl_hash_next_element(&iter)) {
+         data = (struct Curl_easy *)he->ptr;
+         DEBUGASSERT(data);
+         DEBUGASSERT(data->magic == CURLEASY_MAGIC_NUMBER);
+ 
+-        if(data->conn && !(data->conn->handler->flags & PROTOPT_DIRLOCK))
+-          /* set socket event bitmask if they're not locked */
+-          data->state.select_bits |= (unsigned char)ev_bitmask;
++        if(data->conn && !(data->conn->handler->flags & PROTOPT_DIRLOCK)) {
++          unsigned int mask = (unsigned int)ev_bitmask;
++          data->state.select_bits = (unsigned char)(mask & UCHAR_MAX);
++#ifdef USE_ARES
++          if (data->state.select_bits & CURL_CSELECT_IN) {
++            data->last_pollin_time = time_now;
++            if (mask & CURL_CSELECT_OS_EPOLLIN) {
++              data->last_os_pollin_time = time_now;
++            }
++          }
++          if (data->state.select_bits & CURL_CSELECT_OUT) {
++            data->last_pollout_time = time_now;
++            if (mask & CURL_CSELECT_OS_EPOLLOUT) {
++              data->last_os_pollout_time = time_now;
++            }
++          }
++#endif
++        }
+ 
+         Curl_expire(data, 0, EXPIRE_RUN_NOW);
+       }
+diff --git a/lib/setopt.c b/lib/setopt.c
+index e8b25454b..3d2248499 100644
+--- a/lib/setopt.c
++++ b/lib/setopt.c
+@@ -59,6 +59,10 @@
+ #include "curl_memory.h"
+ #include "memdebug.h"
+ 
++#ifdef USE_ARES
++#include "ares.h"
++#endif
++
+ CURLcode Curl_setstropt(char **charp, const char *s)
+ {
+   /* Release the previous storage at `charp' and replace by a dynamic storage
+@@ -193,6 +197,14 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
+   curl_off_t bigsize;
+ 
+   switch(option) {
++  case CURLOPT_ARES_SOCKET_FUNCTION:
++#ifdef USE_ARES
++    {
++      curl_ares_socket_functions *funcs = va_arg(param, curl_ares_socket_functions *);
++      ares_set_socket_functions((ares_channel) data->state.async.resolver, funcs->functions, funcs->userp);
++    }
++#endif
++  break;
+   case CURLOPT_DNS_CACHE_TIMEOUT:
+     arg = va_arg(param, long);
+     if(arg < -1)
+diff --git a/lib/url.c b/lib/url.c
+index 2814d31ad..a54e2af01 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -515,6 +515,42 @@ CURLcode Curl_open(struct Curl_easy **curl)
+   }
+ 
+   data->magic = CURLEASY_MAGIC_NUMBER;
++#ifdef USE_ARES
++  memset(data->ssl_err, 0, sizeof(data->ssl_err));
++  data->min_tls_version = -1;
++  data->max_tls_version = -1;
++  memset(data->ciphers, 0, sizeof(data->ciphers));
++  data->cipher_num = 0;
++
++  data->last_pollin_time.tv_sec = 0;
++  data->last_pollin_time.tv_usec = 0;
++  data->last_pollout_time.tv_sec = 0;
++  data->last_pollout_time.tv_usec = 0;
++
++  data->last_os_pollin_time.tv_sec = 0;
++  data->last_os_pollin_time.tv_usec = 0;
++  data->last_os_pollout_time.tv_sec = 0;
++  data->last_os_pollout_time.tv_usec = 0;
++
++  data->last_ssl_recv_size = 0;
++  data->last_ssl_send_size = 0;
++  data->total_ssl_recv_size = 0;
++  data->total_ssl_send_size = 0;
++
++  data->ssl_connect_errno = 0;
++  data->tcp_connect_errno = 0;
++
++  memset(data->last_ssl_recv_err, 0, sizeof(data->last_ssl_recv_err));
++  memset(data->last_ssl_send_err, 0, sizeof(data->last_ssl_send_err));
++  data->last_recv_errno = 0;
++  data->last_send_errno = 0;
++
++  memset(data->cert_issuer_names, 0, sizeof(data->cert_issuer_names));
++  data->cert_num = 0;
++
++  data->try_connect_ipv4 = 0;
++  data->try_connect_ipv6 = 0;
++#endif
+ 
+   Curl_req_init(&data->req);
+ 
+diff --git a/lib/urldata.h b/lib/urldata.h
+index 8b1bd65d6..c11655c27 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -1974,6 +1974,31 @@ struct Curl_easy {
+ #ifdef USE_HYPER
+   struct hyptransfer hyp;
+ #endif
++#ifdef USE_ARES
++  char ssl_err[CURL_MAX_SSL_ERR_LEN];
++  long min_tls_version;
++  long max_tls_version;
++  const char *ciphers[CURL_MAX_CIPHER_NUM];
++  long cipher_num;
++  struct timeval last_pollin_time;
++  struct timeval last_os_pollin_time;
++  struct timeval last_pollout_time;
++  struct timeval last_os_pollout_time;
++  ssize_t last_ssl_recv_size;
++  ssize_t last_ssl_send_size;
++  ssize_t total_ssl_recv_size;
++  ssize_t total_ssl_send_size;
++  char last_ssl_recv_err[CURL_MAX_SSL_ERR_LEN];
++  char last_ssl_send_err[CURL_MAX_SSL_ERR_LEN];
++  long last_recv_errno;
++  long last_send_errno;
++  long ssl_connect_errno;
++  long tcp_connect_errno;
++  char cert_issuer_names[CURL_MAX_CERT_NUM][CURL_MAX_ISSUER_NAME];
++  long cert_num;
++  long try_connect_ipv4;
++  long try_connect_ipv6;
++#endif
+ };
+ 
+ #define LIBCURL_NAME "libcurl"
+diff --git a/lib/vtls/openssl.c b/lib/vtls/openssl.c
+index 298a488a0..abf04f664 100644
+--- a/lib/vtls/openssl.c
++++ b/lib/vtls/openssl.c
+@@ -4204,6 +4204,47 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
+       /* Get the earliest error code from the thread's error queue and remove
+          the entry. */
+       errdetail = ERR_get_error();
++#ifdef USE_ARES
++      if (octx) {
++        if (octx->ssl_ctx && data) {
++          struct stack_st_SSL_CIPHER *ciphers = SSL_CTX_get_ciphers(octx->ssl_ctx);
++          data->cipher_num = 0;
++          if (ciphers) {
++            size_t num_ciphers = sk_SSL_CIPHER_num(ciphers);
++            for (size_t i = 0; i < num_ciphers; ++i) {
++              const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
++              const char *cipher_name = SSL_CIPHER_get_name(cipher);
++              if (data->cipher_num < CURL_MAX_CIPHER_NUM) {
++                data->ciphers[data->cipher_num] = cipher_name;
++                ++data->cipher_num;
++              }
++            }
++          }
++          data->min_tls_version = (long) SSL_CTX_get_min_proto_version(octx->ssl_ctx);
++          data->max_tls_version = (long) SSL_CTX_get_max_proto_version(octx->ssl_ctx);
++        }
++        if (octx->ssl && data) {
++          STACK_OF(X509) *certs = SSL_get_peer_cert_chain(octx->ssl);
++          data->cert_num = 0;
++          if (certs) {
++            size_t cert_num = sk_X509_num(certs);
++            if (cert_num > CURL_MAX_CERT_NUM) {
++              cert_num = CURL_MAX_CERT_NUM;
++            }
++            for (size_t i = 0; i < cert_num; ++i) {
++              X509 *cert = sk_X509_value(certs, i);
++              X509_NAME *issuer_name = X509_get_issuer_name(cert);
++              (void)X509_NAME_oneline(issuer_name, data->cert_issuer_names[data->cert_num], CURL_MAX_ISSUER_NAME);
++              ++data->cert_num;
++            }
++          }
++        }
++      }
++      if (data) {
++        ERR_error_string_n(errdetail, data->ssl_err, sizeof(data->ssl_err));
++        data->ssl_connect_errno = errno;
++      }
++#endif
+ 
+       /* Extract which lib and reason */
+       lib = ERR_GET_LIB(errdetail);
+@@ -4954,6 +4995,12 @@ static ssize_t ossl_send(struct Curl_cfilter *cf,
+         goto out;
+       }
+       sslerror = ERR_get_error();
++#ifdef USE_ARES
++      if (data) {
++        ERR_error_string_n(sslerror, data->last_ssl_send_err, sizeof(data->last_ssl_send_err));
++        data->last_send_errno = errno;
++      }
++#endif
+       if(sslerror)
+         ossl_strerror(sslerror, error_buffer, sizeof(error_buffer));
+       else if(sockerr)
+@@ -4990,6 +5037,12 @@ static ssize_t ossl_send(struct Curl_cfilter *cf,
+   *curlcode = CURLE_OK;
+ 
+ out:
++#ifdef USE_ARES
++  if (data) {
++    data->last_ssl_send_size = rc;
++    data->total_ssl_send_size += rc;
++  }
++#endif
+   return (ssize_t)rc; /* number of bytes */
+ }
+ 
+@@ -5045,6 +5098,12 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
+         goto out;
+       }
+       sslerror = ERR_get_error();
++#ifdef USE_ARES
++      if (data) {
++        ERR_error_string_n(sslerror, data->last_ssl_recv_err, sizeof(data->last_ssl_recv_err));
++        data->last_recv_errno = errno;
++      }
++#endif
+       if((nread < 0) || sslerror) {
+         /* If the return code was negative or there actually is an error in the
+            queue */
+@@ -5091,6 +5150,12 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
+   }
+ 
+ out:
++#ifdef USE_ARES
++  if (data) {
++    data->last_ssl_recv_size = nread;
++    data->total_ssl_recv_size += nread;
++  }
++#endif
+   return nread;
+ }
+ 
+-- 
+2.34.1
+
