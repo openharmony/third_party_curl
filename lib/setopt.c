@@ -1464,8 +1464,10 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
      * The maximum time you allow curl to use to connect.
      */
     arg = va_arg(param, long);
-    if((arg >= 0) && (arg <= (INT_MAX/1000)))
+    if((arg >= 0) && (arg <= (INT_MAX/1000))) {
       data->set.connecttimeout = (unsigned int)arg * 1000;
+      data->set.dns_cache_timeout = (int)arg;
+    }
     else
       return CURLE_BAD_FUNCTION_ARGUMENT;
     break;
@@ -1475,6 +1477,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     if(uarg > UINT_MAX)
       uarg = UINT_MAX;
     data->set.connecttimeout = (unsigned int)uarg;
+    data->set.dns_cache_timeout = (int) (uarg % 1000);
     break;
 
 #ifndef CURL_DISABLE_FTP
