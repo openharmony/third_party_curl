@@ -86,8 +86,6 @@
   ((x) && (x)->magic == CURL_MULTI_HANDLE)
 #endif
 
-static void move_pending_to_connect(struct Curl_multi *multi,
-                                    struct Curl_easy *data);
 static CURLMcode singlesocket(struct Curl_multi *multi,
                               struct Curl_easy *data);
 static CURLMcode add_next_timeout(struct curltime now,
@@ -102,7 +100,6 @@ static void multi_xfer_bufs_free(struct Curl_multi *multi);
 static const char * const multi_statename[]={
   "INIT",
   "PENDING",
-  "SETUP",
   "CONNECT",
   "RESOLVING",
   "CONNECTING",
@@ -152,7 +149,6 @@ static void mstate(struct Curl_easy *data, CURLMstate state
   static const init_multistate_func finit[MSTATE_LAST] = {
     NULL,              /* INIT */
     NULL,              /* PENDING */
-    NULL,              /* SETUP */
     Curl_init_CONNECT, /* CONNECT */
     NULL,              /* RESOLVING */
     NULL,              /* CONNECTING */
@@ -1116,7 +1112,6 @@ static void multi_getsock(struct Curl_easy *data,
   switch(data->mstate) {
   case MSTATE_INIT:
   case MSTATE_PENDING:
-  case MSTATE_SETUP:
   case MSTATE_CONNECT:
     /* nothing to poll for yet */
     break;
@@ -1961,41 +1956,30 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
 
     switch(data->mstate) {
     case MSTATE_INIT:
-      /* Transitional state. init this transfer. A handle never comes
-         back to this state. */
+      /* init this transfer. */
       result = Curl_pretransfer(data);
-      if(result)
-        break;
+      if(!result) {
+        /* after init, go CONNECT */
+        multistate(data, MSTATE_CONNECT);
+        *nowp = Curl_pgrsTime(data, TIMER_STARTOP);
+        rc = CURLM_CALL_MULTI_PERFORM;
+      }
+      break;
 
-      /* after init, go SETUP */
-      multistate(data, MSTATE_SETUP);
-      (void)Curl_pgrsTime(data, TIMER_STARTOP);
-      FALLTHROUGH();
-
-    case MSTATE_SETUP:
-      /* Transitional state. Setup things for a new transfer. The handle
-         can come back to this state on a redirect. */
+    case MSTATE_CONNECT:
+      /* Connect. We want to get a connection identifier filled in. */
+      /* init this transfer. */
       *nowp = Curl_pgrsTime(data, TIMER_STARTSINGLE);
       if(data->set.timeout)
         Curl_expire(data, data->set.timeout, EXPIRE_TIMEOUT);
+      
       if(data->set.connecttimeout)
-        /* Since a connection might go to pending and back to CONNECT several
-           times before it actually takes off, we need to set the timeout once
-           in SETUP before we enter CONNECT the first time. */
         Curl_expire(data, data->set.connecttimeout, EXPIRE_CONNECTTIMEOUT);
-
-      multistate(data, MSTATE_CONNECT);
-      FALLTHROUGH();
-
-    case MSTATE_CONNECT:
-      /* Connect. We want to get a connection identifier filled in. This state
-         can be entered from SETUP and from PENDING. */
       result = Curl_connect(data, &async, &connected);
       if(CURLE_NO_CONNECTION_AVAILABLE == result) {
         /* There was no connection available. We will go to the pending
            state and wait for an available connection. */
         multistate(data, MSTATE_PENDING);
-
         /* add this handle to the list of connect-pending handles */
         Curl_llist_append(&multi->pending, data, &data->connect_queue);
         /* unlink from the main list */
@@ -2003,9 +1987,11 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
         result = CURLE_OK;
         break;
       }
-      else
+      else if(data->state.previouslypending) {
+        /* this transfer comes from the pending queue so try move another */
+        infof(data, "Transfer was pending, now try another");
         process_pending_handles(data->multi);
-
+      }
       if(!result) {
         *nowp = Curl_pgrsTime(data, TIMER_POSTQUEUE);
         if(async)
@@ -2016,7 +2002,6 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
              protocol connect is already done and we can go directly to
              WAITDO or DO! */
           rc = CURLM_CALL_MULTI_PERFORM;
-
           if(connected)
             multistate(data, MSTATE_PROTOCONNECT);
           else {
@@ -2285,7 +2270,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
               follow = FOLLOW_RETRY;
               drc = Curl_follow(data, newurl, follow);
               if(!drc) {
-                multistate(data, MSTATE_SETUP);
+                multistate(data, MSTATE_CONNECT);
                 rc = CURLM_CALL_MULTI_PERFORM;
                 result = CURLE_OK;
               }
@@ -2545,7 +2530,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
           /* multi_done() might return CURLE_GOT_NOTHING */
           result = Curl_follow(data, newurl, follow);
           if(!result) {
-            multistate(data, MSTATE_SETUP);
+            multistate(data, MSTATE_CONNECT);
             rc = CURLM_CALL_MULTI_PERFORM;
           }
         }
@@ -2638,7 +2623,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
        * (i.e. CURLM_CALL_MULTI_PERFORM == TRUE) then we should do that before
        * declaring the connection timed out as we may almost have a completed
        * connection. */
-      multi_handle_timeout(data, nowp, &stream_error, &result, FALSE);
+      multi_handle_timeout(data, nowp, &stream_error, &result, TRUE);
     }
 
 statemachine_end:
@@ -2777,20 +2762,9 @@ CURLMcode curl_multi_perform(struct Curl_multi *multi, int *running_handles)
    */
   do {
     multi->timetree = Curl_splaygetbest(now, multi->timetree, &t);
-    if(t) {
+    if(t)
       /* the removed may have another timeout in queue */
-      data = t->payload;
-      if(data->mstate == MSTATE_PENDING) {
-        bool stream_unused;
-        CURLcode result_unused;
-        if(multi_handle_timeout(data, &now, &stream_unused, &result_unused,
-                                FALSE)) {
-          infof(data, "PENDING handle timeout");
-          move_pending_to_connect(multi, data);
-        }
-      }
       (void)add_next_timeout(now, multi, t->payload);
-    }
   } while(t);
 
   *running_handles = multi->num_alive;
@@ -3759,43 +3733,29 @@ void Curl_multiuse_state(struct Curl_easy *data,
   process_pending_handles(data->multi);
 }
 
-static void move_pending_to_connect(struct Curl_multi *multi,
-                                    struct Curl_easy *data)
-{
-  DEBUGASSERT(data->mstate == MSTATE_PENDING);
-
-  /* put it back into the main list */
-  link_easy(multi, data);
-
-  multistate(data, MSTATE_CONNECT);
-
-  /* Remove this node from the pending list */
-  Curl_llist_remove(&multi->pending, &data->connect_queue, NULL);
-
-  /* Make sure that the handle will be processed soonish. */
-  Curl_expire(data, 0, EXPIRE_RUN_NOW);
-}
-
-/* process_pending_handles() moves a handle from PENDING back into the main
-   list and change state to CONNECT.
-
-   We do not move all transfers because that can be a significant amount.
-   Since this is tried every now and then doing too many too often becomes a
-   performance problem.
-
-   When there is a change for connection limits like max host connections etc,
-   this likely only allows one new transfer. When there is a pipewait change,
-   it can potentially allow hundreds of new transfers.
-
-   We could consider an improvement where we store the queue reason and allow
-   more pipewait rechecks than others.
-*/
+/* process_pending_handles() moves all handles from PENDING
+   back into the main list and change state to CONNECT */
 static void process_pending_handles(struct Curl_multi *multi)
 {
   struct Curl_llist_element *e = multi->pending.head;
   if(e) {
     struct Curl_easy *data = e->ptr;
-    move_pending_to_connect(multi, data);
+
+    DEBUGASSERT(data->mstate == MSTATE_PENDING);
+
+    /* put it back into the main list */
+    link_easy(multi, data);
+
+    multistate(data, MSTATE_CONNECT);
+
+    /* Remove this node from the list */
+    Curl_llist_remove(&multi->pending, e, NULL);
+
+    /* Make sure that the handle will be processed soonish. */
+    Curl_expire(data, 0, EXPIRE_RUN_NOW);
+
+    /* mark this as having been in the pending queue */
+    data->state.previouslypending = TRUE;
   }
 }
 
