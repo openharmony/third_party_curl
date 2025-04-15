@@ -96,7 +96,6 @@ static CURLMcode multi_timeout(struct Curl_multi *multi,
 static void process_pending_handles(struct Curl_multi *multi);
 static void multi_xfer_bufs_free(struct Curl_multi *multi);
 
-#ifdef DEBUGBUILD
 static const char * const multi_statename[]={
   "INIT",
   "PENDING",
@@ -116,7 +115,6 @@ static const char * const multi_statename[]={
   "COMPLETED",
   "MSGSENT",
 };
-#endif
 
 /* function pointer called once when switching TO a state */
 typedef void (*init_multistate_func)(struct Curl_easy *data);
@@ -185,6 +183,17 @@ static void mstate(struct Curl_easy *data, CURLMstate state
           (void *)data, lineno);
   }
 #endif
+  char address[32];
+  snprintf(address, sizeof(address), "%p", data);
+  char buff[64];
+  const int reserve_digits = 4;
+  snprintf(buff,
+    sizeof(buff),
+    "STATE: %s => %s handle %s",
+    multi_statename[oldstate],
+    multi_statename[data->mstate],
+    address + strlen(address) - reserve_digits);
+  Curl_debug(data, CURLINFO_STATE, buff, strlen(buff));
 
   if(state == MSTATE_COMPLETED) {
     /* changing to COMPLETED means there's one less easy handle 'alive' */
