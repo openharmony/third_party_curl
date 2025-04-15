@@ -475,6 +475,7 @@ typedef enum {
   CURLINFO_DATA_OUT,     /* 4 */
   CURLINFO_SSL_DATA_IN,  /* 5 */
   CURLINFO_SSL_DATA_OUT, /* 6 */
+  CURLINFO_STATE,        /* 7 */
   CURLINFO_END
 } curl_infotype;
 
