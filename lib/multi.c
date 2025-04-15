@@ -192,7 +192,7 @@ static void mstate(struct Curl_easy *data, CURLMstate state
     "STATE: %s => %s handle %s",
     multi_statename[oldstate],
     multi_statename[data->mstate],
-    address + strlen(address]) - reserve_digits);
+    address + strlen(address) - reserve_digits);
   Curl_debug(data, CURLINFO_STATE, buff, strlen(buff));
 
   if(state == MSTATE_COMPLETED) {
