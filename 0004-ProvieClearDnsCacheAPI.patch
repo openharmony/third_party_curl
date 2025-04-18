@@ -1,0 +1,55 @@
+diff --git a/curl.map b/curl.map
+index d20bfbbfc..31260c893 100644
+--- a/curl.map
++++ b/curl.map
+@@ -11,6 +11,7 @@
+         curl_multi_poll;
+         curl_multi_wakeup;
+         curl_multi_perform;
++        curl_multi_clear_dns_cache;
+         curl_multi_cleanup;
+         curl_multi_info_read;
+         curl_multi_strerror;
+diff --git a/curl_without_http3.map b/curl_without_http3.map
+index a10fb64f8..e7dc327dc 100644
+--- a/curl_without_http3.map
++++ b/curl_without_http3.map
+@@ -11,6 +11,7 @@ global:
+     curl_multi_poll;
+     curl_multi_wakeup;
+     curl_multi_perform;
++    curl_multi_clear_dns_cache;
+     curl_multi_cleanup;
+     curl_multi_info_read;
+     curl_multi_strerror;
+diff --git a/include/curl/multi.h b/include/curl/multi.h
+index df5d8c549..73b6c7c27 100644
+--- a/include/curl/multi.h
++++ b/include/curl/multi.h
+@@ -221,6 +221,8 @@ CURL_EXTERN CURLMcode curl_multi_wakeup(CURLM *multi_handle);
+ CURL_EXTERN CURLMcode curl_multi_perform(CURLM *multi_handle,
+                                          int *running_handles);
+ 
++CURL_EXTERN void curl_multi_clear_dns_cache(CURLM *multi_handle);
++
+  /*
+   * Name:    curl_multi_cleanup()
+   *
+diff --git a/lib/multi.c b/lib/multi.c
+index 642882768..ae3e72d66 100644
+--- a/lib/multi.c
++++ b/lib/multi.c
+@@ -2798,6 +2798,13 @@ static void unlink_all_msgsent_handles(struct Curl_multi *multi)
+   }
+ }
+ 
++void curl_multi_clear_dns_cache(CURLM *multi)
++{
++  if (GOOD_MULTI_HANDLE(multi)) {
++    Curl_hash_destroy(&multi->hostcache);
++  }
++}
++
+ CURLMcode curl_multi_cleanup(struct Curl_multi *multi)
+ {
+   struct Curl_easy *data;
