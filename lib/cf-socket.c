@@ -398,6 +398,25 @@ void Curl_sndbufset(curl_socket_t sockfd)
 #endif
 
 #ifndef CURL_DISABLE_BINDLOCAL
+#ifdef HTTP_HANDOVER_FEATURE
+int32_t BindSocket(int32_t fd, uint32_t netId);
+static CURLcode bindohosnetid(struct Curl_easy *data, struct connectdata *conn, curl_socket_t sockfd)
+{
+  unsigned int netid = data->set.socket_bind_netid;
+  if (netid > 0) {
+    int ret = BindSocket(sockfd, netid);
+    if (ret == 0) {
+      conn->socket_bind_netid = netid;
+      return CURLE_OK;
+    } else {
+      // try bind but failed
+      return CURLE_INTERFACE_FAILED;
+    }
+  }
+  return CURLE_OK;
+}
+#endif
+
 static CURLcode bindlocal(struct Curl_easy *data, struct connectdata *conn,
                           curl_socket_t sockfd, int af, unsigned int scope)
 {
@@ -426,10 +445,16 @@ static CURLcode bindlocal(struct Curl_easy *data, struct connectdata *conn,
   /*************************************************************
    * Select device to bind socket to
    *************************************************************/
+#ifdef HTTP_HANDOVER_FEATURE
+  if (!dev && !port) {
+    /*no local kind of binding was requested */
+    return data->set.socket_bind_netid > 0 ? bindohosnetid(data, conn, sockfd) : CURLE_OK;
+  }
+#else
   if(!dev && !port)
     /* no local kind of binding was requested */
     return CURLE_OK;
-
+#endif
   memset(&sa, 0, sizeof(struct Curl_sockaddr_storage));
 
   if(dev && (strlen(dev)<255) ) {
