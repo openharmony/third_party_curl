@@ -490,6 +490,11 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   memset(&set->priority, 0, sizeof(set->priority));
 #endif
   set->quick_exit = 0L;
+#ifdef HTTP_HANDOVER_FEATURE
+  set->socket_bind_netid = 0; /* OHOS default network */
+  set->fconnreuse = ZERO_NULL;
+  set->connreuse_userp = ZERO_NULL;
+#endif
   return result;
 }
 
@@ -1325,7 +1330,15 @@ ConnectionExists(struct Curl_easy *data,
       Curl_disconnect(data, check, TRUE);
       continue;
     }
-
+#ifdef HTTP_HANDOVER_FEATURE
+    if (check->socket_bind_netid != data->set.socket_bind_netid) {
+      continue;
+    }
+    if (data->set.fconnreuse && !data->set.fconnreuse(data->set.connreuse_userp, check->sockfd)) {
+      // no reuse
+      continue;
+    }
+#endif
     /* We have found a connection. Let's stop searching. */
     chosen = check;
     break;
@@ -1454,7 +1467,9 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->closesocket_client = data->set.closesocket_client;
   conn->lastused = conn->created;
   conn->gssapi_delegation = data->set.gssapi_delegation;
-
+#ifdef HTTP_HANDOVER_FEATURE
+  conn->socket_bind_netid = 0; /* OHOS default net id*/
+#endif
   return conn;
 error:
 
