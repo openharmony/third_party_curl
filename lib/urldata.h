@@ -1014,6 +1014,10 @@ struct connectdata {
   unsigned char httpversion; /* the HTTP version*10 reported by the server */
   unsigned char connect_only;
   unsigned char gssapi_delegation; /* inherited from set.gssapi_delegation */
+
+#ifdef HTTP_HANDOVER_FEATURE
+  unsigned int socket_bind_netid; /* OHOS net id*/
+#endif
 };
 
 #ifndef CURL_DISABLE_PROXY
@@ -1875,6 +1879,12 @@ struct UserDefined {
 #ifdef USE_WEBSOCKETS
   BIT(ws_raw_mode);
 #endif
+#ifdef HTTP_HANDOVER_FEATURE
+  unsigned int socket_bind_netid; /* OHOS net id*/
+  curl_connreuse_callback fconnreuse;
+  void *connreuse_userp;
+#endif
+
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
 #endif
