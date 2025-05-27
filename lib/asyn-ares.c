@@ -224,7 +224,7 @@ CURLcode Curl_resolver_init(struct Curl_easy *easy, void **resolver)
       return CURLE_FAILED_INIT;
   }
 #ifdef HTTP_HANDOVER_FEATURE
-  if (easy->set.sock_bind_netid > 0) {
+  if (easy->set.socket_bind_netid > 0) {
     ares_set_socket_configure_callback(resolver, bindohosnetid, easy);
   }
 #endif

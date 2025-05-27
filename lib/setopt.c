@@ -3180,7 +3180,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #define MAX_NET_ID (0xFFFF - 0x400)
     if (uarg > MAX_NET_ID)
       return CURLE_BAD_FUNCTION_ARGUMENT;
-    data->set.socket_bint_netid = uarg;
+    data->set.socket_bind_netid = uarg;
     break;
   case CURLOPT_CONNREUSEFUNCTION:
     data->set.fconnreuse = va_arg(param, curl_connreuse_callback);
