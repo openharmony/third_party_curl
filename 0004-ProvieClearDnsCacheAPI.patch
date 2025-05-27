@@ -46,7 +46,7 @@ index 642882768..ae3e72d66 100644
 +void curl_multi_clear_dns_cache(CURLM *multi)
 +{
 +  if (GOOD_MULTI_HANDLE(multi)) {
-+    Curl_hash_destroy(&multi->hostcache);
++    Curl_hash_clean(&multi->hostcache);
 +  }
 +}
 +
