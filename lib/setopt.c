@@ -3174,6 +3174,21 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_QUICK_EXIT:
     data->set.quick_exit = (0 != va_arg(param, long)) ? 1L:0L;
     break;
+#ifdef HTTP_HANDOVER_FEATURE
+  case CURLOPT_OHOS_SOCKET_BIND_NET_ID:
+    uarg = va_arg(param, unsigned long);
+#define MAX_NET_ID (0xFFFF - 0x400)
+    if (uarg > MAX_NET_ID)
+      return CURLE_BAD_FUNCTION_ARGUMENT;
+    data->set.socket_bind_netid = uarg;
+    break;
+  case CURLOPT_CONNREUSEFUNCTION:
+    data->set.fconnreuse = va_arg(param, curl_connreuse_callback);
+    break;
+  case CURLOPT_CONNREUSEDATA:
+    data->set.connreuse_userp = va_arg(param, void *);
+    break;
+#endif
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;

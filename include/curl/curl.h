@@ -414,6 +414,9 @@ typedef enum {
 typedef int (*curl_sockopt_callback)(void *clientp,
                                      curl_socket_t curlfd,
                                      curlsocktype purpose);
+#ifdef HTTP_HANDOVER_FEATURE
+typedef bool (*curl_connreuse_callback)(void *userdata, curl_socket_t curlfd);
+#endif
 
 struct curl_sockaddr {
   int family;
@@ -2215,7 +2218,15 @@ typedef enum {
 
     /* set ECH configuration  */
   CURLOPT(CURLOPT_ECH, CURLOPTTYPE_STRINGPOINT, 325),
+#ifdef HTTP_HANDOVER_FEATURE
+  CURLOPT(CURLOPT_OHOS_SOCKET_BIND_NET_ID, CURLOPTTYPE_LONG, 1000),
 
+  /* Callback function for deciding url connection reuse */
+  CURLOPT(CURLOPT_CONNREUSEFUNCTION, CURLOPTTYPE_FUNCTIONPOINT, 1001),
+
+  /* Data passed to the CURLOPT_CONNREUSEFUNCTION callback */
+  CURLOPT(CURLOPT_CONNREUSEDATA, CURLOPTTYPE_CBPOINT, 1002),
+#endif
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
