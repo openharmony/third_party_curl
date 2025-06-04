@@ -164,6 +164,28 @@ static void sock_state_cb(void *data, ares_socket_t socket_fd,
   }
 }
 
+#ifdef HTTP_HANDOVER_FEATURE
+int32_t BindSocket(int32_t fd, uint32_t netId);
+static int bindohosnetid(ares_socket_t socket_fd, int type, void *data)
+{
+  struct Curl_easy *easy = (struct Curl_easy *)data;
+  if (!easy || socket_fd <= 0) {
+    return -1;
+  }
+  unsigned int netid = easy->set.socket_bind_netid;
+  if (netid > 0) {
+    int ret = BindSocket(socket_fd, netid);
+    if (ret == 0) {
+      return 0;
+    } else {
+      // try bind but failed
+      return -1;
+    }
+  }
+  return 0;
+}
+#endif
+
 /*
  * Curl_resolver_init()
  *
@@ -201,6 +223,11 @@ CURLcode Curl_resolver_init(struct Curl_easy *easy, void **resolver)
     else
       return CURLE_FAILED_INIT;
   }
+#ifdef HTTP_HANDOVER_FEATURE
+  if (easy->set.socket_bind_netid > 0) {
+    ares_set_socket_configure_callback(resolver, bindohosnetid, easy);
+  }
+#endif
   return CURLE_OK;
   /* make sure that all other returns from this function should destroy the
      ares channel before returning error! */
