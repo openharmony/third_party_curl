@@ -3189,6 +3189,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.connreuse_userp = va_arg(param, void *);
     break;
 #endif
+  case CURLOPT_MMS_RESERVED_DEFAULT_PORT:
+    data->set.mms_reserved_default_port = (0 != va_arg(param, long)) ? 1L:0L;
+    break;
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;
