@@ -1889,6 +1889,8 @@ struct UserDefined {
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
 #endif
+
+  BIT(mms_reserved_default_port);
 };
 
 #ifndef CURL_DISABLE_MIME

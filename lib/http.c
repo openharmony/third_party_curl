@@ -1842,7 +1842,11 @@ CURLcode Curl_http_target(struct Curl_easy *data,
       }
     }
     /* Extract the URL to use in the request. */
-    uc = curl_url_get(h, CURLUPART_URL, &url, CURLU_NO_DEFAULT_PORT);
+    if(data->set.mms_reserved_default_port != 1L)
+      uc = curl_url_get(h, CURLUPART_URL, &url, CURLU_NO_DEFAULT_PORT);
+    else
+      uc = curl_url_get(h, CURLUPART_URL, &url, 0);
+
     if(uc) {
       curl_url_cleanup(h);
       return CURLE_OUT_OF_MEMORY;
