@@ -652,7 +652,7 @@ size_t Curl_ftp_parselist(char *buffer, size_t size, size_t nmemb,
         switch(parser->state.UNIX.sub.time) {
         case PL_UNIX_TIME_PREPART1:
           if(c != ' ') {
-            if(ISALNUM(c)) {
+            if(ISALNUM(c) && len) {
               parser->item_offset = len -1;
               parser->item_length = 1;
               parser->state.UNIX.sub.time = PL_UNIX_TIME_PART1;
@@ -736,7 +736,7 @@ size_t Curl_ftp_parselist(char *buffer, size_t size, size_t nmemb,
       case PL_UNIX_FILENAME:
         switch(parser->state.UNIX.sub.filename) {
         case PL_UNIX_FILENAME_PRESPACE:
-          if(c != ' ') {
+          if(c != ' ' && len) {
             parser->item_offset = len - 1;
             parser->item_length = 1;
             parser->state.UNIX.sub.filename = PL_UNIX_FILENAME_NAME;
