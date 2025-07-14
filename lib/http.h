@@ -181,7 +181,10 @@ CURLcode Curl_http_auth_act(struct Curl_easy *data);
 
 bool Curl_http_exp100_is_selected(struct Curl_easy *data);
 void Curl_http_exp100_got100(struct Curl_easy *data);
-
+/* MAX_HTTP_RESP_HEADER_COUNT is the maximum number of response headers that
+   libcurl allows for a single HTTP response, including CONNECT and
+   redirects. */
+#define MAX_HTTP_RESP_HEADER_COUNT 5000
 #endif /* CURL_DISABLE_HTTP */
 
 /****************************************************************************
