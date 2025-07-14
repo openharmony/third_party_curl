@@ -974,7 +974,7 @@ size_t Curl_ftp_parselist(char *buffer, size_t size, size_t nmemb,
       case PL_WINNT_FILENAME:
         switch(parser->state.NT.sub.filename) {
         case PL_WINNT_FILENAME_PRESPACE:
-          if(c != ' ') {
+          if(c != ' ' && len) {
             parser->item_offset = len -1;
             parser->item_length = 1;
             parser->state.NT.sub.filename = PL_WINNT_FILENAME_CONTENT;
