@@ -43,18 +43,10 @@
             ],
             "inner_kits": [
                 {
-                    "name":"//third_party/curl:curl_shared",
-                    "header":{
-                        "header_files":[],
-                        "header_base":"//third_party/curl/include/curl"
-                    }
+                    "name":"//third_party/curl:curl_shared"
                 },
                 {
-                    "name":"//third_party/curl:curl_shared_http3",
-                    "header":{
-                        "header_files":[],
-                        "header_base":"//third_party/curl/include/curl"
-                    }
+                    "name":"//third_party/curl:curl_shared_http3"
                 },
                 {
                     "name":"//third_party/curl:libcurl_shared",
