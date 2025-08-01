@@ -245,6 +245,10 @@ if (defined(ohos_lite)) {
     }
   }
 
+  group("curl_shared") {}
+
+  group("curl_shared_http3") {}
+
   config("curl_config_public") {
     include_dirs = [
       "include",
