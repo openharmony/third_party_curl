@@ -24,6 +24,7 @@
  *
  ***************************************************************************/
 #include "curl_setup.h"
+#include "urldata.h"
 
 struct connectdata;
 struct ssl_config_data;
