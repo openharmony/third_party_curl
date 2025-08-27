@@ -743,6 +743,9 @@ static CURLcode easy_perform(struct Curl_easy *data, bool events)
     multi = Curl_multi_handle(1, 3, 7);
     if(!multi)
       return CURLE_OUT_OF_MEMORY;
+#if defined(USE_OPENHITLS)
+    multi->conn_cache.closure_handle->set.ssl.primary.version = data->set.ssl.primary.version;
+#endif
   }
 
   if(multi->in_callback)
