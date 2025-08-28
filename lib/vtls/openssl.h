@@ -50,6 +50,10 @@ struct ossl_ctx {
 #endif
   BIT(x509_store_setup);            /* x509 store has been set up */
   BIT(reused_session);              /* session-ID was reused for this */
+#if defined(USE_OPENHITLS)
+  void *config;     /* HITLS_Config */
+  void *ctx;        /* HITLS_Ctx */
+#endif
 };
 
 typedef CURLcode Curl_ossl_ctx_setup_cb(struct Curl_cfilter *cf,

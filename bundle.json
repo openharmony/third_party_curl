@@ -27,14 +27,16 @@
                 "nghttp2",
                 "openssl",
                 "zlib",
-                "brotli" 
+                "brotli",
+                "openhitls"
             ],
             "third_party": [
                 "nghttp2",
                 "openssl",
                 "zlib",
                 "cares",
-                "nghttp2"
+                "nghttp2",
+                "openhitls"
             ]
         },
         "build": {
