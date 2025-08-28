@@ -331,10 +331,12 @@ CURLWARNING(_curl_easy_getinfo_err_curl_off_t,
    (option) == CURLOPT_SSH_KNOWNHOSTS ||                                      \
    (option) == CURLOPT_SSH_PRIVATE_KEYFILE ||                                 \
    (option) == CURLOPT_SSH_PUBLIC_KEYFILE ||                                  \
+   (option) == CURLOPT_SSLENCCERT ||                                          \
    (option) == CURLOPT_SSLCERT ||                                             \
    (option) == CURLOPT_SSLCERTTYPE ||                                         \
    (option) == CURLOPT_SSLENGINE ||                                           \
    (option) == CURLOPT_SSLKEY ||                                              \
+   (option) == CURLOPT_SSLENCKEY ||                                              \
    (option) == CURLOPT_SSLKEYTYPE ||                                          \
    (option) == CURLOPT_SSL_CIPHER_LIST ||                                     \
    (option) == CURLOPT_TLS13_CIPHERS ||                                       \

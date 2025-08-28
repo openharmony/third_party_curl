@@ -28,6 +28,18 @@
  */
 
 #include "curl_setup.h"
+#include "openhitls.h"
+#if defined(USE_OPENHITLS)
+#define CHECK_VERSION_CALL(f) \
+do { \
+  if (data->set.ssl.primary.version >= CURL_SSLVERSION_TLCPv1_1 && data->set.ssl.primary.version < CURL_SSLVERSION_LAST) { \
+    printf("%s:%d OPENHITLS CALL\n", __func__, __LINE__); \
+    return Curl_ssl_hitls.f; \
+  } \
+} while(0)
+#else
+#define CHECK_VERSION_CALL(f)
+#endif
 
 #if defined(USE_QUICHE) || defined(USE_OPENSSL)
 
@@ -1743,7 +1755,9 @@ static int ossl_init(void)
 #endif
 
   Curl_tls_keylog_open();
-
+#if defined(USE_OPENHITLS)
+  Curl_ssl_hitls.init();
+#endif
   return 1;
 }
 
@@ -1782,12 +1796,16 @@ static void ossl_cleanup(void)
 #endif
 
   Curl_tls_keylog_close();
+#if defined(USE_OPENHITLS)
+  Curl_ssl_hitls.cleanup();
+#endif
 }
 
 /* Selects an OpenSSL crypto engine
  */
 static CURLcode ossl_set_engine(struct Curl_easy *data, const char *engine)
 {
+  CHECK_VERSION_CALL(set_engine(data, engine));
 #ifdef USE_OPENSSL_ENGINE
   ENGINE *e;
 
@@ -1833,6 +1851,7 @@ static CURLcode ossl_set_engine(struct Curl_easy *data, const char *engine)
  */
 static CURLcode ossl_set_engine_default(struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(set_engine_default(data));
 #ifdef USE_OPENSSL_ENGINE
   if(data->state.engine) {
     if(ENGINE_set_default(data->state.engine, ENGINE_METHOD_ALL) > 0) {
@@ -1855,6 +1874,7 @@ static CURLcode ossl_set_engine_default(struct Curl_easy *data)
  */
 static struct curl_slist *ossl_engines_list(struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(engines_list(data));
   struct curl_slist *list = NULL;
 #ifdef USE_OPENSSL_ENGINE
   struct curl_slist *beg;
@@ -1875,6 +1895,7 @@ static struct curl_slist *ossl_engines_list(struct Curl_easy *data)
 
 static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(close(cf, data));
   struct ssl_connect_data *connssl = cf->ctx;
   struct ossl_ctx *octx = (struct ossl_ctx *)connssl->backend;
 
@@ -1971,6 +1992,7 @@ static void ossl_close(struct Curl_cfilter *cf, struct Curl_easy *data)
 static int ossl_shutdown(struct Curl_cfilter *cf,
                          struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(shut_down(cf, data));
   int retval = 0;
   struct ssl_connect_data *connssl = cf->ctx;
   char buf[256]; /* We will use this for the OpenSSL error buffer, so it has
@@ -2085,6 +2107,7 @@ static void ossl_session_free(void *sessionid, size_t idsize)
  */
 static void ossl_close_all(struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(close_all(data));
 #ifdef USE_OPENSSL_ENGINE
   if(data->state.engine) {
     ENGINE_finish(data->state.engine);
@@ -4777,6 +4800,26 @@ static CURLcode ossl_connect_common(struct Curl_cfilter *cf,
 {
   CURLcode result = CURLE_OK;
   struct ssl_connect_data *connssl = cf->ctx;
+
+#if defined(USE_OPENHITLS)
+  if (data->set.ssl.primary.version >= CURL_SSLVERSION_TLCPv1_1 && data->set.ssl.primary.version < CURL_SSLVERSION_LAST) {
+    if (nonblocking) {
+      result = Curl_ssl_hitls.connect_nonblocking(cf, data, done);
+      printf("%s=====openhitls========connect_nonblocking====%d=====\n", __func__, result);
+    } else {
+      result = Curl_ssl_hitls.connect_blocking(cf, data);
+      printf("%s=====openhitls========connect_blocking====%d=====\n", __func__, result);
+    }
+    if (result == CURLE_OK) {
+      connssl->state = ssl_connection_complete;
+      *done = TRUE;
+    } else {
+      *done = FALSE;
+    }
+    return result;
+  }
+#endif
+
   curl_socket_t sockfd = Curl_conn_cf_get_socket(cf, data);
   int what;
 
@@ -4902,6 +4945,7 @@ static CURLcode ossl_connect(struct Curl_cfilter *cf,
 static bool ossl_data_pending(struct Curl_cfilter *cf,
                               const struct Curl_easy *data)
 {
+  CHECK_VERSION_CALL(data_pending(cf, data));
   struct ssl_connect_data *connssl = cf->ctx;
   struct ossl_ctx *octx = (struct ossl_ctx *)connssl->backend;
 
@@ -4918,6 +4962,7 @@ static ssize_t ossl_send(struct Curl_cfilter *cf,
                          size_t len,
                          CURLcode *curlcode)
 {
+  CHECK_VERSION_CALL(send_plain(cf, data, mem, len, curlcode));
   /* SSL_write() is said to return 'int' while write() and send() returns
      'size_t' */
   int err;
@@ -5011,6 +5056,7 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
                          size_t buffersize,        /* max amount to read */
                          CURLcode *curlcode)
 {
+  CHECK_VERSION_CALL(recv_plain(cf, data, buf, buffersize, curlcode));
   char error_buffer[256];
   unsigned long sslerror;
   ssize_t nread;
@@ -5194,6 +5240,7 @@ static size_t ossl_version(char *buffer, size_t size)
 static CURLcode ossl_random(struct Curl_easy *data,
                             unsigned char *entropy, size_t length)
 {
+  CHECK_VERSION_CALL(random(data, entropy, length));
   int rc;
   if(data) {
     if(ossl_seed(data)) /* Initiate the seed if not already done */
@@ -5214,6 +5261,7 @@ static CURLcode ossl_sha256sum(const unsigned char *tmp, /* input */
                                unsigned char *sha256sum /* output */,
                                size_t unused)
 {
+  //todo
   EVP_MD_CTX *mdctx;
   unsigned int len = 0;
   (void) unused;
@@ -5245,6 +5293,7 @@ static bool ossl_cert_status_request(void)
 static void *ossl_get_internals(struct ssl_connect_data *connssl,
                                 CURLINFO info)
 {
+  //todo openhitls return NULL
   /* Legacy: CURLINFO_TLS_SESSION must return an SSL_CTX pointer. */
   struct ossl_ctx *octx = (struct ossl_ctx *)connssl->backend;
   DEBUGASSERT(octx);
@@ -5255,6 +5304,7 @@ static void *ossl_get_internals(struct ssl_connect_data *connssl,
 static void ossl_free_multi_ssl_backend_data(
   struct multi_ssl_backend_data *mbackend)
 {
+  // todo
 #if defined(HAVE_SSL_X509_STORE_SHARE)
   if(mbackend->store) {
     X509_STORE_free(mbackend->store);
