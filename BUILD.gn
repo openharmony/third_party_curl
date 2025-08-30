@@ -194,8 +194,8 @@ print("Build curl is_cares_on: $is_cares_on")
 
 support_gmssl = false
 if (defined(global_parts_info) &&
-    defined(global_parts_info.third_party_openhitls) &&
-    global_parts_info.third_party_openhitls &&
+    defined(global_parts_info.thirdparty_openhitls) &&
+    global_parts_info.thirdparty_openhitls &&
     (is_linux || (is_ohos && is_standard_system)))  {
   support_gmssl = true
 }
@@ -312,6 +312,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_source_set("curl") {
+    defines = []
     configs = [ ":curl_config" ]
 
     external_deps = [ "openssl:libssl_shared" ]
@@ -473,7 +474,7 @@ if (defined(ohos_lite)) {
           "cares:c_ares",
         ]
       }
-      defines = [
+      defines += [
         "USE_ARES",
         "HAVE_BROTLI",
         "DISABLE_GETENV",
@@ -484,6 +485,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_source_set("curl_http3") {
+    defines = []
     configs = [ ":curl_config" ]
 
     if (netstack_feature_http3) {
@@ -657,7 +659,7 @@ if (defined(ohos_lite)) {
           "cares:c_ares",
         ]
       }
-      defines = [
+      defines += [
         "USE_ARES",
         "HAVE_BROTLI",
         "DISABLE_GETENV",
