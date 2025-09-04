@@ -135,7 +135,7 @@ struct OperationConfig {
   char *cipher13_list;
   char *proxy_cipher13_list;
   char *cert;
-  char *enc_cert;
+  char *encCert;
   char *proxy_cert;
   char *cert_type;
   char *proxy_cert_type;
@@ -148,7 +148,7 @@ struct OperationConfig {
   char *pinnedpubkey;
   char *proxy_pinnedpubkey;
   char *key;
-  char *enc_key;
+  char *encKey;
   char *proxy_key;
   char *key_type;
   char *proxy_key_type;
