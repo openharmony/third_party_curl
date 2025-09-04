@@ -238,7 +238,7 @@ static bool clone_ssl_primary_config(struct ssl_primary_config *source,
   CLONE_STRING(CAfile);
   CLONE_STRING(issuercert);
   CLONE_STRING(clientcert);
-  CLONE_STRING(clientcert_enc);
+  CLONE_STRING(clientcertEnc);
   CLONE_STRING(cipher_list);
   CLONE_STRING(cipher_list13);
   CLONE_STRING(pinned_key);
@@ -258,7 +258,7 @@ static void Curl_free_primary_ssl_config(struct ssl_primary_config *sslc)
   Curl_safefree(sslc->CAfile);
   Curl_safefree(sslc->issuercert);
   Curl_safefree(sslc->clientcert);
-  Curl_safefree(sslc->clientcert_enc);
+  Curl_safefree(sslc->clientcertEnc);
   Curl_safefree(sslc->cipher_list);
   Curl_safefree(sslc->cipher_list13);
   Curl_safefree(sslc->pinned_key);
@@ -295,11 +295,11 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
 #endif
   data->set.ssl.cert_type = data->set.str[STRING_CERT_TYPE];
   data->set.ssl.key = data->set.str[STRING_KEY];
-  data->set.ssl.enc_key = data->set.str[STRING_ENCKEY];
+  data->set.ssl.encKey = data->set.str[STRING_ENCKEY];
   data->set.ssl.key_type = data->set.str[STRING_KEY_TYPE];
   data->set.ssl.key_passwd = data->set.str[STRING_KEY_PASSWD];
   data->set.ssl.primary.clientcert = data->set.str[STRING_CERT];
-  data->set.ssl.primary.clientcert_enc = data->set.str[STRING_ENCCERT];
+  data->set.ssl.primary.clientcertEnc = data->set.str[STRING_ENCCERT];
   data->set.ssl.key_blob = data->set.blobs[BLOB_KEY];
 
 #ifndef CURL_DISABLE_PROXY
@@ -1367,8 +1367,6 @@ const struct Curl_ssl *Curl_ssl =
   &Curl_ssl_schannel;
 #elif defined(USE_BEARSSL)
   &Curl_ssl_bearssl;
-#elif defined(USE_OPENHITLS)
-  &Curl_ssl_hitls;
 #else
 #error "Missing struct Curl_ssl for selected SSL backend"
 #endif
@@ -1397,9 +1395,6 @@ static const struct Curl_ssl *available_backends[] = {
 #endif
 #if defined(USE_RUSTLS)
   &Curl_ssl_rustls,
-#endif
-#if defined(USE_OPENHITLS)
-  &Curl_ssl_hitls,
 #endif
   NULL
 };

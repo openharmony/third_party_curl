@@ -609,7 +609,7 @@ static const struct LongShort aliases[]= {
   {"tlsv1.1",                    ARG_NONE, ' ', C_TLSV1_1},
   {"tlsv1.2",                    ARG_NONE, ' ', C_TLSV1_2},
   {"tlsv1.3",                    ARG_NONE, ' ', C_TLSV1_3},
-  {"tlcpv1.1",                    ARG_NONE, ' ', C_TLCPV1_1},
+  {"tlcpv1.1",                   ARG_NONE, ' ', C_TLCPV1_1},
   {"tr-encoding",                ARG_BOOL, ' ', C_TR_ENCODING},
   {"trace",                      ARG_FILE, ' ', C_TRACE},
   {"trace-ascii",                ARG_FILE, ' ', C_TRACE_ASCII},
@@ -2062,10 +2062,10 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       break;
     case C_ENC_CERT: /* --enc-cert */
       cleanarg(clearthis);
-      GetFileAndPassword(nextarg, &config->enc_cert, &config->key_passwd);
+      GetFileAndPassword(nextarg, &config->encCert, &config->key_passwd);
       break;
     case C_ENC_KEY: /* --enc-key */
-      err = getstr(&config->enc_key, nextarg, DENY_BLANK);
+      err = getstr(&config->encKey, nextarg, DENY_BLANK);
       break;
     case C_CACERT: /* --cacert */
       err = getstr(&config->cacert, nextarg, DENY_BLANK);
