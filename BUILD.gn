@@ -192,6 +192,15 @@ is_cares_on = !is_mingw && !is_mac && current_os != "ios" && host_os != "mac" &&
               current_os != "mac" && current_os != "android"
 print("Build curl is_cares_on: $is_cares_on")
 
+support_gmssl = false
+if (defined(global_parts_info) &&
+    defined(global_parts_info.thirdparty_openhitls) &&
+    global_parts_info.thirdparty_openhitls &&
+    (is_linux || (is_ohos && is_standard_system)))  {
+  support_gmssl = true
+}
+print("Build curl support_gmssl: $support_gmssl")
+
 if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
 
@@ -303,6 +312,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_source_set("curl") {
+    defines = []
     configs = [ ":curl_config" ]
 
     external_deps = [ "openssl:libssl_shared" ]
@@ -434,6 +444,19 @@ if (defined(ohos_lite)) {
         "openssl:libssl_shared",
         "zlib:shared_libz",
       ]
+
+      if (support_gmssl) {
+        external_deps += [
+          "openhitls:openhitls_bsl",
+          "openhitls:openhitls_crypto",
+          "openhitls:openhitls_pki",
+          "openhitls:openhitls_tls",
+          "openhitls:openhitls_auth",
+        ]
+        defines += [
+          "USE_OPENHITLS",
+        ]
+      }
     }
 
     if (current_os != "ios" && is_cares_on) {
@@ -448,7 +471,7 @@ if (defined(ohos_lite)) {
           "cares:c_ares",
         ]
       }
-      defines = [
+      defines += [
         "USE_ARES",
         "HAVE_BROTLI",
         "DISABLE_GETENV",
@@ -459,6 +482,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_source_set("curl_http3") {
+    defines = []
     configs = [ ":curl_config" ]
 
     if (netstack_feature_http3) {
@@ -596,6 +620,18 @@ if (defined(ohos_lite)) {
         "zlib:shared_libz",
       ]
 
+      if (support_gmssl) {
+        external_deps += [
+          "openhitls:openhitls_bsl",
+          "openhitls:openhitls_crypto",
+          "openhitls:openhitls_pki",
+          "openhitls:openhitls_tls",
+          "openhitls:openhitls_auth",
+        ]
+        defines += [
+          "USE_OPENHITLS",
+        ]
+      }
       if (netstack_feature_http3) {
         deps += [ "//vendor/open_source/quiche/quiche:lib" ]
       } else {
@@ -617,7 +653,7 @@ if (defined(ohos_lite)) {
           "cares:c_ares",
         ]
       }
-      defines = [
+      defines += [
         "USE_ARES",
         "HAVE_BROTLI",
         "DISABLE_GETENV",

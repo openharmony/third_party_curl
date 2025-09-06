@@ -296,6 +296,7 @@ struct ssl_primary_config {
   char *CAfile;          /* certificate to verify peer against */
   char *issuercert;      /* optional issuer certificate filename */
   char *clientcert;
+  char *clientcertEnc;
   char *cipher_list;     /* list of ciphers to use */
   char *cipher_list13;   /* list of TLS 1.3 cipher suites to use */
   char *pinned_key;
@@ -324,6 +325,7 @@ struct ssl_config_data {
   void *fsslctxp;        /* parameter for call back */
   char *cert_type; /* format for certificate (default: PEM)*/
   char *key; /* private key file name */
+  char *encKey; /* encryption private key file name */
   struct curl_blob *key_blob;
   char *key_type; /* format for private key (default: PEM) */
   char *key_passwd; /* plain text private key password */
@@ -1434,8 +1436,10 @@ struct Curl_multi;    /* declared in multihandle.c */
 
 enum dupstring {
   STRING_CERT,            /* client certificate file name */
+  STRING_ENCCERT,            /* client encrypt certificate file name */
   STRING_CERT_TYPE,       /* format for certificate (default: PEM)*/
   STRING_KEY,             /* private key file name */
+  STRING_ENCKEY,             /* private key file name */
   STRING_KEY_PASSWD,      /* plain text private key password */
   STRING_KEY_TYPE,        /* format for private key (default: PEM) */
   STRING_SSL_CAPATH,      /* CA directory name (doesn't work on windows) */

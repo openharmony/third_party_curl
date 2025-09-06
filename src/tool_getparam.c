@@ -87,6 +87,8 @@ typedef enum {
   C_CACERT,
   C_CAPATH,
   C_CERT,
+  C_ENC_CERT,
+  C_ENC_KEY,
   C_CERT_STATUS,
   C_CERT_TYPE,
   C_CIPHERS,
@@ -322,6 +324,7 @@ typedef enum {
   C_TLSV1_1,
   C_TLSV1_2,
   C_TLSV1_3,
+  C_TLCPV1_1,
   C_TR_ENCODING,
   C_TRACE,
   C_TRACE_ASCII,
@@ -407,6 +410,14 @@ static const struct LongShort aliases[]= {
   {"dump-header",                ARG_FILE, 'D', C_DUMP_HEADER},
   {"ech",                        ARG_STRG, ' ', C_ECH},
   {"egd-file",                   ARG_STRG, ' ', C_EGD_FILE},
+    {"enc-cert",
+        ARG_FILE,
+        ' ',
+        C_ENC_CERT},
+    {"enc-key",
+        ARG_FILE,
+        ' ',
+        C_ENC_KEY},
   {"engine",                     ARG_STRG, ' ', C_ENGINE},
   {"eprt",                       ARG_BOOL, ' ', C_EPRT},
   {"epsv",                       ARG_BOOL, ' ', C_EPSV},
@@ -604,6 +615,7 @@ static const struct LongShort aliases[]= {
   {"tlsv1.1",                    ARG_NONE, ' ', C_TLSV1_1},
   {"tlsv1.2",                    ARG_NONE, ' ', C_TLSV1_2},
   {"tlsv1.3",                    ARG_NONE, ' ', C_TLSV1_3},
+    {"tlcpv1.1",                    ARG_NONE, ' ', C_TLCPV1_1},
   {"tr-encoding",                ARG_BOOL, ' ', C_TR_ENCODING},
   {"trace",                      ARG_FILE, ' ', C_TRACE},
   {"trace-ascii",                ARG_FILE, ' ', C_TRACE_ASCII},
@@ -1953,6 +1965,9 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
     case C_TLSV1_3: /* --tlsv1.3 */
       config->ssl_version = CURL_SSLVERSION_TLSv1_3;
       break;
+    case C_TLCPV1_1:
+      config->ssl_version = CURL_SSLVERSION_TLCPv1_1;
+      break;
     case C_TLS13_CIPHERS: /* --tls13-ciphers */
       err = getstr(&config->cipher13_list, nextarg, DENY_BLANK);
       break;
@@ -2050,6 +2065,13 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
     case C_CERT: /* --cert */
       cleanarg(clearthis);
       GetFileAndPassword(nextarg, &config->cert, &config->key_passwd);
+      break;
+    case C_ENC_CERT: /* --enc-cert */
+      cleanarg(clearthis);
+      GetFileAndPassword(nextarg, &config->encCert, &config->key_passwd);
+      break;
+    case C_ENC_KEY: /* --enc-key */
+      err = getstr(&config->encKey, nextarg, DENY_BLANK);
       break;
     case C_CACERT: /* --cacert */
       err = getstr(&config->cacert, nextarg, DENY_BLANK);
