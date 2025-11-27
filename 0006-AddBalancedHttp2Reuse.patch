@@ -1,0 +1,105 @@
+From 5bb0c94c7e6767213faea1706b430bf65562dd96 Mon Sep 17 00:00:00 2001
+From: c30031068 <chenchao239@huawei.com>
+Date: Tue, 25 Nov 2025 11:45:16 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:AR20251021709939=20Description:Support?=
+ =?UTF-8?q?=20for=20HTTP=20pipelining=20is=20configurable.=20Team:HarmonyO?=
+ =?UTF-8?q?S=20Feature=20or=20Bugfix:Feature=20Binary=20Source:No=20Privat?=
+ =?UTF-8?q?eCode(Yes/No):No=20from=EF=BC=9AHarmonyOS=20API=20Designer=20Pl?=
+ =?UTF-8?q?atform?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I63d51203221866f18c6309b596044933c04a839e
+---
+ include/curl/curl.h |  4 ++++
+ lib/setopt.c        |  4 ++++
+ lib/url.c           | 18 ++++++++++++++++--
+ lib/urldata.h       |  4 ++++
+ 4 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index 4efaa5f11..24781a1d3 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -2263,6 +2263,10 @@ typedef enum {
+   
+   CURLOPT(CURLOPT_MMS_RESERVED_DEFAULT_PORT, CURLOPTTYPE_LONG, 1003),
+ 
++#ifdef USE_ARES
++  CURLOPT(CURLOPT_BALANCED_CONNECTION, CURLOPTTYPE_LONG, 1004),
++#endif
++
+   CURLOPT_LASTENTRY /* the last unused */
+ } CURLoption;
+ 
+diff --git a/lib/setopt.c b/lib/setopt.c
+index 6a1ef04e9..3b7ad1a53 100644
+--- a/lib/setopt.c
++++ b/lib/setopt.c
+@@ -2924,6 +2924,10 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
+       return result;
+     result = Curl_set_dns_local_ip6(data, data->set.str[STRING_DNS_LOCAL_IP6]);
+     break;
++  case CURLOPT_BALANCED_CONNECTION:
++    data->set.http_balanced_connection = (0 != va_arg(param, long));
++    break;
++
+ #endif
+   case CURLOPT_TCP_KEEPALIVE:
+     data->set.tcp_keepalive = (0 != va_arg(param, long));
+diff --git a/lib/url.c b/lib/url.c
+index e61348b03..f5dc22f79 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -971,6 +971,7 @@ ConnectionExists(struct Curl_easy *data,
+   bool canmultiplex = FALSE;
+   struct connectbundle *bundle;
+   struct Curl_llist_element *curr;
++  uint min_inuse = UINT_MAX;
+ 
+ #ifdef USE_NTLM
+   bool wantNTLMhttp = ((data->state.authhost.want & CURLAUTH_NTLM) &&
+@@ -1354,9 +1355,22 @@ ConnectionExists(struct Curl_easy *data,
+       continue;
+     }
+ #endif
++
++#ifdef USE_ARES
+     /* We have found a connection. Let's stop searching. */
+-    chosen = check;
+-    break;
++    if(data->set.http_balanced_connection) {
++      if(CONN_INUSE(check) < min_inuse) {
++        chosen = check;
++        min_inuse = CONN_INUSE(check);
++      }
++    } else {
++#endif
++      chosen = check;
++      break;
++#ifdef USE_ARES
++    }
++#endif
++
+   } /* loop over connection bundle */
+ 
+   if(chosen) {
+diff --git a/lib/urldata.h b/lib/urldata.h
+index b6702a585..02216c47f 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -1894,6 +1894,10 @@ struct UserDefined {
+   int tls_ech;      /* TLS ECH configuration  */
+ #endif
+ 
++#ifdef USE_ARES
++  BIT(http_balanced_connection); /* balanced HTTP connection */
++#endif
++
+   BIT(mms_reserved_default_port);
+ };
+ 
+-- 
+2.45.2.huawei.10
+
