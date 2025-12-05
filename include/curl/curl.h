@@ -2220,6 +2220,9 @@ typedef enum {
     /* set ECH configuration  */
   CURLOPT(CURLOPT_ECH, CURLOPTTYPE_STRINGPOINT, 325),
 
+  /* SNI domain name to include the SNI field during the TLS connection process */
+  CURLOPT(CURLOPT_SNI_HOSTNAME, CURLOPTTYPE_STRINGPOINT, 1006),
+
 #ifdef HTTP_HANDOVER_FEATURE
   CURLOPT(CURLOPT_OHOS_SOCKET_BIND_NET_ID, CURLOPTTYPE_LONG, 1000),
 

@@ -1683,6 +1683,23 @@ static CURLcode ssl_cf_connect(struct Curl_cfilter *cf,
   result = Curl_ssl_peer_init(&connssl->peer, cf, TRNSPRT_TCP);
   if(result)
     goto out;
+  if(data->set.str[STRING_SNIHOSTNAME]) {
+    if(connssl->peer.sni) {
+      curl_free(connssl->peer.sni);
+    }
+    size_t len = strlen(data->set.str[STRING_SNIHOSTNAME]);
+    if(len && (data->set.str[STRING_SNIHOSTNAME][len-1] == '.'))
+      len--;
+    connssl->peer.sni = calloc(1, len + 1);
+    if(!connssl->peer.sni) {
+      Curl_ssl_peer_cleanup(&connssl->peer);
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    } else {
+      Curl_strntolower(connssl->peer.sni, data->set.str[STRING_SNIHOSTNAME], len);
+      connssl->peer.sni[len] = 0;
+    }
+  }
 
   if(blocking) {
     result = ssl_connect(cf, data);

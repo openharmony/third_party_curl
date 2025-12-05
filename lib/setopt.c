@@ -3206,6 +3206,17 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_MMS_RESERVED_DEFAULT_PORT:
     data->set.mms_reserved_default_port = (0 != va_arg(param, long)) ? 1L:0L;
     break;
+  case CURLOPT_SNI_HOSTNAME:
+    argptr = va_arg(param, char *);
+    size_t sniLen = strlen(argptr);
+    if(sniLen && argptr[sniLen-1] == '.')
+        sniLen--;
+    if(sniLen >= USHRT_MAX) {
+      result = CURLE_BAD_FUNCTION_ARGUMENT;
+      break;
+    }
+    result = Curl_setstropt(&data->set.str[STRING_SNIHOSTNAME], argptr);
+    break;
   default:
     /* unknown tag and its companion, just ignore: */
     result = CURLE_UNKNOWN_OPTION;
