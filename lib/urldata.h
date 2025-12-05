@@ -1566,6 +1566,8 @@ enum dupstring {
 
   STRING_COPYPOSTFIELDS,  /* if POST, set the fields' values here */
 
+  STRING_SNIHOSTNAME,  /* CURLOPT_SNI_HOST_NAME */
+
   STRING_LAST /* not used, just an end-of-list marker */
 };
 
@@ -2010,6 +2012,7 @@ struct Curl_easy {
   long last_send_errno;
   long ssl_connect_errno;
   long tcp_connect_errno;
+  const char *sni_hostname;
 };
 
 #define LIBCURL_NAME "libcurl"
