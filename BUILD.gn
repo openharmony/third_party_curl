@@ -639,7 +639,7 @@ if (defined(ohos_lite)) {
         ]
       }
       if (netstack_feature_http3) {
-        deps += [ "//vendor/open_source/quiche/quiche:lib" ]
+        libs = [ "//vendor/huawei/binary/artifacts/communication/quiche/lib/libquiche.a" ]
       } else {
         external_deps += [
           "openssl:libcrypto_shared",
