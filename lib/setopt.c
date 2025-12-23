@@ -3208,6 +3208,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     break;
   case CURLOPT_SNI_HOSTNAME:
     argptr = va_arg(param, char *);
+    if (!argptr) {
+      break;
+    }
     size_t sniLen = strlen(argptr);
     if(sniLen && argptr[sniLen-1] == '.')
         sniLen--;
