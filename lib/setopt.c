@@ -3212,9 +3212,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
       break;
     }
     size_t sniLen = strlen(argptr);
-    if(sniLen && argptr[sniLen-1] == '.')
+    if (sniLen && argptr[sniLen-1] == '.')
         sniLen--;
-    if(sniLen >= USHRT_MAX) {
+    if (sniLen >= USHRT_MAX) {
       result = CURLE_BAD_FUNCTION_ARGUMENT;
       break;
     }
