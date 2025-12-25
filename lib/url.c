@@ -1468,7 +1468,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->lastused = conn->created;
   conn->gssapi_delegation = data->set.gssapi_delegation;
 #ifdef HTTP_HANDOVER_FEATURE
-  conn->socket_bind_netid = 0; /* OHOS default net id*/
+  conn->socket_bind_netid = data->set.socket_bind_netid; 
 #endif
   return conn;
 error:

@@ -98,6 +98,7 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+ares_status_t  ares_init_by_sysconfig(ares_channel_t *channel);
 struct thread_data {
   int num_pending; /* number of outstanding c-ares requests */
   struct Curl_addrinfo *temp_ai; /* intermediary result while fetching c-ares
@@ -982,4 +983,30 @@ CURLcode Curl_set_dns_local_ip6(struct Curl_easy *data,
   return CURLE_NOT_BUILT_IN;
 #endif
 }
+
+CURLcode Curl_set_dns_netid(struct Curl_easy *data,
+                                int32_t netId)
+{
+  if(!data)
+    return CURLE_BAD_FUNCTION_ARGUMENT;
+#ifdef HTTP_HANDOVER_FEATURE
+#define MAX_NET_ID (0xFFFF - 0x400)
+  if(netId > MAX_NET_ID)
+    return CURLE_NOT_BUILT_IN;
+
+  ares_set_dns_netid((ares_channel)data->state.async.resolver, netId);
+  ares_status_t   status = ARES_SUCCESS;
+  status = ares_init_by_sysconfig((ares_channel)data->state.async.resolver);
+  if (status != ARES_SUCCESS) {
+    return CURLE_NOT_BUILT_IN;
+  }
+
+  return CURLE_OK;
+#else /* c-ares version too old! */
+  (void)data;
+  (void)netId;
+  return CURLE_NOT_BUILT_IN;
+#endif
+}
+
 #endif /* CURLRES_ARES */
