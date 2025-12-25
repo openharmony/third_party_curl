@@ -995,4 +995,11 @@ CURLcode Curl_set_dns_local_ip6(struct Curl_easy *data,
   return CURLE_NOT_BUILT_IN;
 }
 
+CURLcode Curl_set_dns_netid(struct Curl_easy *data,
+                                int32_t netId)
+                                {
+  (void)data;
+  (void)netId;
+  return CURLE_NOT_BUILT_IN;
+}
 #endif /* CURLRES_THREADED */
