@@ -248,6 +248,8 @@ CURLcode Curl_set_dns_local_ip4(struct Curl_easy *data,
 CURLcode Curl_set_dns_local_ip6(struct Curl_easy *data,
                                 const char *local_ip6);
 
+CURLcode Curl_set_dns_netid(struct Curl_easy *data,
+                            int32_t netId);
 /*
  * Clean off entries from the cache
  */
