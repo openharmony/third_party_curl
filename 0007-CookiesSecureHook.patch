@@ -1,6 +1,6 @@
-From f6753ddf9dbf4795e78f3b6d7020de92cd895df6 Mon Sep 17 00:00:00 2001
+From 7cb982f99e49b8707d888bbcbb33664d8f4dea19 Mon Sep 17 00:00:00 2001
 From: w00804699 <wangzeyu43@huawei.com>
-Date: Mon, 29 Dec 2025 09:38:30 +0800
+Date: Mon, 29 Dec 2025 21:22:24 +0800
 Subject: [PATCH] TicketNo:AR20251021709939 Description: use huks to encrypt
  cookie files Team:HarmonyOS Feature or Bugfix:Feature Binary Source:No
  PrivateCode(Yes/No):No
@@ -17,28 +17,28 @@ Change-Id: Ieb938c98dd7f24d84928286aec4e41365c2bb111
  7 files changed, 128 insertions(+), 4 deletions(-)
 
 diff --git a/include/curl/curl.h b/include/curl/curl.h
-index 4198c7a53..9fd3a4b1a 100644
+index 4198c7a53..ba3a649c7 100644
 --- a/include/curl/curl.h
 +++ b/include/curl/curl.h
 @@ -1131,6 +1131,16 @@ typedef CURLSTScode (*curl_hstswrite_callback)(CURL *easy,
  typedef enum {
  #ifdef USE_ARES
    CURLOPT(CURLOPT_BALANCED_CONNECTION, CURLOPTTYPE_LONG, 2000),
-+  CURLOPT(CURLOPT_ENABLE_COOKIES_USER_DEFINED_READER_WRITER, CURLOPTTYPE_LONG, 2001),
++  CURLOPT(CURLOPT_ENABLE_COOKIE_VALUE_CHANGE, CURLOPTTYPE_LONG, 2001),
 +  CURLOPT(CURLOPT_COOKIES_LINE_MAX_SIZE_MULTIPLIER, CURLOPTTYPE_LONG, 2002),
 +  CURLOPT(CURLOPT_COOKIES_ENCODER, CURLOPTTYPE_FUNCTIONPOINT, 2003),
-+  CURLOPT(CURLOPT_COOKIES_ENCODER_USER_PTR, CURLOPTTYPE_CBPOINT, 2004),
++  CURLOPT(CURLOPT_COOKIES_ENCODER_DATA, CURLOPTTYPE_CBPOINT, 2004),
 +  CURLOPT(CURLOPT_COOKIES_DECODER, CURLOPTTYPE_FUNCTIONPOINT, 2005),
-+  CURLOPT(CURLOPT_COOKIES_DECODER_USER_PTR, CURLOPTTYPE_CBPOINT, 2006),
++  CURLOPT(CURLOPT_COOKIES_DECODER_DATA, CURLOPTTYPE_CBPOINT, 2006),
 +  CURLOPT(CURLOPT_COOKIES_ENCODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2007),
-+  CURLOPT(CURLOPT_COOKIES_ENCODER_FREE_USER_PTR, CURLOPTTYPE_CBPOINT, 2008),
++  CURLOPT(CURLOPT_COOKIES_ENCODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2008),
 +  CURLOPT(CURLOPT_COOKIES_DECODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2009),
-+  CURLOPT(CURLOPT_COOKIES_DECODER_FREE_USER_PTR, CURLOPTTYPE_CBPOINT, 2010),
++  CURLOPT(CURLOPT_COOKIES_DECODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2010),
  #endif
  
    /* This is the FILE * or void * the regular output should be written to. */
 diff --git a/lib/cookie.c b/lib/cookie.c
-index 6dc9142ed..22e8a651a 100644
+index 6dc9142ed..297acf30e 100644
 --- a/lib/cookie.c
 +++ b/lib/cookie.c
 @@ -1245,9 +1245,25 @@ struct CookieInfo *Curl_cookie_init(struct Curl_easy *data,
@@ -47,7 +47,7 @@ index 6dc9142ed..22e8a651a 100644
        struct dynbuf buf;
 -      Curl_dyn_init(&buf, MAX_COOKIE_LINE);
 +#ifdef USE_ARES
-+      if (data->set.enable_cookies_user_defined_reader_writer) {
++      if (data->set.enable_cookie_value_change) {
 +        Curl_dyn_init(&buf, MAX_COOKIE_LINE * data->set.cookies_line_max_size_multiplier);
 +      } else {
 +#endif
@@ -58,8 +58,8 @@ index 6dc9142ed..22e8a651a 100644
        while(Curl_get_line(&buf, fp)) {
          char *lineptr = Curl_dyn_ptr(&buf);
 +#ifdef USE_ARES
-+        if (data->set.enable_cookies_user_defined_reader_writer && data->set.cookies_decode) {
-+          lineptr = data->set.cookies_decode(lineptr, data->set.cookies_decode_usr_ptr);
++        if (data->set.enable_cookie_value_change && data->set.cookies_decode) {
++          lineptr = data->set.cookies_decode(lineptr, data->set.cookies_decode_data);
 +        }
 +        if (!lineptr) {
 +            continue;
@@ -73,8 +73,8 @@ index 6dc9142ed..22e8a651a 100644
  
          Curl_cookie_add(data, c, headerline, TRUE, lineptr, NULL, NULL, TRUE);
 +#ifdef USE_ARES
-+        if (data->set.enable_cookies_user_defined_reader_writer && data->set.cookies_decode_free) {
-+          data->set.cookies_decode_free(lineptr, data->set.cookies_decode_free_usr_ptr);
++        if (data->set.enable_cookie_value_change && data->set.cookies_decode_free) {
++          data->set.cookies_decode_free(lineptr, data->set.cookies_decode_free_data);
 +        }
 +#endif
        }
@@ -100,9 +100,9 @@ index 6dc9142ed..22e8a651a 100644
      for(i = 0; i < nvalid; i++) {
        char *format_ptr = get_netscape_format(array[i]);
 +#ifdef USE_ARES
-+      if (data->set.enable_cookies_user_defined_reader_writer && data->set.cookies_encode) {
++      if (data->set.enable_cookie_value_change && data->set.cookies_encode) {
 +        char *origin_ptr = format_ptr;
-+        format_ptr = data->set.cookies_encode(format_ptr, data->set.cookies_encode_usr_ptr);
++        format_ptr = data->set.cookies_encode(format_ptr, data->set.cookies_encode_data);
 +        free(origin_ptr);
 +      }
 +#endif
@@ -114,8 +114,8 @@ index 6dc9142ed..22e8a651a 100644
        fprintf(out, "%s\n", format_ptr);
 -      free(format_ptr);
 +#ifdef USE_ARES
-+      if (data->set.enable_cookies_user_defined_reader_writer && data->set.cookies_encode_free) {
-+        data->set.cookies_encode_free(format_ptr, data->set.cookies_encode_free_usr_ptr);
++      if (data->set.enable_cookie_value_change && data->set.cookies_encode_free) {
++        data->set.cookies_encode_free(format_ptr, data->set.cookies_encode_free_data);
 +      } else {
 +#endif
 +        free(format_ptr);
@@ -144,7 +144,7 @@ index 012dd892c..2c64ba5e7 100644
    /* linked list of cookies we know of */
    struct Cookie *cookies[COOKIE_HASH_SIZE];
 diff --git a/lib/easy.c b/lib/easy.c
-index e0a9f22a8..d95ae6e30 100644
+index e0a9f22a8..171846a20 100644
 --- a/lib/easy.c
 +++ b/lib/easy.c
 @@ -952,6 +952,17 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
@@ -152,21 +152,21 @@ index e0a9f22a8..d95ae6e30 100644
    outcurl->dns_status = CURL_DNS_STATUS_INIT;
    outcurl->is_dns_from_netsys_cache = 0;
 +
-+  outcurl->set.enable_cookies_user_defined_reader_writer = 0;
++  outcurl->set.enable_cookie_value_change = 0;
 +  outcurl->set.cookies_line_max_size_multiplier = 1;
 +  outcurl->set.cookies_encode = NULL;
-+  outcurl->set.cookies_encode_usr_ptr = NULL;
++  outcurl->set.cookies_encode_data = NULL;
 +  outcurl->set.cookies_decode = NULL;
-+  outcurl->set.cookies_decode_usr_ptr = NULL;
++  outcurl->set.cookies_decode_data = NULL;
 +  outcurl->set.cookies_encode_free = NULL;
-+  outcurl->set.cookies_encode_free_usr_ptr = NULL;
++  outcurl->set.cookies_encode_free_data = NULL;
 +  outcurl->set.cookies_decode_free = NULL;
-+  outcurl->set.cookies_decode_free_usr_ptr = NULL;
++  outcurl->set.cookies_decode_free_data = NULL;
  #endif
  
    /* copy all userdefined values */
 diff --git a/lib/setopt.c b/lib/setopt.c
-index 3b7ad1a53..d0548abe7 100644
+index 3b7ad1a53..32249610f 100644
 --- a/lib/setopt.c
 +++ b/lib/setopt.c
 @@ -197,6 +197,42 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
@@ -174,8 +174,8 @@ index 3b7ad1a53..d0548abe7 100644
  
    switch(option) {
 +#ifdef USE_ARES
-+  case CURLOPT_ENABLE_COOKIES_USER_DEFINED_READER_WRITER:
-+    data->set.enable_cookies_user_defined_reader_writer = (0 != va_arg(param, long));
++  case CURLOPT_ENABLE_COOKIE_VALUE_CHANGE:
++    data->set.enable_cookie_value_change = (0 != va_arg(param, long));
 +    break;
 +  case CURLOPT_COOKIES_LINE_MAX_SIZE_MULTIPLIER:
 +    arg = va_arg(param, long);
@@ -186,26 +186,26 @@ index 3b7ad1a53..d0548abe7 100644
 +  case CURLOPT_COOKIES_ENCODER:
 +    data->set.cookies_encode = va_arg(param, cookies_encode_function);
 +    break;
-+  case CURLOPT_COOKIES_ENCODER_USER_PTR:
-+    data->set.cookies_encode_usr_ptr = va_arg(param, void *);
++  case CURLOPT_COOKIES_ENCODER_DATA:
++    data->set.cookies_encode_data = va_arg(param, void *);
 +    break;
 +  case CURLOPT_COOKIES_DECODER:
 +    data->set.cookies_decode = va_arg(param, cookies_decode_function);
 +    break;
-+  case CURLOPT_COOKIES_DECODER_USER_PTR:
-+    data->set.cookies_decode_usr_ptr = va_arg(param, void *);
++  case CURLOPT_COOKIES_DECODER_DATA:
++    data->set.cookies_decode_data = va_arg(param, void *);
 +    break;
 +  case CURLOPT_COOKIES_ENCODER_FREE:
 +    data->set.cookies_encode_free = va_arg(param, cookies_encode_free_function);
 +    break;
-+  case CURLOPT_COOKIES_ENCODER_FREE_USER_PTR:
-+    data->set.cookies_encode_free_usr_ptr = va_arg(param, void *);
++  case CURLOPT_COOKIES_ENCODER_FREE_DATA:
++    data->set.cookies_encode_free_data = va_arg(param, void *);
 +    break;
 +  case CURLOPT_COOKIES_DECODER_FREE:
 +    data->set.cookies_decode_free = va_arg(param, cookies_decode_free_function);
 +    break;
-+  case CURLOPT_COOKIES_DECODER_FREE_USER_PTR:
-+    data->set.cookies_decode_free_usr_ptr = va_arg(param, void *);
++  case CURLOPT_COOKIES_DECODER_FREE_DATA:
++    data->set.cookies_decode_free_data = va_arg(param, void *);
 +    break;
 +#endif
 +
@@ -213,7 +213,7 @@ index 3b7ad1a53..d0548abe7 100644
  #ifdef USE_ARES
      {
 diff --git a/lib/url.c b/lib/url.c
-index f406decab..17e4dbd9c 100644
+index f406decab..8345672f3 100644
 --- a/lib/url.c
 +++ b/lib/url.c
 @@ -562,6 +562,17 @@ CURLcode Curl_open(struct Curl_easy **curl)
@@ -221,21 +221,21 @@ index f406decab..17e4dbd9c 100644
    data->dns_status = CURL_DNS_STATUS_INIT;
    data->is_dns_from_netsys_cache = 0;
 +
-+  data->set.enable_cookies_user_defined_reader_writer = 0;
++  data->set.enable_cookie_value_change = 0;
 +  data->set.cookies_line_max_size_multiplier = 1;
 +  data->set.cookies_encode = NULL;
-+  data->set.cookies_encode_usr_ptr = NULL;
++  data->set.cookies_encode_data = NULL;
 +  data->set.cookies_decode = NULL;
-+  data->set.cookies_decode_usr_ptr = NULL;
++  data->set.cookies_decode_data = NULL;
 +  data->set.cookies_encode_free = NULL;
-+  data->set.cookies_encode_free_usr_ptr = NULL;
++  data->set.cookies_encode_free_data = NULL;
 +  data->set.cookies_decode_free = NULL;
-+  data->set.cookies_decode_free_usr_ptr = NULL;
++  data->set.cookies_decode_free_data = NULL;
  #endif
  
    Curl_req_init(&data->req);
 diff --git a/lib/urldata.h b/lib/urldata.h
-index 02216c47f..ca78b8736 100644
+index 02216c47f..71ecc74f3 100644
 --- a/lib/urldata.h
 +++ b/lib/urldata.h
 @@ -1612,6 +1612,18 @@ struct UserDefined {
@@ -245,13 +245,13 @@ index 02216c47f..ca78b8736 100644
 +#ifdef USE_ARES
 +  long cookies_line_max_size_multiplier;
 +  cookies_encode_function cookies_encode;
-+  void *cookies_encode_usr_ptr;
++  void *cookies_encode_data;
 +  cookies_decode_function cookies_decode;
-+  void *cookies_decode_usr_ptr;
++  void *cookies_decode_data;
 +  cookies_encode_free_function cookies_encode_free;
-+  void *cookies_encode_free_usr_ptr;
++  void *cookies_encode_free_data;
 +  cookies_decode_free_function cookies_decode_free;
-+  void *cookies_decode_free_usr_ptr;
++  void *cookies_decode_free_data;
 +#endif
 +
    curl_write_callback fwrite_func;   /* function that stores the output */
@@ -261,7 +261,7 @@ index 02216c47f..ca78b8736 100644
  
  #ifdef USE_ARES
    BIT(http_balanced_connection); /* balanced HTTP connection */
-+  BIT(enable_cookies_user_defined_reader_writer); /* user defined cookie file */
++  BIT(enable_cookie_value_change); /* user defined cookie file */
  #endif
  
    BIT(mms_reserved_default_port);
