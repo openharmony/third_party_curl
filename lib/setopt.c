@@ -191,6 +191,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   long arg;
   unsigned long uarg;
   curl_off_t bigsize;
+  size_t sniLen;
 
   switch(option) {
   case CURLOPT_DNS_CACHE_TIMEOUT:
@@ -3211,7 +3212,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     if (!argptr) {
       break;
     }
-    size_t sniLen = strlen(argptr);
+    sniLen = strlen(argptr);
     if (sniLen && argptr[sniLen-1] == '.')
         sniLen--;
     if (sniLen >= USHRT_MAX) {
