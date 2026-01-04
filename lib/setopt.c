@@ -3196,6 +3196,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     if (uarg > MAX_NET_ID)
       return CURLE_BAD_FUNCTION_ARGUMENT;
     data->set.socket_bind_netid = uarg;
+#ifdef HAS_NETMANAGER_BASE
+    Curl_set_dns_netid(data, data->set.socket_bind_netid);
+#endif
     break;
   case CURLOPT_CONNREUSEFUNCTION:
     data->set.fconnreuse = va_arg(param, curl_connreuse_callback);
