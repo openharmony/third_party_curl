@@ -1039,6 +1039,13 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
     rc = Curl_set_dns_local_ip6(outcurl, data->set.str[STRING_DNS_LOCAL_IP6]);
     if(rc && rc != CURLE_NOT_BUILT_IN)
       goto fail;
+#ifdef HTTP_HANDOVER_FEATURE
+#ifdef HAS_NETMANAGER_BASE
+    rc = Curl_set_dns_netid(outcurl, data->set.socket_bind_netid);
+    if(rc && rc != CURLE_NOT_BUILT_IN)
+      goto fail;
+#endif
+#endif
   }
 #endif /* USE_ARES */
 
