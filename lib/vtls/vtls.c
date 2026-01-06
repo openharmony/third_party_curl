@@ -1656,12 +1656,15 @@ static void ssl_cf_close(struct Curl_cfilter *cf,
 
 static bool set_ssl_sni(struct ssl_connect_data *connssl, struct Curl_easy *data)
 {
-  if (connssl->peer.sni) {
-    free(connssl->peer.sni);
-  }
   size_t len = strlen(data->set.str[STRING_SNIHOSTNAME]);
   if (len && (data->set.str[STRING_SNIHOSTNAME][len-1] == '.'))
     len--;
+  if (len > UCHAR_MAX || len == 0) {
+    return true;
+  }
+  if (connssl->peer.sni) {
+    free(connssl->peer.sni);
+  }
   connssl->peer.sni = calloc(1, len + 1);
   if (!connssl->peer.sni) {
     Curl_ssl_peer_cleanup(&connssl->peer);

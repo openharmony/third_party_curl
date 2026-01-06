@@ -3218,7 +3218,7 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     sniLen = strlen(argptr);
     if (sniLen && argptr[sniLen-1] == '.')
         sniLen--;
-    if (sniLen >= USHRT_MAX) {
+    if (sniLen > UCHAR_MAX || sniLen == 0) {
       result = CURLE_BAD_FUNCTION_ARGUMENT;
       break;
     }
