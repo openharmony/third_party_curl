@@ -3407,7 +3407,7 @@ static bool cached_x509_store_different(
 {
   struct ssl_primary_config *conn_config = Curl_ssl_cf_get_primary_config(cf);
   struct ssl_config_data *ssl_config =
-    Curl_ssl_cf_get_config(cf, data);
+    Curl_ssl_cf_get_config(cf, CURL_UNCONST(data));
   if(mb->no_partialchain != ssl_config->no_partialchain)
     return TRUE;
   if(!mb->CAfile || !conn_config->CAfile)
@@ -3456,7 +3456,7 @@ static void set_cached_x509_store(struct Curl_cfilter *cf,
   if(X509_STORE_up_ref(store)) {
     char *CAfile = NULL;
     struct ssl_config_data *ssl_config =
-      Curl_ssl_cf_get_config(cf, data);
+      Curl_ssl_cf_get_config(cf, CURL_UNCONST(data));
 
     if(conn_config->CAfile) {
       CAfile = strdup(conn_config->CAfile);
