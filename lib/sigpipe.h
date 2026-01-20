@@ -54,6 +54,7 @@ static void sigpipe_ignore(struct Curl_easy *data,
     action = ig->old_pipe_act;
     /* ignore this signal */
     action.sa_handler = SIG_IGN;
+    action.sa_flags &= ~SA_SIGINFO;
     sigaction(SIGPIPE, &action, NULL);
   }
 }
