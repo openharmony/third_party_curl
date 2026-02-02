@@ -1975,7 +1975,6 @@ static ssize_t cf_h2_recv(struct Curl_cfilter *cf, struct Curl_easy *data,
   }
 
   CF_DATA_SAVE(save, cf, data);
-
   nread = stream_recv(cf, data, stream, buf, len, err);
   if(nread < 0 && *err != CURLE_AGAIN)
     goto out;
