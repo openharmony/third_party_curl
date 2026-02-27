@@ -205,8 +205,11 @@ static CURLcode namevalue(char *header, size_t hlen, unsigned int type,
   if(*header)
     /* Skip over colon, null it */
     *header++ = 0;
-  else
-    return CURLE_BAD_FUNCTION_ARGUMENT;
+  else {
+    *header = 0;
+    *value = header;
+    return CURLE_OK;
+  }
 
   /* skip all leading space letters */
   while(*header && ISBLANK(*header))
