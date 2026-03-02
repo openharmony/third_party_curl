@@ -1,0 +1,99 @@
+From 7610cefe0ad461c48fb7832d58f537d0ae884458 Mon Sep 17 00:00:00 2001
+From: mWX1075981 <mayongzhi@h-partners.com>
+Date: Mon, 2 Mar 2026 14:37:51 +0800
+Subject: [PATCH] TicketNo: DTS2026020347797 Description: Connect Only For
+ Reuse Team:HarmonyOS Feature or Bugfix:Feature Binary Source: No
+ PrivateCode(Yes/No):No
+
+Change-Id: Ic12fe2ef1a972c0832141bd25d33c8032342b903
+---
+ include/curl/curl.h | 1 +
+ lib/http.c          | 1 +
+ lib/multi.c         | 2 +-
+ lib/setopt.c        | 6 ++++++
+ lib/url.c           | 2 +-
+ lib/urldata.h       | 1 +
+ 6 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index 9c67964a4..544b14b33 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -1141,6 +1141,7 @@ typedef enum {
+   CURLOPT(CURLOPT_COOKIES_ENCODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2008),
+   CURLOPT(CURLOPT_COOKIES_DECODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2009),
+   CURLOPT(CURLOPT_COOKIES_DECODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2010),
++  CURLOPT(CURLOPT_CONNECT_ONLY_FOR_HTTP_REUSE, CURLOPTTYPE_LONG, 2011),
+ #endif
+ 
+   /* This is the FILE * or void * the regular output should be written to. */
+diff --git a/lib/http.c b/lib/http.c
+index 9aed3b502..4fcca9296 100644
+--- a/lib/http.c
++++ b/lib/http.c
+@@ -1194,6 +1194,7 @@ CURLcode Curl_http_done(struct Curl_easy *data,
+                       entire operation is complete */
+      !conn->bits.retry &&
+      !data->set.connect_only &&
++     !data->set.connect_only_for_http_reuse &&
+      (data->req.bytecount +
+       data->req.headerbytecount -
+       data->req.deductheadercount) <= 0) {
+diff --git a/lib/multi.c b/lib/multi.c
+index 799dba6c0..9748f41cb 100644
+--- a/lib/multi.c
++++ b/lib/multi.c
+@@ -2203,7 +2203,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
+         }
+       }
+ 
+-      if(data->set.connect_only == 1) {
++      if(data->set.connect_only == 1 || data->set.connect_only_for_http_reuse) {
+         /* keep connection open for application to use the socket */
+         connkeep(data->conn, "CONNECT_ONLY");
+         multistate(data, MSTATE_DONE);
+diff --git a/lib/setopt.c b/lib/setopt.c
+index e37ba28ce..7a26b7648 100644
+--- a/lib/setopt.c
++++ b/lib/setopt.c
+@@ -199,6 +199,12 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
+ 
+   switch(option) {
+ #ifdef USE_ARES
++  case CURLOPT_CONNECT_ONLY_FOR_HTTP_REUSE:
++    arg = va_arg(param, long);
++    if(arg != 1)
++      return CURLE_BAD_FUNCTION_ARGUMENT;
++    data->set.connect_only_for_http_reuse = (unsigned char)arg;
++    break;
+   case CURLOPT_ENABLE_COOKIE_VALUE_CHANGE:
+     data->set.enable_cookie_value_change = (0 != va_arg(param, long));
+     break;
+diff --git a/lib/url.c b/lib/url.c
+index d48946b82..a7135686c 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -3699,7 +3699,7 @@ static CURLcode create_conn(struct Curl_easy *data,
+      already (which happens due to follow-location or during an HTTP
+      authentication phase). CONNECT_ONLY transfers also refuse reuse. */
+   if((data->set.reuse_fresh && !data->state.followlocation) ||
+-     data->set.connect_only)
++     data->set.connect_only || data->set.connect_only_for_http_reuse)
+     reuse = FALSE;
+   else
+     reuse = ConnectionExists(data, conn, &existing, &force_reuse, &waitpipe);
+diff --git a/lib/urldata.h b/lib/urldata.h
+index c1bd62436..a8173e7be 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -1800,6 +1800,7 @@ struct UserDefined {
+                               IMAP or POP3 or others! (type: curl_usessl)*/
+   unsigned char connect_only; /* make connection/request, then let
+                                  application use the socket */
++  unsigned char connect_only_for_http_reuse;
+ #ifndef CURL_DISABLE_MIME
+   BIT(mime_formescape);
+ #endif
+-- 
+2.45.2.huawei.10
+
