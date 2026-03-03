@@ -3332,9 +3332,9 @@ static CURLcode verify_header(struct Curl_easy *data,
   else {
     ptr = memchr(hd, ':', hdlen);
     if(!ptr) {
-      /* this is bad, bail out */
-      failf(data, "Header without colon");
-      return CURLE_WEIRD_SERVER_REPLY;
+      /* tolerate malformed header lines without colon */
+      infof(data, "Header without colon, ignored");
+      return CURLE_OK;
     }
   }
   return CURLE_OK;
