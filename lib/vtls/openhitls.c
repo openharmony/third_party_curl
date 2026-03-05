@@ -86,7 +86,6 @@ static HITLS_CERT_Store *BuildCertStoreFromList(BslList *certList, struct Curl_e
     return x509Store;
 exit:
     HITLS_X509_StoreCtxFree(x509Store);
-    HITLS_X509_CertFree(cert);
     return NULL;
 }
 
