@@ -1781,6 +1781,7 @@ CURLUcode curl_url_set(CURLU *u, CURLUPart what,
     urlencode = FALSE; /* never */
     if(ISALPHA(*s)) {
       /* ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+      s++;
       while(--plen) {
         if(ISALNUM(*s) || (*s == '+') || (*s == '-') || (*s == '.'))
           s++; /* fine */
