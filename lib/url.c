@@ -944,6 +944,18 @@ ConnectionExists(struct Curl_easy *data,
   bool wantProxyNTLMhttp = FALSE;
 #endif
 #endif
+#if !defined(CURL_DISABLE_HTTP) && defined(USE_SPNEGO)
+  bool wantNegotiateHttp = ((data->state.authhost.want & CURLAUTH_NEGOTIATE) &&
+                            (needle->handler->protocol & PROTO_FAMILY_HTTP));
+#ifndef CURL_DISABLE_PROXY
+  bool wantProxyNegotiateHttp = (needle->bits.proxy_user_passwd &&
+                                 ((data->state.authproxy.want &
+                                   CURLAUTH_NEGOTIATE) &&
+                                  (needle->handler->protocol & PROTO_FAMILY_HTTP)));
+#else
+  bool wantProxyNegotiateHttp = FALSE;
+#endif
+#endif
   /* plain HTTP with upgrade */
   bool h2upgrade = (data->state.httpwant == CURL_HTTP_VERSION_2_0) &&
     (needle->handler->protocol & CURLPROTO_HTTP);
@@ -1271,6 +1283,58 @@ ConnectionExists(struct Curl_easy *data,
          (check->http_ntlm_state != NTLMSTATE_NONE)) ||
           (wantProxyNTLMhttp &&
            (check->proxy_ntlm_state != NTLMSTATE_NONE))) {
+        /* We must use this connection, no other */
+        *force_reuse = TRUE;
+        break;
+      }
+      /* Continue look up for a better connection */
+      continue;
+    }
+#endif
+
+#if !defined(CURL_DISABLE_HTTP) && defined(USE_SPNEGO)
+    /* If we are looking for an HTTP+Negotiate connection, check if this is
+       already authenticating with the right credentials. If not, keep looking
+       so that we can reuse Negotiate connections if possible. */
+    if(wantNegotiateHttp) {
+      if(Curl_timestrcmp(needle->user, check->user) ||
+         Curl_timestrcmp(needle->passwd, check->passwd))
+        continue;
+    }
+    else if(check->http_negotiate_state != GSS_AUTHNONE) {
+      /* Connection is using Negotiate auth but we do not want Negotiate */
+      continue;
+    }
+
+#ifndef CURL_DISABLE_PROXY
+    /* Same for Proxy Negotiate authentication */
+    if(wantProxyNegotiateHttp) {
+      /* Both check->http_proxy.user and check->http_proxy.passwd can be
+       * NULL */
+      if(!check->http_proxy.user || !check->http_proxy.passwd)
+        continue;
+
+      if(Curl_timestrcmp(needle->http_proxy.user,
+                         check->http_proxy.user) ||
+         Curl_timestrcmp(needle->http_proxy.passwd,
+                         check->http_proxy.passwd))
+        continue;
+    }
+    else if(check->proxy_negotiate_state != GSS_AUTHNONE) {
+      /* Proxy connection is using Negotiate auth but we do not want Negotiate */
+      continue;
+    }
+#endif
+    if(wantNegotiateHttp || wantProxyNegotiateHttp) {
+      /* Credentials are already checked, we may use this connection. We MUST
+       * use a connection where it has already been fully negotiated. If it has
+       * not, we keep on looking for a better one. */
+      chosen = check;
+
+      if((wantNegotiateHttp &&
+         (check->http_negotiate_state != GSS_AUTHNONE)) ||
+          (wantProxyNegotiateHttp &&
+           (check->proxy_negotiate_state != GSS_AUTHNONE))) {
         /* We must use this connection, no other */
         *force_reuse = TRUE;
         break;
