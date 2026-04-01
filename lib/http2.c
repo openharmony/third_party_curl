@@ -288,7 +288,11 @@ static CURLcode http2_data_setup(struct Curl_cfilter *cf,
   struct h2_stream_ctx *stream;
 
   (void)cf;
-  DEBUGASSERT(data);
+  
+  
+  if(!data)
+    return CURLE_BAD_FUNCTION_ARGUMENT;
+
   if(!data->req.p.http) {
     failf(data, "initialization failure, transfer not http initialized");
     return CURLE_FAILED_INIT;
@@ -1957,10 +1961,15 @@ static ssize_t cf_h2_recv(struct Curl_cfilter *cf, struct Curl_easy *data,
                           char *buf, size_t len, CURLcode *err)
 {
   struct cf_h2_ctx *ctx = cf->ctx;
-  struct h2_stream_ctx *stream = H2_STREAM_CTX(ctx, data);
+  struct h2_stream_ctx *stream;
   ssize_t nread = -1;
   CURLcode result;
   struct cf_call_data save;
+
+  if(!data)
+    return CURLE_HTTP2;
+
+  stream = H2_STREAM_CTX(ctx, data);
 
   if(!stream) {
     /* Abnormal call sequence: either this transfer has never opened a stream
