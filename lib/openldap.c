@@ -608,12 +608,18 @@ static CURLcode oldap_connect(struct Curl_easy *data, bool *done)
 static CURLcode oldap_state_mechs_resp(struct Curl_easy *data,
                                        LDAPMessage *msg, int code)
 {
-  struct connectdata *conn = data->conn;
-  struct ldapconninfo *li = conn->proto.ldapc;
+  struct connectdata *conn;
+  struct ldapconninfo *li;
   int rc;
   BerElement *ber = NULL;
   CURLcode result = CURLE_OK;
   struct berval bv, *bvals;
+
+  if(!data)
+    return CURLE_FAILED_INIT;
+
+  conn = data->conn;
+  li = Curl_conn_meta_get(conn, CURL_META_LDAP_CONN);
 
   switch(ldap_msgtype(msg)) {
   case LDAP_RES_SEARCH_ENTRY:
