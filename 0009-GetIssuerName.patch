@@ -1,0 +1,110 @@
+From 751d74a0774649c53b9ab938b780fc3f44c4c462 Mon Sep 17 00:00:00 2001
+From: m00557507 <maosiping@huawei.com>
+Date: Wed, 4 Mar 2026 16:18:30 +0800
+Subject: [PATCH] TicketNo:AR20260106535919 Description: get issuer name
+ Team:EMUI Feature or Bugfix:Feature Binary Source:No PrivateCode(Yes/No):No
+ Change-Id: I6b6e37605e03900dc41355efdab7b79330137524
+
+---
+ include/curl/curl.h |  1 +
+ lib/setopt.c        |  4 +++-
+ lib/urldata.h       |  1 +
+ lib/vtls/openssl.c  | 36 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index 9c67964a4..72bd1011e 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -1141,6 +1141,7 @@ typedef enum {
+   CURLOPT(CURLOPT_COOKIES_ENCODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2008),
+   CURLOPT(CURLOPT_COOKIES_DECODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2009),
+   CURLOPT(CURLOPT_COOKIES_DECODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2010),
++  CURLOPT(CURLOPT_GET_ISSUER_NAME, CURLOPTTYPE_LONG, 2011),
+ #endif
+ 
+   /* This is the FILE * or void * the regular output should be written to. */
+diff --git a/lib/setopt.c b/lib/setopt.c
+index e37ba28ce..f91f62ee0 100644
+--- a/lib/setopt.c
++++ b/lib/setopt.c
+@@ -2964,7 +2964,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
+   case CURLOPT_BALANCED_CONNECTION:
+     data->set.http_balanced_connection = (0 != va_arg(param, long));
+     break;
+-
++  case CURLOPT_GET_ISSUER_NAME:
++    data->set.get_issuer_name = (0 != va_arg(param, long));
++    break;
+ #endif
+   case CURLOPT_TCP_KEEPALIVE:
+     data->set.tcp_keepalive = (0 != va_arg(param, long));
+diff --git a/lib/urldata.h b/lib/urldata.h
+index c1bd62436..6b9fd060f 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -1911,6 +1911,7 @@ struct UserDefined {
+ #ifdef USE_ARES
+   BIT(http_balanced_connection); /* balanced HTTP connection */
+   BIT(enable_cookie_value_change); /* user defined cookie file */
++  BIT(get_issuer_name); /* user defined cookie file */
+ #endif
+ 
+   BIT(mms_reserved_default_port);
+diff --git a/lib/vtls/openssl.c b/lib/vtls/openssl.c
+index ff58b9aaa..676fd5499 100644
+--- a/lib/vtls/openssl.c
++++ b/lib/vtls/openssl.c
+@@ -4172,6 +4172,37 @@ static void ossl_trace_ech_retry_configs(struct Curl_easy *data, SSL* ssl,
+ 
+ #endif
+ 
++#ifdef USE_ARES
++static void ossl_get_issuer_names(struct Curl_cfilter *cf, struct Curl_easy *data)
++{
++  if (cf == NULL || data == NULL) {
++    return;
++  }
++  struct ssl_connect_data *connssl = cf->ctx;
++  if (connssl == NULL) {
++    return;
++  }
++  struct ossl_ctx *octx = (struct ossl_ctx *)connssl->backend;
++  if (octx == NULL) {
++    return;
++  }
++  STACK_OF(X509) *certs = SSL_get_peer_cert_chain(octx->ssl);
++  data->cert_num = 0;
++  if (certs) {
++    size_t cert_num = sk_X509_num(certs);
++    if (cert_num > CURL_MAX_CERT_NUM) {
++      cert_num = CURL_MAX_CERT_NUM;
++    }
++    for (size_t i = 0; i < cert_num; ++i) {
++      X509 *cert = sk_X509_value(certs, i);
++      X509_NAME *issuer_name = X509_get_issuer_name(cert);
++      (void) X509_NAME_oneline(issuer_name, data->cert_issuer_names[data->cert_num], CURL_MAX_ISSUER_NAME);
++      ++data->cert_num;
++    }
++  }
++}
++#endif
++
+ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
+                                    struct Curl_easy *data)
+ {
+@@ -4371,6 +4402,11 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
+     }
+   }
+   else {
++#ifdef USE_ARES
++    if (data->set.get_issuer_name) {
++      ossl_get_issuer_names(cf, data);
++    }
++#endif
+     int psigtype_nid = NID_undef;
+     const char *negotiated_group_name = NULL;
+ 
+-- 
+2.45.2.huawei.10
+
