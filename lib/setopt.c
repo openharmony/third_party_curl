@@ -3134,6 +3134,17 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   case CURLOPT_PREREQDATA:
     data->set.prereq_userp = va_arg(param, void *);
     break;
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  case CURLOPT_USER_TIME_OUT:
+    data->set.user_time_out = va_arg(param, long);
+    break;
+  case CURLOPT_USER_TIME_OUT_FUNCTION:
+    data->set.fusertimeout = va_arg(param, curl_usertimeout_callback);
+    break;
+  case CURLOPT_USER_TIME_OUT_DATA:
+    data->set.usertimeout_userp = va_arg(param, void *);
+    break;
+#endif
 #ifdef USE_WEBSOCKETS
   case CURLOPT_WS_OPTIONS: {
     bool raw;

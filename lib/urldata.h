@@ -564,6 +564,9 @@ struct ConnectBits {
                          accept() */
   BIT(parallel_connect); /* set TRUE when a parallel connect attempt has
                             started (happy eyeballs) */
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  BIT(user_timed); /* the timeout limit set by CURLOPT_USER_TIME_OUT is reached */
+#endif
 };
 
 struct hostname {
@@ -1019,6 +1022,10 @@ struct connectdata {
 
 #ifdef HTTP_HANDOVER_FEATURE
   unsigned int socket_bind_netid; /* OHOS net id*/
+#endif
+
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  struct curltime t_usertimeout_start; /* the first */
 #endif
 };
 
@@ -1891,7 +1898,11 @@ struct UserDefined {
   curl_connreuse_callback fconnreuse;
   void *connreuse_userp;
 #endif
-
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  long user_time_out;    /* in milliseconds */
+  curl_usertimeout_callback fusertimeout;
+  void *usertimeout_userp;
+#endif
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
 #endif

@@ -168,4 +168,14 @@ extern struct Curl_cftype Curl_cft_udp;
 extern struct Curl_cftype Curl_cft_unix;
 extern struct Curl_cftype Curl_cft_tcp_accept;
 
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+/**
+ * Set TCP_USER_TIMEOUT option on tcp sock to specifies the maximum amount of
+ * time in milliseconds that transmitted data may remain unacknowledged
+ * before TCP will forcibly close the corresponding connection and
+ * return ETIMEDOUT to the
+ * application.
+ */
+void Curl_set_tcp_user_time_out(struct Curl_easy *data, long timeout_ms);
+#endif
 #endif /* HEADER_CURL_CF_SOCKET_H */

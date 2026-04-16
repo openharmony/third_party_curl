@@ -495,6 +495,11 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->fconnreuse = ZERO_NULL;
   set->connreuse_userp = ZERO_NULL;
 #endif
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  set->user_time_out = 0;
+  set->fusertimeout = ZERO_NULL;
+  set->usertimeout_userp = ZERO_NULL;
+#endif
   return result;
 }
 

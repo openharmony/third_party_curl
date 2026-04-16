@@ -219,6 +219,17 @@ tcpkeepalive(struct Curl_easy *data,
   }
 }
 
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+void Curl_set_tcp_user_time_out(struct Curl_easy *data, long timeout_ms)
+{
+    if (setsockopt(data->conn->sockfd, IPPROTO_TCP, TCP_USER_TIMEOUT,
+        &timeout_ms, sizeof(timeout_ms)) < 0) {
+        infof(data, "Failed to set TCP_USER_TIMEOUT on fd "
+            "%" CURL_FORMAT_SOCKET_T ": errno %d", data->conn->sockfd, SOCKERRNO);
+    }
+}
+#endif
+
 /**
  * Assign the address `ai` to the Curl_sockaddr_ex `dest` and
  * set the transport used.

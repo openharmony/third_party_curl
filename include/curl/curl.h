@@ -418,7 +418,10 @@ typedef int (*curl_sockopt_callback)(void *clientp,
 #ifdef HTTP_HANDOVER_FEATURE
 typedef bool (*curl_connreuse_callback)(void *userdata, curl_socket_t curlfd);
 #endif
-
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+typedef bool (*curl_usertimeout_callback)(void *userdata, curl_socket_t curlfd,
+   bool isReused, int retryCount, int sPort, long long diff);
+#endif
 struct curl_sockaddr {
   int family;
   int socktype;
@@ -2220,9 +2223,6 @@ typedef enum {
     /* set ECH configuration  */
   CURLOPT(CURLOPT_ECH, CURLOPTTYPE_STRINGPOINT, 325),
 
-  /* SNI domain name to include the SNI field during the TLS connection process */
-  CURLOPT(CURLOPT_SNI_HOSTNAME, CURLOPTTYPE_STRINGPOINT, 1006),
-
 #ifdef HTTP_HANDOVER_FEATURE
   CURLOPT(CURLOPT_OHOS_SOCKET_BIND_NET_ID, CURLOPTTYPE_LONG, 1000),
 
@@ -2240,6 +2240,21 @@ typedef enum {
 
   /* name of the file keeping your private encryption SSL-key */
   CURLOPT(CURLOPT_SSLENCKEY, CURLOPTTYPE_STRINGPOINT, 1005),
+
+  /* SNI domain name to include the SNI field during the TLS connection process */
+  CURLOPT(CURLOPT_SNI_HOSTNAME, CURLOPTTYPE_STRINGPOINT, 1006),
+
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+  /* Set TCP_USER_TIMEOUT if conn is reused */
+  CURLOPT(CURLOPT_USER_TIME_OUT, CURLOPTTYPE_LONG, 1007),
+ 
+  /* Callback function for deciding whether to retry http request in CURLE_SEND_ERROR,
+     it gets called by libcurl if TCP_USER_TIMEOUT is due */
+  CURLOPT(CURLOPT_USER_TIME_OUT_FUNCTION, CURLOPTTYPE_FUNCTIONPOINT, 1008),
+ 
+  /* Data passed to the CURLOPT_USER_TIME_OUT_FUNCTION callback */
+  CURLOPT(CURLOPT_USER_TIME_OUT_DATA, CURLOPTTYPE_LONG, 1009),
+#endif
 
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
