@@ -1,0 +1,92 @@
+From dacb7aec5f93e0af8d44e6f5a10912fec8dd8c22 Mon Sep 17 00:00:00 2001
+From: s00897202 <s00897202@notesmail.huawei.com/>
+Date: Tue, 14 Apr 2026 17:48:10 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:DTS2026040909929=20Description:=20?=
+ =?UTF-8?q?=E6=94=AF=E6=8C=81=E5=9B=BD=E5=AF=86=E7=AE=97=E6=B3=95=E4=BB=A5?=
+ =?UTF-8?q?=E5=8F=8A=E5=9B=BD=E5=AF=86=E8=87=AA=E5=AE=9A=E4=B9=89=E8=AF=81?=
+ =?UTF-8?q?=E4=B9=A6=E6=A0=A1=E9=AA=8C=20Team:EMUI=20Feature=20or=20Bugfix?=
+ =?UTF-8?q?:Feature=20Binary=20Source:No=20PrivateCode(Yes/No):No?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: I3c7681528665c02d260024c74f64af80ae2421bf
+---
+ include/curl/curl.h  |  1 +
+ lib/setopt.c         | 13 +++++++++++++
+ lib/urldata.h        |  1 +
+ lib/vtls/openhitls.c |  4 ++--
+ 4 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/include/curl/curl.h b/include/curl/curl.h
+index 2df757445..83f73cff6 100644
+--- a/include/curl/curl.h
++++ b/include/curl/curl.h
+@@ -1148,6 +1148,7 @@ typedef enum {
+   CURLOPT(CURLOPT_GET_ISSUER_NAME, CURLOPTTYPE_LONG, 2012),
+   CURLOPT(CURLOPT_SSL_CTX_UNIFIED_USERDATA, CURLOPTTYPE_OBJECTPOINT, 2012),
+   CURLOPT(CURLOPT_SSL_CTX_UNIFIED_PROXY_USERDATA, CURLOPTTYPE_OBJECTPOINT, 2013),
++  CURLOPT(CURLOPT_HITLS_CTX_FUNCTION, CURLOPTTYPE_FUNCTIONPOINT, 2015),
+ #endif
+ 
+   /* This is the FILE * or void * the regular output should be written to. */
+diff --git a/lib/setopt.c b/lib/setopt.c
+index bdecc403d..22daec752 100644
+--- a/lib/setopt.c
++++ b/lib/setopt.c
+@@ -2088,6 +2088,19 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
+ #endif
+       result = CURLE_NOT_BUILT_IN;
+     break;
++#ifdef USE_ARES
++  case CURLOPT_HITLS_CTX_FUNCTION:
++    /*
++     * Set a HITLS_CTX callback
++     */
++#ifdef USE_SSL
++    if(Curl_ssl_supports(data, SSLSUPP_SSL_CTX))
++      data->set.ssl.fhitlsctx = va_arg(param, curl_ssl_ctx_callback);
++    else
++#endif
++      result = CURLE_NOT_BUILT_IN;
++    break;
++#endif
+   case CURLOPT_SSL_CTX_DATA:
+     /*
+      * Set a SSL_CTX callback parameter pointer
+diff --git a/lib/urldata.h b/lib/urldata.h
+index 078a56433..f4495a022 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -325,6 +325,7 @@ struct ssl_config_data {
+   struct ssl_primary_config primary;
+   long certverifyresult; /* result from the certificate verification */
+   curl_ssl_ctx_callback fsslctx; /* function to initialize ssl ctx */
++  curl_ssl_ctx_callback fhitlsctx; /* function to initialize ssl ctx */
+   void *fsslctxp;        /* parameter for call back */
+   char *cert_type; /* format for certificate (default: PEM)*/
+   char *key; /* private key file name */
+diff --git a/lib/vtls/openhitls.c b/lib/vtls/openhitls.c
+index a480dd7d6..af9001ddc 100644
+--- a/lib/vtls/openhitls.c
++++ b/lib/vtls/openhitls.c
+@@ -341,14 +341,14 @@ static CURLcode hitls_handle_ssl_ctx_callback(struct hitls_ssl_backend_data *bac
+     int32_t ret = 0;
+     struct ssl_config_data *sslConfig = Curl_ssl_cf_get_config(cf, data);
+     
+-    if (data->set.ssl.fsslctx) {
++    if (data->set.ssl.fhitlsctx) {
+ #ifdef USE_ARES
+         if (sslConfig->primary.userData) {
+             HITLS_CFG_SetConfigUserData(backend->config, sslConfig->primary.userData);
+         }
+ #endif
+         Curl_set_in_callback(data, true);
+-        ret = (*data->set.ssl.fsslctx)(data, backend->config, data->set.ssl.fsslctxp);
++        ret = (*data->set.ssl.fhitlsctx)(data, backend->config, data->set.ssl.fsslctxp);
+         Curl_set_in_callback(data, false);
+         if (ret != CURLE_OK) {
+             failf(data, "error signaled by hitls ctx callback");
+-- 
+2.51.2.huawei.11
+
