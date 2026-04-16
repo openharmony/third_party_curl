@@ -2179,6 +2179,16 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
       break;
 
     case MSTATE_DO:
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+      if (data->set.user_time_out && data->info.numconnects == 0) {
+        Curl_set_tcp_user_time_out(data, data->set.user_time_out);
+        if (data->conn->t_usertimeout_start.tv_sec == 0
+          && data->conn->t_usertimeout_start.tv_usec == 0) {
+          data->conn->t_usertimeout_start = Curl_now();
+        }
+        infof(data, "Curl Set TCP_USER_TIMEOUT if reused: %d", data->set.user_time_out);
+      }
+#endif
       if(data->set.fprereq) {
         int prereq_rc;
 
@@ -2458,8 +2468,41 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
 
       /* read/write data if it is ready to do so */
       result = Curl_readwrite(data);
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+      /* reset TCP_USER_TIMEOUT option on socket upon receiving header(s) */
+      if (data->set.user_time_out && data->info.numconnects == 0
+        && data->info.header_size) {
+        infof(data, "Curl Reset TCP_USER_TIMEOUT %ld to timeout %d upon receiving",
+          data->set.user_time_out, data->set.timeout);
+        Curl_set_tcp_user_time_out(data, data->set.timeout);
+        /* ensure TCP_USER_TIMEOUT is reset only once */
+        data->set.user_time_out = 0;
+        data->conn->t_usertimeout_start.tv_sec = 0;
+        data->conn->t_usertimeout_start.tv_usec = 0;
+      }
 
-      if(data->req.done || (result == CURLE_RECV_ERROR || result == CURLE_HTTP2)) {
+      /* check if user-timed */
+      bool userRetry = false;
+      if (data->set.fusertimeout && (errno == ETIMEDOUT || errno == EPIPE)) {
+        timediff_t tReal = Curl_timediff(Curl_now(), data->conn->t_usertimeout_start);
+        infof(data, "sock: %d, errno: %d, connNum: %d, timediff: %ld", data->conn->sockfd, errno,
+          data->info.numconnects, tReal);
+        if (tReal >= data->set.user_time_out) {
+          bool reused = data->info.numconnects == 0 ? true : false;
+          timediff_t tReq = Curl_timediff(Curl_now(), data->progress.t_startsingle);
+          userRetry = data->set.fusertimeout(data->set.usertimeout_userp, data->conn->sockfd,
+            reused, data->state.retrycount, data->info.primary.local_port, tReq);
+          data->conn->bits.user_timed = 1;
+          infof(data, "sock %d is user timed out with errno: %d", data->conn->sockfd, errno);
+        }
+      }
+#endif
+      if(data->req.done || (result == CURLE_RECV_ERROR || result == CURLE_HTTP2)
+#ifdef HTTP_DEADFLOWRESET_FEATURE
+        /* retry if failed by CURLE_SEND_ERROR in user_timeout scene */
+        || (result == CURLE_SEND_ERROR && data->conn->bits.user_timed && userRetry)
+#endif
+        ) {
         /* If CURLE_RECV_ERROR happens early enough, we assume it was a race
          * condition and the server closed the reused connection exactly when
          * we wanted to use it, so figure out if that is indeed the case.

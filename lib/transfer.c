@@ -415,7 +415,6 @@ CURLcode Curl_readwrite(struct Curl_easy *data)
     if(result)
       goto out;
   }
-
   if(data->state.select_bits) {
     if(select_bits_paused(data, data->state.select_bits)) {
       /* leave the bits unchanged, so they'll tell us what to do when
