@@ -3211,6 +3211,18 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     Curl_set_dns_netid(data, data->set.socket_bind_netid);
 #endif
     break;
+  case CURLOPT_USE_DNS_INTERCEPTOR:
+#ifdef HAS_NETMANAGER_BASE
+    /*
+     * Enable or disable DNS interceptor for DNS resolution.
+     * When enabled, DNS queries will be handled by the DNS interceptor
+     * hook provided by musl instead of the standard system resolver.
+     */
+    data->set.use_dns_interceptor = (0 != va_arg(param, long));
+#else
+    result = CURLE_NOT_BUILT_IN;
+#endif
+    break;
   case CURLOPT_CONNREUSEFUNCTION:
     data->set.fconnreuse = va_arg(param, curl_connreuse_callback);
     break;

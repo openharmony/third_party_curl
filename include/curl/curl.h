@@ -2256,6 +2256,9 @@ typedef enum {
   CURLOPT(CURLOPT_USER_TIME_OUT_DATA, CURLOPTTYPE_LONG, 1009),
 #endif
 
+  /* Enable DNS interceptor for DNS resolution */
+  CURLOPT(CURLOPT_USE_DNS_INTERCEPTOR, CURLOPTTYPE_LONG, 1010),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 
