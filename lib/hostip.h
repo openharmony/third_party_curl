@@ -250,6 +250,14 @@ CURLcode Curl_set_dns_local_ip6(struct Curl_easy *data,
 #ifdef HAS_NETMANAGER_BASE
 CURLcode Curl_set_dns_netid(struct Curl_easy *data,
                             int32_t netId);
+/*
+ * This function uses the DNS interceptor hook provided by musl to perform
+ * DNS resolution instead of the standard system resolver.
+ */
+CURLcode Curl_dns_interceptor_resolve(struct Curl_easy *data,
+                                      const char *hostname,
+                                      int port,
+                                      struct Curl_addrinfo **addr);
 #endif
 /*
  * Clean off entries from the cache
