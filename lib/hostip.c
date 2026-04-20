@@ -803,7 +803,7 @@ enum resolve_t Curl_resolv(struct Curl_easy *data,
          * it. If not, bail out. */
         if(!Curl_ipvalid(data, conn))
           return CURLRESOLV_ERROR;
- #ifdef HAS_NETMANAGER_BASE
+#ifdef HAS_NETMANAGER_BASE
         /* If DNS interceptor is enabled, use it for DNS resolution */
         if (data->set.use_dns_interceptor) {
           result = Curl_dns_interceptor_resolve(data, hostname, port, &addr);
@@ -816,8 +816,8 @@ enum resolve_t Curl_resolv(struct Curl_easy *data,
 #endif
         {
           /* If Curl_getaddrinfo() returns NULL, 'respwait' might be set to a
-            non-zero value indicating that we need to wait for the response to
-            the resolve call */
+             non-zero value indicating that we need to wait for the response to
+             the resolve call */
           addr = Curl_getaddrinfo(data, hostname, port, &respwait);
         }
       }
@@ -1495,11 +1495,11 @@ CURLcode Curl_resolver_error(struct Curl_easy *data)
 
 #ifdef HAS_NETMANAGER_BASE
 /*
-* Curl_dns_interceptor_resolve() - DNS resolution using interceptor
-*
-* This function uses the DNS interceptor hook provided by musl to perform
-* DNS resolution instead of the standard system resolver.
-*/
+ * Curl_dns_interceptor_resolve() - DNS resolution using interceptor
+ *
+ * This function uses the DNS interceptor hook provided by musl to perform
+ * DNS resolution instead of the standard system resolver.
+ */
 CURLcode Curl_dns_interceptor_resolve(struct Curl_easy *data,
                                     const char *hostname,
                                     int port,
