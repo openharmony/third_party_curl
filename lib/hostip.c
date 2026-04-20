@@ -803,10 +803,23 @@ enum resolve_t Curl_resolv(struct Curl_easy *data,
          * it. If not, bail out. */
         if(!Curl_ipvalid(data, conn))
           return CURLRESOLV_ERROR;
-        /* If Curl_getaddrinfo() returns NULL, 'respwait' might be set to a
-           non-zero value indicating that we need to wait for the response to
-           the resolve call */
-        addr = Curl_getaddrinfo(data, hostname, port, &respwait);
+#ifdef HAS_NETMANAGER_BASE
+        /* If DNS interceptor is enabled, use it for DNS resolution */
+        if (data->set.use_dns_interceptor) {
+          result = Curl_dns_interceptor_resolve(data, hostname, port, &addr);
+          if(result) {
+            /* DNS interceptor failed, fallback to original resolver */
+            addr = Curl_getaddrinfo(data, hostname, port, &respwait);
+          }
+        }
+        else
+#endif
+        {
+          /* If Curl_getaddrinfo() returns NULL, 'respwait' might be set to a
+             non-zero value indicating that we need to wait for the response to
+             the resolve call */
+          addr = Curl_getaddrinfo(data, hostname, port, &respwait);
+        }
       }
     }
     if(!addr) {
@@ -1479,3 +1492,137 @@ CURLcode Curl_resolver_error(struct Curl_easy *data)
   return result;
 }
 #endif /* USE_CURL_ASYNC */
+
+#ifdef HAS_NETMANAGER_BASE
+/*
+ * Curl_dns_interceptor_resolve() - DNS resolution using interceptor
+ *
+ * This function uses the DNS interceptor hook provided by musl to perform
+ * DNS resolution instead of the standard system resolver.
+ */
+CURLcode Curl_dns_interceptor_resolve(struct Curl_easy *data,
+                                    const char *hostname,
+                                    int port,
+                                    struct Curl_addrinfo **addr)
+{
+  struct addrinfo hints;
+  struct addrinfo *res = NULL;
+  char serv[10];
+  int rc;
+  CURLcode result = CURLE_OK;
+  const struct addrinfo *ai;
+  struct Curl_addrinfo *cafirst = NULL;
+  struct Curl_addrinfo *calast = NULL;
+  struct Curl_addrinfo *ca;
+  size_t ss_size, namelen;
+
+  *addr = NULL;
+
+  if(!hostname || !*hostname) {
+    failf(data, "Empty hostname for DNS interceptor resolve");
+    return CURLE_BAD_FUNCTION_ARGUMENT;
+  }
+
+  /* Prepare service string for getaddrinfo */
+  msnprintf(serv, sizeof(serv), "%d", port);
+
+  /* Initialize hints for getaddrinfo */
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = PF_UNSPEC; /* Allow IPv4 or IPv6 */
+  hints.ai_socktype = SOCK_STREAM; /* We want TCP */
+
+  /* Call the DNS interceptor hook provided by musl */
+  rc = getaddrinfo_custom(hostname, serv, &hints, &res);
+
+  if(rc != 0) {
+    /* getaddrinfo_custom failed, return error */
+    failf(data, "DNS interceptor resolve failed for %s: %s",
+          hostname, gai_strerror(rc));
+    if (res) {
+      freeaddrinfo(res);
+    }
+    return CURLE_COULDNT_RESOLVE_HOST;
+  }
+
+  if(!res) {
+    failf(data, "DNS interceptor returned empty result for %s", hostname);
+    return CURLE_COULDNT_RESOLVE_HOST;
+  }
+
+  /* Convert system addrinfo to Curl's internal format */
+  /* This logic is similar to Curl_getaddrinfo_ex but uses the result
+  * from getaddrinfo_hook instead of calling getaddrinfo again */
+  for(ai = res; ai != NULL; ai = ai->ai_next) {
+    namelen = ai->ai_canonname ? strlen(ai->ai_canonname) + 1 : 0;
+    
+    /* Determine sockaddr structure size based on address family */
+    if(ai->ai_family == AF_INET)
+      ss_size = sizeof(struct sockaddr_in);
+#ifdef USE_IPV6
+    else if(ai->ai_family == AF_INET6)
+      ss_size = sizeof(struct sockaddr_in6);
+#endif
+    else
+      continue;  /* Skip unsupported address families */
+
+    /* Ignore elements without required address info */
+    if(!ai->ai_addr || !(ai->ai_addrlen > 0))
+      continue;
+
+    /* Ignore elements with bogus address size */
+    if((size_t)ai->ai_addrlen < ss_size)
+      continue;
+
+    /* Allocate memory for Curl_addrinfo struct + sockaddr + canonname */
+    ca = malloc(sizeof(struct Curl_addrinfo) + ss_size + namelen);
+    if(!ca) {
+      result = CURLE_OUT_OF_MEMORY;
+      break;
+    }
+
+    /* Copy each structure member individually */
+    ca->ai_flags     = ai->ai_flags;
+    ca->ai_family    = ai->ai_family;
+    ca->ai_socktype  = ai->ai_socktype;
+    ca->ai_protocol  = ai->ai_protocol;
+    ca->ai_addrlen   = (curl_socklen_t)ss_size;
+    ca->ai_addr      = NULL;
+    ca->ai_canonname = NULL;
+    ca->ai_next      = NULL;
+
+    /* Copy sockaddr data */
+    ca->ai_addr = (void *)((char *)ca + sizeof(struct Curl_addrinfo));
+    memcpy(ca->ai_addr, ai->ai_addr, ss_size);
+
+    /* Copy canonname if present */
+    if(namelen) {
+      ca->ai_canonname = (void *)((char *)ca->ai_addr + ss_size);
+      memcpy(ca->ai_canonname, ai->ai_canonname, namelen);
+    }
+
+    /* Add to the result list */
+    if(!cafirst)
+      cafirst = ca;
+
+    if(calast)
+      calast->ai_next = ca;
+    calast = ca;
+  }
+
+  /* Free the result from getaddrinfo_hook */
+  freeaddrinfo(res);
+
+  /* If we failed, also destroy the Curl_addrinfo list */
+  if(result) {
+    Curl_freeaddrinfo(cafirst);
+    cafirst = NULL;
+  }
+  else if(!cafirst) {
+    /* No valid addresses found */
+    result = CURLE_COULDNT_RESOLVE_HOST;
+  }
+
+  *addr = cafirst;
+  return result;
+}
+#endif /* HAS_NETMANAGER_BASE */
