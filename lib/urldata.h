@@ -1903,6 +1903,9 @@ struct UserDefined {
   curl_usertimeout_callback fusertimeout;
   void *usertimeout_userp;
 #endif
+#ifdef HAS_NETMANAGER_BASE
+  BIT(use_dns_interceptor); /* whether to use DNS interceptor for resolution */
+#endif
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
 #endif
