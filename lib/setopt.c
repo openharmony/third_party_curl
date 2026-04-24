@@ -1789,6 +1789,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = Curl_setstropt(&data->set.str[STRING_ENCKEY],
                             va_arg(param, char *));
     break;
+  case CURLOPT_SSLPARTIALCHAIN:
+    data->set.ssl.no_partialchain = (0 == va_arg(param, long)) ? 1L:0L;
+    break;
   case CURLOPT_SSLKEY_BLOB:
     /*
      * Blob that holds file content of the SSL key to use

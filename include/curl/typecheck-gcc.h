@@ -337,6 +337,7 @@ CURLWARNING(_curl_easy_getinfo_err_curl_off_t,
    (option) == CURLOPT_SSLENGINE ||                                           \
    (option) == CURLOPT_SSLKEY ||                                              \
    (option) == CURLOPT_SSLENCKEY ||                                              \
+   (option) == CURLOPT_SSLPARTIALCHAIN                                        \
    (option) == CURLOPT_SSLKEYTYPE ||                                          \
    (option) == CURLOPT_SSL_CIPHER_LIST ||                                     \
    (option) == CURLOPT_TLS13_CIPHERS ||                                       \
