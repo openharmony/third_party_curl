@@ -2259,6 +2259,9 @@ typedef enum {
   /* Enable DNS interceptor for DNS resolution */
   CURLOPT(CURLOPT_USE_DNS_INTERCEPTOR, CURLOPTTYPE_LONG, 1010),
 
+  /* Enable partial SSL chain verification */
+  CURLOPT(CURLOPT_SSLPARTIALCHAIN, CURLOPTTYPE_LONG, 1011),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 

@@ -1161,6 +1161,7 @@ curl_easy_setopt_ccsid(CURL *easy, CURLoption tag, ...)
   case CURLOPT_SSLENGINE:
   case CURLOPT_SSLKEY:
   case CURLOPT_SSLENCKEY:
+  case CURLOPT_SSLPARTIALCHAIN:
   case CURLOPT_SSLKEYTYPE:
   case CURLOPT_SSL_CIPHER_LIST:
   case CURLOPT_SSL_EC_CURVES:

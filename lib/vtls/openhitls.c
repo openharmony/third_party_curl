@@ -162,6 +162,14 @@ static int32_t ParseAndSetCACertificate(HITLS_Config *config, const char *caFile
         goto exit;
     }
 
+    if (!data->set.ssl.no_partialchain) {
+        ret = HITLS_CFG_SetVerifyFlags(config, HITLS_X509_VFY_FLAG_PARTIAL_CHAIN);
+        if (ret != HITLS_SUCCESS) {
+            failf(data, "HITLS_CFG_SetVerifyFlags failed.");
+            goto exit;
+        }
+    }
+
     return CURLE_OK;
 exit:
     BSL_LIST_FREE(certList, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
