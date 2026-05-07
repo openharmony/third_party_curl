@@ -300,6 +300,8 @@ static void cf_quiche_expire_conn_closed(struct Curl_cfilter *cf,
   struct Curl_easy *sdata;
 
   DEBUGASSERT(data->multi);
+  if (!data->multi)
+    return;
   CURL_TRC_CF(data, cf, "conn closed, expire all transfers");
   for(sdata = data->multi->easyp; sdata; sdata = sdata->next) {
     if(sdata == data || sdata->conn != data->conn)
