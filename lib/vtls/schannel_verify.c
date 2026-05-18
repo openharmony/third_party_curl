@@ -76,11 +76,6 @@ struct cert_chain_engine_config_win7 {
   HCERTSTORE hExclusiveTrustedPeople;
 };
 
-static int is_cr_or_lf(char c)
-{
-  return c == '\r' || c == '\n';
-}
-
 /* Search the substring needle,needlelen into string haystack,haystacklen
  * Strings don't need to be terminated by a '\0'.
  * Similar of OSX/Linux memmem (not available on Visual Studio).
@@ -118,10 +113,11 @@ static CURLcode add_certs_data_to_store(HCERTSTORE trust_store,
 
   while(more_certs && (current_ca_file_ptr<ca_buffer_limit)) {
     const char *begin_cert_ptr = c_memmem(current_ca_file_ptr,
-                                          ca_buffer_limit-current_ca_file_ptr,
+                                          ca_buffer_limit -
+                                          current_ca_file_ptr - 1,
                                           BEGIN_CERT,
                                           begin_cert_len);
-    if(!begin_cert_ptr || !is_cr_or_lf(begin_cert_ptr[begin_cert_len])) {
+    if(!begin_cert_ptr || !ISNEWLINE(begin_cert_ptr[begin_cert_len])) {
       more_certs = 0;
     }
     else {
