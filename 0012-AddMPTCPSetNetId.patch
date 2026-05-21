@@ -1,0 +1,212 @@
+From eaa33294802ea47f67c8a0283a02e0128946f9d8 Mon Sep 17 00:00:00 2001
+From: s00897202 <s00897202@notesmail.huawei.com/>
+Date: Wed, 13 May 2026 09:47:19 +0800
+Subject: [PATCH] =?UTF-8?q?TicketNo:DTS2026040909929=20Description:=20?=
+ =?UTF-8?q?=E6=94=AF=E6=8C=81mptcp=20Team:EMUI=20Feature=20or=20Bugfix:Fea?=
+ =?UTF-8?q?ture=20Binary=20Source:No=20PrivateCode(Yes/No):No?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: Iac891ff59cd2379b3f4afad306493c4c0c13e0ea
+---
+ curl.map               |  1 +
+ curl_without_http3.map |  1 +
+ include/curl/easy.h    |  1 +
+ lib/doh.c              | 10 +++++++++-
+ lib/easy.c             | 18 +++++++++++-------
+ lib/url.c              |  5 ++++-
+ lib/url.h              |  2 +-
+ lib/urldata.h          |  2 ++
+ libcurl.def            |  1 +
+ tests/unit/unit1620.c  |  4 ++--
+ 10 files changed, 33 insertions(+), 12 deletions(-)
+
+diff --git a/curl.map b/curl.map
+index 31260c893..63bc8779c 100644
+--- a/curl.map
++++ b/curl.map
+@@ -67,6 +67,7 @@
+         curl_share_strerror;
+         curl_easy_pause;
+         curl_easy_init;
++        curl_easy_init_with_netid;
+         curl_easy_setopt;
+         curl_easy_perform;
+         curl_easy_cleanup;
+diff --git a/curl_without_http3.map b/curl_without_http3.map
+index e7dc327dc..d47718d85 100644
+--- a/curl_without_http3.map
++++ b/curl_without_http3.map
+@@ -67,6 +67,7 @@ global:
+     curl_share_strerror;
+     curl_easy_pause;
+     curl_easy_init;
++    curl_easy_init_with_netid;
+     curl_easy_init_with_cares;
+     curl_easy_setopt;
+     curl_easy_perform;
+diff --git a/include/curl/easy.h b/include/curl/easy.h
+index 1285101c5..1c65af3bd 100644
+--- a/include/curl/easy.h
++++ b/include/curl/easy.h
+@@ -39,6 +39,7 @@ struct curl_blob {
+ };
+ 
+ CURL_EXTERN CURL *curl_easy_init(void);
++CURL_EXTERN CURL *curl_easy_init_with_netid(int netid);
+ CURL_EXTERN CURLcode curl_easy_setopt(CURL *curl, CURLoption option, ...);
+ CURL_EXTERN CURLcode curl_easy_perform(CURL *curl);
+ CURL_EXTERN void curl_easy_cleanup(CURL *curl);
+diff --git a/lib/doh.c b/lib/doh.c
+index 03317ae27..22e9c6b2f 100644
+--- a/lib/doh.c
++++ b/lib/doh.c
+@@ -265,7 +265,7 @@ static CURLcode dohprobe(struct Curl_easy *data,
+     goto error;
+   }
+   /* Curl_open() is the internal version of curl_easy_init() */
+-  result = Curl_open(&doh);
++  result = Curl_open_with_netid(&doh, data->netid);
+   if(!result) {
+     /* pass in the struct pointer via a local variable to please coverity and
+        the gcc typecheck helpers */
+@@ -273,6 +273,14 @@ static CURLcode dohprobe(struct Curl_easy *data,
+     doh->state.internal = true;
+ #ifndef CURL_DISABLE_VERBOSE_STRINGS
+     doh->state.feat = &Curl_doh_trc;
++#endif
++#ifdef USE_ARES
++    if (data->netid && data->set.str[STRING_DNS_INTERFACE]) {
++        ERROR_CHECK_SETOPT(CURLOPT_DNS_INTERFACE, data->set.str[STRING_DNS_INTERFACE]);
++    }
++    if (data->netid && data->set.str[STRING_DEVICE]) {
++        ERROR_CHECK_SETOPT(CURLOPT_INTERFACE, data->set.str[STRING_DEVICE]);
++    }
+ #endif
+     ERROR_CHECK_SETOPT(CURLOPT_URL, url);
+     ERROR_CHECK_SETOPT(CURLOPT_DEFAULT_PROTOCOL, "https");
+diff --git a/lib/easy.c b/lib/easy.c
+index cc9fe0200..f7d0965b0 100644
+--- a/lib/easy.c
++++ b/lib/easy.c
+@@ -341,11 +341,7 @@ CURLsslset curl_global_sslset(curl_sslbackend id, const char *name,
+   return rc;
+ }
+ 
+-/*
+- * curl_easy_init() is the external interface to alloc, setup and init an
+- * easy handle that is returned. If anything goes wrong, NULL is returned.
+- */
+-struct Curl_easy *curl_easy_init(void)
++struct Curl_easy *curl_easy_init_with_netid(int netid)
+ {
+   CURLcode result;
+   struct Curl_easy *data;
+@@ -365,14 +361,22 @@ struct Curl_easy *curl_easy_init(void)
+   global_init_unlock();
+ 
+   /* We use curl_open() with undefined URL so far */
+-  result = Curl_open(&data);
++  result = Curl_open_with_netid(&data, netid);
+   if(result) {
+-    DEBUGF(fprintf(stderr, "Error: Curl_open failed\n"));
++    DEBUGF(fprintf(stderr, "Error: Curl_open_with_netid failed\n"));
+     return NULL;
+   }
+ 
+   return data;
+ }
++/*
++ * curl_easy_init() is the external interface to alloc, setup and init an
++ * easy handle that is returned. If anything goes wrong, NULL is returned.
++ */
++struct Curl_easy *curl_easy_init(void)
++{
++  return curl_easy_init_with_netid(0);
++}
+ 
+ #ifdef CURLDEBUG
+ 
+diff --git a/lib/url.c b/lib/url.c
+index 178506729..970c6c1d4 100644
+--- a/lib/url.c
++++ b/lib/url.c
+@@ -514,7 +514,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
+  * @return CURLcode
+  */
+ 
+-CURLcode Curl_open(struct Curl_easy **curl)
++CURLcode Curl_open_with_netid(struct Curl_easy **curl, int netid)
+ {
+   CURLcode result;
+   struct Curl_easy *data;
+@@ -581,6 +581,9 @@ CURLcode Curl_open(struct Curl_easy **curl)
+   data->set.cookies_encode_free_data = NULL;
+   data->set.cookies_decode_free = NULL;
+   data->set.cookies_decode_free_data = NULL;
++  data->netid = netid;
++
++  ares_set_dns_netid((ares_channel)data->state.async.resolver, netid);
+ #endif
+ 
+   Curl_req_init(&data->req);
+diff --git a/lib/url.h b/lib/url.h
+index 198a00ad1..ea92ff2d0 100644
+--- a/lib/url.h
++++ b/lib/url.h
+@@ -30,7 +30,7 @@
+  */
+ 
+ CURLcode Curl_init_do(struct Curl_easy *data, struct connectdata *conn);
+-CURLcode Curl_open(struct Curl_easy **curl);
++CURLcode Curl_open_with_netid(struct Curl_easy **curl, int netid);
+ CURLcode Curl_init_userdefined(struct Curl_easy *data);
+ 
+ void Curl_freeset(struct Curl_easy *data);
+diff --git a/lib/urldata.h b/lib/urldata.h
+index 07ab90312..0336bb71b 100644
+--- a/lib/urldata.h
++++ b/lib/urldata.h
+@@ -2062,7 +2062,9 @@ struct Curl_easy {
+   long connected_ip_num;
+   curl_dns_status_type dns_status;
+   long is_dns_from_netsys_cache;
++  curl_socket_t used_socket_fd;
+ #endif
++  int netid;
+   const char *sni_hostname;
+ };
+ 
+diff --git a/libcurl.def b/libcurl.def
+index 9bf9fcc95..3bf543b40 100644
+--- a/libcurl.def
++++ b/libcurl.def
+@@ -5,6 +5,7 @@ curl_easy_escape
+ curl_easy_getinfo
+ curl_easy_header
+ curl_easy_init
++curl_easy_init_with_netid
+ curl_easy_nextheader
+ curl_easy_option_by_id
+ curl_easy_option_by_name
+diff --git a/tests/unit/unit1620.c b/tests/unit/unit1620.c
+index 4a457ff0e..fdb75885b 100644
+--- a/tests/unit/unit1620.c
++++ b/tests/unit/unit1620.c
+@@ -52,10 +52,10 @@ UNITTEST_START
+   bool async = FALSE;
+   bool protocol_connect = FALSE;
+ 
+-  rc = Curl_open(&empty);
++  rc = Curl_open_with_netid(&empty, 0);
+   if(rc)
+     goto unit_test_abort;
+-  fail_unless(rc == CURLE_OK, "Curl_open() failed");
++  fail_unless(rc == CURLE_OK, "Curl_open_with_netid() failed");
+ 
+   rc = Curl_connect(empty, &async, &protocol_connect);
+   fail_unless(rc == CURLE_URL_MALFORMAT,
+-- 
+2.51.2.huawei.11
+
