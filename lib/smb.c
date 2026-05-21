@@ -462,9 +462,6 @@ static CURLcode smb_connect(struct Curl_easy *data, bool *done)
   if(!smbc->send_buf)
     return CURLE_OUT_OF_MEMORY;
 
-  /* Multiple requests are allowed with this connection */
-  connkeep(conn, "SMB default");
-
   /* Parse the username, domain, and password */
   slash = strchr(conn->user, '/');
   if(!slash)
