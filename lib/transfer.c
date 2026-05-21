@@ -559,6 +559,40 @@ void Curl_init_CONNECT(struct Curl_easy *data)
 }
 
 /*
+ * Restore the user credentials to those set in options.
+ */
+CURLcode Curl_reset_userpwd(struct Curl_easy *data)
+{
+  CURLcode result;
+  if(data->set.str[STRING_USERNAME] || data->set.str[STRING_PASSWORD])
+    data->state.creds_from = CREDS_OPTION;
+  result = Curl_setstropt(&data->state.aptr.user,
+                          data->set.str[STRING_USERNAME]);
+  if(!result)
+    result = Curl_setstropt(&data->state.aptr.passwd,
+                            data->set.str[STRING_PASSWORD]);
+  return result;
+}
+
+/*
+ * Restore the proxy credentials to those set in options.
+ */
+CURLcode Curl_reset_proxypwd(struct Curl_easy *data)
+{
+#ifndef CURL_DISABLE_PROXY
+  CURLcode result = Curl_setstropt(&data->state.aptr.proxyuser,
+                                   data->set.str[STRING_PROXYUSERNAME]);
+  if(!result)
+    result = Curl_setstropt(&data->state.aptr.proxypasswd,
+                            data->set.str[STRING_PROXYPASSWORD]);
+  return result;
+#else
+  (void)data;
+  return CURLE_OK;
+#endif
+}
+
+/*
  * Curl_pretransfer() is called immediately before a transfer starts, and only
  * once for one transfer no matter if it has redirects or do multi-pass
  * authentication etc.
@@ -706,18 +740,10 @@ CURLcode Curl_pretransfer(struct Curl_easy *data)
   }
 
   if(!result)
-    result = Curl_setstropt(&data->state.aptr.user,
-                            data->set.str[STRING_USERNAME]);
-  if(!result)
-    result = Curl_setstropt(&data->state.aptr.passwd,
-                            data->set.str[STRING_PASSWORD]);
+    result = Curl_reset_userpwd(data);
 #ifndef CURL_DISABLE_PROXY
   if(!result)
-    result = Curl_setstropt(&data->state.aptr.proxyuser,
-                            data->set.str[STRING_PROXYUSERNAME]);
-  if(!result)
-    result = Curl_setstropt(&data->state.aptr.proxypasswd,
-                            data->set.str[STRING_PROXYPASSWORD]);
+    result = Curl_reset_proxypwd(data);
 #endif
 
   data->req.headerbytecount = 0;
@@ -846,56 +872,38 @@ CURLcode Curl_follow(struct Curl_easy *data,
       return CURLE_OUT_OF_MEMORY;
   }
   else {
-    uc = curl_url_get(data->state.uh, CURLUPART_URL, &newurl, 0);
-    if(uc)
+    bool same_origin;
+    CURLcode result;
+    CURLU *u = curl_url();
+    if(!u)
+      return CURLE_OUT_OF_MEMORY;
+    uc = curl_url_set(u, CURLUPART_URL,
+                      data->state.url,
+                      CURLU_URLENCODE | CURLU_ALLOW_SPACE);
+    if(!uc)
+      uc = curl_url_get(data->state.uh, CURLUPART_URL, &newurl, 0);
+    if(uc) {
+      curl_url_cleanup(u);
       return Curl_uc_to_curlcode(uc);
+    }
 
-    /* Clear auth if this redirects to a different port number or protocol,
-       unless permitted */
-    if(!data->set.allow_auth_to_other_hosts && (type != FOLLOW_FAKE)) {
-      char *portnum;
-      int port;
-      bool clear = FALSE;
+    same_origin = Curl_url_same_origin(u, data->state.uh);
+    curl_url_cleanup(u);
 
-      if(data->set.use_port && data->state.allow_port)
-        /* a custom port is used */
-        port = (int)data->set.use_port;
-      else {
-        uc = curl_url_get(data->state.uh, CURLUPART_PORT, &portnum,
-                          CURLU_DEFAULT_PORT);
-        if(uc) {
-          free(newurl);
-          return Curl_uc_to_curlcode(uc);
-        }
-        port = atoi(portnum);
-        free(portnum);
+    if((!same_origin && !data->set.allow_auth_to_other_hosts) ||
+       !data->set.str[STRING_USERNAME]) {
+      result = Curl_reset_userpwd(data);
+      if(result) {
+        free(newurl);
+        return result;
       }
-      if(port != data->info.conn_remote_port) {
-        infof(data, "Clear auth, redirects to port from %u to %u",
-              data->info.conn_remote_port, port);
-        clear = TRUE;
-      }
-      else {
-        char *scheme;
-        const struct Curl_handler *p;
-        uc = curl_url_get(data->state.uh, CURLUPART_SCHEME, &scheme, 0);
-        if(uc) {
-          free(newurl);
-          return Curl_uc_to_curlcode(uc);
-        }
-
-        p = Curl_get_scheme_handler(scheme);
-        if(p && (p->protocol != data->info.conn_protocol)) {
-          infof(data, "Clear auth, redirects scheme from %s to %s",
-                data->info.conn_scheme, scheme);
-          clear = TRUE;
-        }
-        free(scheme);
-      }
-      if(clear) {
-        Curl_safefree(data->state.aptr.user);
-        Curl_safefree(data->state.aptr.passwd);
-      }
+      Curl_safefree(data->state.aptr.user);
+      Curl_safefree(data->state.aptr.passwd);
+    }
+    result = Curl_reset_proxypwd(data);
+    if(result) {
+      free(newurl);
+      return result;
     }
   }
 
