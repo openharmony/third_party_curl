@@ -879,7 +879,7 @@ CURLcode Curl_follow(struct Curl_easy *data,
     if(!u)
       return CURLE_OUT_OF_MEMORY;
     uc = curl_url_set(u, CURLUPART_URL,
-                      Curl_bufref_ptr(&data->state.url),
+                      data->state.url,
                       CURLU_URLENCODE | CURLU_ALLOW_SPACE);
     if(!uc)
       uc = curl_url_get(data->state.uh, CURLUPART_URL, &newurl, 0);
