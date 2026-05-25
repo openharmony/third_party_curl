@@ -1228,6 +1228,11 @@ struct urlpieces {
   char *query;
 };
 
+#define CREDS_NONE   0
+#define CREDS_URL    1 /* from URL */
+#define CREDS_OPTION 2 /* set with a CURLOPT_ */
+#define CREDS_NETRC  3 /* found in netrc */
+
 struct UrlState {
   /* Points to the connection cache */
   struct conncache *conn_cache;
@@ -1381,6 +1386,9 @@ struct UrlState {
   unsigned char select_bits; /* != 0 -> bitmask of socket events for this
                                  transfer overriding anything the socket may
                                  report */
+  unsigned int creds_from:2; /* where is the server credentials originating
+                                from, see the CREDS_* defines above */
+
 #ifdef CURLDEBUG
   BIT(conncache_lock);
 #endif
