@@ -1150,6 +1150,7 @@ static CURLcode smb_do(struct Curl_easy *data, bool *done)
   struct smb_conn *smbc = &conn->proto.smbc;
 
   *done = FALSE;
+  connclose(conn, "SMB(S) does not support reuse");
   if(smbc->share) {
     return CURLE_OK;
   }
