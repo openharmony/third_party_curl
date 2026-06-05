@@ -89,7 +89,6 @@ struct Curl_multi_conn_param {
   int stream_num_max;
 };
 
-
 /* This is the struct known as CURLM on the outside */
 struct Curl_multi {
   /* First a simple identifier to easier detect if a user mix up
@@ -170,6 +169,7 @@ struct Curl_multi {
 #endif
 #endif
   unsigned int max_concurrent_streams;
+  long conn_keep_alive_duration_max;  
   unsigned int maxconnects; /* if >0, a fixed limit of the maximum number of
                                entries we're allowed to grow the connection
                                cache to */
