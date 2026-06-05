@@ -3397,19 +3397,12 @@ static void close_bundle_idle_conn(struct Curl_multi *multi,
     Curl_disconnect(data, conn, FALSE);
     CONNCACHE_LOCK(data);
 
-    if(!was_closing) {
-      infof(data, "Closed idle connection: %s:%ld",
-            conn->host.name, conn->remote_port);
-    }
-
     Curl_hash_start_iterate(&connc->hash, iter);
   }
   else if(bundle->conn_list.head) {
     conn = bundle->conn_list.head->ptr;
     if(!conn->bits.close) {
       connclose(conn, "max_concurrent reduced");
-      infof(data, "Connection will close after transfer: %s:%ld",
-            conn->host.name, conn->remote_port);
     }
     bundle->num_connections--;
   }
