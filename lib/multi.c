@@ -3419,13 +3419,11 @@ static void reduce_connections_by_concurrent(struct Curl_multi *multi)
 {
   struct Curl_easy *data = multi->easyp;
   int max_concurrent = multi->max_host_connections;
- 
+
   if(!data || max_concurrent <= 0) {
     return;
   }
-
   CONNCACHE_LOCK(data);
-
 
   struct Curl_hash_iterator iter;
   struct Curl_hash_element *he;
@@ -3435,11 +3433,9 @@ static void reduce_connections_by_concurrent(struct Curl_multi *multi)
 
   while((he = Curl_hash_next_element(&iter))) {
     struct connectbundle *bundle = (struct connectbundle *)he->ptr;
-
     if(!bundle) {
       continue;
     }
-
     while(bundle->num_connections > (size_t)max_concurrent) {
       close_bundle_idle_conn(multi, data, bundle, &iter, connc);
     }
@@ -3447,7 +3443,6 @@ static void reduce_connections_by_concurrent(struct Curl_multi *multi)
 
   CONNCACHE_UNLOCK(data);
 }
-
 
 #undef curl_multi_setopt
 CURLMcode curl_multi_setopt(struct Curl_multi *multi,
@@ -3530,7 +3525,6 @@ static CURLMcode curl_multi_setopt02(struct Curl_multi *multi,
                                      va_list param)
 {
   CURLMcode res = CURLM_UNKNOWN_OPTION;
-
   switch(option) {
   case CURLMOPT_CONN_PARAM_UPDATE:
     {
@@ -3554,7 +3548,6 @@ static CURLMcode curl_multi_setopt02(struct Curl_multi *multi,
   }
   return res;
 }
-
 
 /* we define curl_multi_socket() in the public multi.h header */
 #undef curl_multi_socket
