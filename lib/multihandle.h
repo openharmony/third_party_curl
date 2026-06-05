@@ -83,6 +83,13 @@ typedef enum {
    backend */
 struct multi_ssl_backend_data;
 
+struct Curl_multi_conn_param {
+  int concurrent_num;
+  int keep_alive_duration_max;
+  int stream_num_max;
+};
+
+
 /* This is the struct known as CURLM on the outside */
 struct Curl_multi {
   /* First a simple identifier to easier detect if a user mix up
