@@ -85,7 +85,7 @@ struct multi_ssl_backend_data;
 
 struct Curl_multi_conn_param {
   int concurrent_num;
-  int keep_alive_duration_max;
+  long keep_alive_duration_max;
   int stream_num_max;
 };
 
