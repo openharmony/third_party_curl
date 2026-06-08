@@ -95,6 +95,16 @@ static CURLMcode multi_timeout(struct Curl_multi *multi,
                                long *timeout_ms);
 static void process_pending_handles(struct Curl_multi *multi);
 static void multi_xfer_bufs_free(struct Curl_multi *multi);
+static void reduce_connections_by_concurrent(struct Curl_multi *multi);
+static struct connectdata *find_idle_connection(struct connectbundle *bundle);
+static void close_bundle_idle_conn(struct Curl_multi *multi,
+                                   struct Curl_easy *data,
+                                   struct connectbundle *bundle,
+                                   struct Curl_hash_iterator *iter,
+                                   struct conncache *connc);
+static CURLMcode curl_multi_setopt02(struct Curl_multi *multi,
+                                     CURLMoption option,
+                                     va_list param);
 
 static const char * const multi_statename[]={
   "INIT",
@@ -3344,6 +3354,89 @@ static CURLMcode multi_socket(struct Curl_multi *multi,
   return result;
 }
 
+/*
+ * reduce_connections_by_concurrent() - Clean up connections when concurrent_num decreases
+ *
+ * When CURLMOPT_CONN_PARAM_UPDATE is set with concurrent_num < max_host_connections,
+ * this function:
+ * 1. Idle connections (not in use, not marked close): disconnect directly
+ * 2. Idle connections (not in use, marked close): disconnect directly
+ * 3. Busy connections (in use): mark close, wait for transfer to complete
+ * 4. New requests will NOT reuse connections marked close
+ */
+static struct connectdata *find_idle_connection(struct connectbundle *bundle)
+{
+  struct Curl_llist_element *curr;
+  struct connectdata *conn = NULL;
+
+  for(curr = bundle->conn_list.head; curr; curr = curr->next) {
+    conn = curr->ptr;
+    if(!CONN_INUSE(conn)) {
+      return conn;
+    }
+  }
+  return NULL;
+}
+
+static void close_bundle_idle_conn(struct Curl_multi *multi,
+                                   struct Curl_easy *data,
+                                   struct connectbundle *bundle,
+                                   struct Curl_hash_iterator *iter,
+                                   struct conncache *connc)
+{
+  struct connectdata *conn = find_idle_connection(bundle);
+
+  if(conn) {
+    bool was_closing = conn->bits.close;
+
+    Curl_llist_remove(&bundle->conn_list, &conn->bundle_node, NULL);
+    bundle->num_connections--;
+    conn->bundle = NULL;
+
+    CONNCACHE_UNLOCK(data);
+    Curl_disconnect(data, conn, FALSE);
+    CONNCACHE_LOCK(data);
+
+    Curl_hash_start_iterate(&connc->hash, iter);
+  }
+  else if(bundle->conn_list.head) {
+    conn = bundle->conn_list.head->ptr;
+    if(!conn->bits.close) {
+      connclose(conn, "max_concurrent reduced");
+    }
+    bundle->num_connections--;
+  }
+}
+
+static void reduce_connections_by_concurrent(struct Curl_multi *multi)
+{
+  struct Curl_easy *data = multi->easyp;
+  int max_concurrent = multi->max_host_connections;
+
+  if(!data || max_concurrent <= 0) {
+    return;
+  }
+  CONNCACHE_LOCK(data);
+
+  struct Curl_hash_iterator iter;
+  struct Curl_hash_element *he;
+  struct conncache *connc = &multi->conn_cache;
+
+  Curl_hash_start_iterate(&connc->hash, &iter);
+
+  while((he = Curl_hash_next_element(&iter))) {
+    struct connectbundle *bundle = (struct connectbundle *)he->ptr;
+    if(!bundle) {
+      continue;
+    }
+    while(bundle->num_connections > (size_t)max_concurrent) {
+      close_bundle_idle_conn(multi, data, bundle, &iter, connc);
+    }
+  }
+
+  CONNCACHE_UNLOCK(data);
+}
+
 #undef curl_multi_setopt
 CURLMcode curl_multi_setopt(struct Curl_multi *multi,
                             CURLMoption option, ...)
@@ -3413,10 +3506,39 @@ CURLMcode curl_multi_setopt(struct Curl_multi *multi,
     }
     break;
   default:
-    res = CURLM_UNKNOWN_OPTION;
+    res = curl_multi_setopt02(multi, option, param);
     break;
   }
   va_end(param);
+  return res;
+}
+
+static CURLMcode curl_multi_setopt02(struct Curl_multi *multi,
+                                     CURLMoption option,
+                                     va_list param)
+{
+  CURLMcode res = CURLM_UNKNOWN_OPTION;
+  switch(option) {
+  case CURLMOPT_CONN_PARAM_UPDATE:
+    {
+      struct Curl_multi_conn_param *conn_param =
+        va_arg(param, struct Curl_multi_conn_param *);
+      if(conn_param) {
+        int old_host_conn = multi->max_host_connections;
+        multi->max_host_connections = conn_param->concurrent_num;
+        if(old_host_conn > conn_param->concurrent_num && conn_param->concurrent_num > 0) {
+          reduce_connections_by_concurrent(multi);
+        }
+        multi->conn_keep_alive_duration_max = conn_param->keep_alive_duration_max;
+        multi->max_concurrent_streams = conn_param->stream_num_max;
+      }
+    }
+    res = CURLM_OK;
+    break;
+  default:
+    res = CURLM_UNKNOWN_OPTION;
+    break;
+  }
   return res;
 }
 
