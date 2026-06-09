@@ -631,3 +631,11 @@ int Curl_pgrsUpdate(struct Curl_easy *data)
 
   return 0;
 }
+
+const struct curltime *Curl_pgrs_now(struct Curl_easy *data)
+{
+  struct curltime *pnow = data->multi ?
+                          &data->multi->now : &data->progress.now;
+  curlx_pnow(pnow);
+  return pnow;
+}

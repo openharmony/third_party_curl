@@ -4084,3 +4084,8 @@ static void multi_xfer_bufs_free(struct Curl_multi *multi)
   multi->xfer_ulbuf_len = 0;
   multi->xfer_ulbuf_borrowed = FALSE;
 }
+
+bool Curl_is_connecting(struct Curl_easy *data)
+{
+  return data->mstate < MSTATE_DO;
+}

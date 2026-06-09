@@ -814,6 +814,11 @@ struct ldapconninfo;
  * unique for an entire connection.
  */
 struct connectdata {
+  struct {
+    struct curltime start[2]; /* when filter shutdown started */
+    timediff_t timeout_ms; /* 0 means no timeout */
+  } shutdown;
+  
   struct Curl_llist_element bundle_node; /* conncache */
 
   curl_closesocket_callback fclosesocket; /* function closing the socket(s) */
@@ -1084,6 +1089,7 @@ struct PureInfo {
 
 
 struct Progress {
+  struct curltime now; /* current time of processing */
   time_t lastshow; /* time() of the last displayed progress meter or NULL to
                       force redraw at next call */
   curl_off_t size_dl; /* total expected size */

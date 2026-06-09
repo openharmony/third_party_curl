@@ -43,6 +43,9 @@ typedef enum {
   TIMER_LAST /* must be last */
 } timerid;
 
+/* Get the current timestamp of the transfer */
+const struct curltime *Curl_pgrs_now(struct Curl_easy *data);
+
 int Curl_pgrsDone(struct Curl_easy *data);
 void Curl_pgrsStartNow(struct Curl_easy *data);
 void Curl_pgrsSetDownloadSize(struct Curl_easy *data, curl_off_t size);

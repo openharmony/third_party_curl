@@ -48,6 +48,7 @@
 #include <zstd.h>
 #endif
 
+#include "connect.h"
 #include "sendf.h"
 #include "http.h"
 #include "content_encoding.h"
@@ -65,6 +66,10 @@
 
 /* allow no more than 5 "chained" compression steps */
 #define MAX_ENCODE_STACK 5
+
+#if defined(HAVE_LIBZ) || defined(HAVE_BROTLI) || defined(HAVE_ZSTD)
+#define DECOMPRESS_BUFFER_SIZE 16384 /* buffer size for decompressed data */
+#endif
 
 #define DSIZ CURL_MAX_WRITE_SIZE /* buffer size for decompressed data */
 
@@ -183,6 +188,7 @@ static CURLcode inflate_stream(struct Curl_easy *data,
   Bytef *orig_in = z->next_in;
   bool done = FALSE;
   CURLcode result = CURLE_OK;   /* Curl_client_write status */
+  int i = 0;
   char *decomp;                 /* Put the decompressed data here. */
 
   /* Check state. */
@@ -203,6 +209,15 @@ static CURLcode inflate_stream(struct Curl_easy *data,
   while(!done) {
     int status;                   /* zlib status */
     done = TRUE;
+
+    if(++i > (1024 * 1024 / DECOMPRESS_BUFFER_SIZE)) {
+      /* check every MB of output if we are not exceeding time limit */
+      i = 0;
+      if(Curl_timeleft_ms(data) < 0) {
+        failf(data, "Operation timed out while decoding payload");
+        return exit_zlib(data, z, &zp->zlib_init, CURLE_OPERATION_TIMEDOUT);
+      }
+    }
 
     /* (re)set buffer for decompressed output for every iteration */
     z->next_out = (Bytef *) decomp;
@@ -668,6 +683,7 @@ static CURLcode brotli_do_write(struct Curl_easy *data,
   size_t dstleft;
   CURLcode result = CURLE_OK;
   BrotliDecoderResult r = BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT;
+  int i = 0;
 
   if(!(type & CLIENTWRITE_BODY) || !nbytes)
     return Curl_cwriter_write(data, writer->next, type, buf, nbytes);
@@ -681,6 +697,16 @@ static CURLcode brotli_do_write(struct Curl_easy *data,
 
   while((nbytes || r == BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT) &&
         result == CURLE_OK) {
+
+    if(++i > (1024 * 1024 / DECOMPRESS_BUFFER_SIZE)) {
+      /* check every MB of output if we are not exceeding time limit */
+      i = 0;
+      if(Curl_timeleft_ms(data) < 0) {
+        failf(data, "Operation timed out while decoding payload");
+        return CURLE_OPERATION_TIMEDOUT;
+      }
+    }
+
     dst = (uint8_t *) decomp;
     dstleft = DSIZ;
     r = BrotliDecoderDecompressStream(bp->br,
@@ -761,6 +787,7 @@ static CURLcode zstd_do_write(struct Curl_easy *data,
   ZSTD_inBuffer in;
   ZSTD_outBuffer out;
   size_t errorCode;
+  int i = 0;
 
   if(!(type & CLIENTWRITE_BODY) || !nbytes)
     return Curl_cwriter_write(data, writer->next, type, buf, nbytes);
@@ -775,6 +802,14 @@ static CURLcode zstd_do_write(struct Curl_easy *data,
   in.size = nbytes;
 
   for(;;) {
+    if(++i > (1024 * 1024 / DECOMPRESS_BUFFER_SIZE)) {
+      /* check every MB of output if we are not exceeding time limit */
+      i = 0;
+      if(Curl_timeleft_ms(data) < 0) {
+        failf(data, "Operation timed out while decoding payload");
+        return CURLE_OPERATION_TIMEDOUT;
+      }
+    }
     out.pos = 0;
     out.dst = zp->decomp;
     out.size = DSIZ;
