@@ -35,4 +35,6 @@ CURLUcode Curl_parse_port(struct Curl_URL *u, struct dynbuf *host,
                           bool has_scheme);
 #endif
 
+bool Curl_url_same_origin(CURLU *base, CURLU *href);
+
 #endif /* HEADER_CURL_URLAPI_INT_H */
