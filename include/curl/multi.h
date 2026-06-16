@@ -98,11 +98,11 @@ typedef enum {
   CURLMSG_LAST /* last, not used */
 } CURLMSG;
 
-struct Curl_multi_conn_param {
+typedef struct Curl_multi_conn_param {
   int concurrent_num;
   long keep_alive_duration_max;
   int stream_num_max;
-};
+} CURLM_CONN_PARAM;
 
 struct CURLMsg {
   CURLMSG msg;       /* what this message means */
