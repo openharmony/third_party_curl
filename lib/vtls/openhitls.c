@@ -476,7 +476,6 @@ static ssize_t hitls_recv(struct Curl_cfilter *cf, struct Curl_easy *data, char 
 
     ret = HITLS_Read(backend->ctx, buf, bufferSize, &readLen);
     if (ret == HITLS_SUCCESS) {
-        buf[readLen] = '\0'; // Ensure null-termination
         return readLen;
     } else if (ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY) {
         *curlCode = CURLE_AGAIN;
