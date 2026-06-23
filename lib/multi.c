@@ -2221,7 +2221,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
         }
       }
 
-      if(data->set.connect_only == 1) {
+      if(data->set.connect_only == 1 || data->set.connect_only_for_http_reuse) {
         /* keep connection open for application to use the socket */
         connkeep(data->conn, "CONNECT_ONLY");
         multistate(data, MSTATE_DONE);
@@ -2849,6 +2849,13 @@ static void unlink_all_msgsent_handles(struct Curl_multi *multi)
   }
 }
 
+void curl_multi_clear_dns_cache(CURLM *multi)
+{
+  if (GOOD_MULTI_HANDLE(multi)) {
+    Curl_hash_clean(&multi->hostcache);
+  }
+}
+
 CURLMcode curl_multi_cleanup(struct Curl_multi *multi)
 {
   struct Curl_easy *data;
@@ -3387,11 +3394,7 @@ static void close_bundle_idle_conn(struct Curl_multi *multi,
   struct connectdata *conn = find_idle_connection(bundle);
 
   if(conn) {
-    bool was_closing = conn->bits.close;
-
-    Curl_llist_remove(&bundle->conn_list, &conn->bundle_node, NULL);
-    bundle->num_connections--;
-    conn->bundle = NULL;
+    Curl_conncache_remove_conn(data, conn, FALSE);
 
     CONNCACHE_UNLOCK(data);
     Curl_disconnect(data, conn, FALSE);
@@ -3404,7 +3407,6 @@ static void close_bundle_idle_conn(struct Curl_multi *multi,
     if(!conn->bits.close) {
       connclose(conn, "max_concurrent reduced");
     }
-    bundle->num_connections--;
   }
 }
 
@@ -3429,7 +3431,7 @@ static void reduce_connections_by_concurrent(struct Curl_multi *multi)
     if(!bundle) {
       continue;
     }
-    while(bundle->num_connections > (size_t)max_concurrent) {
+    while(bundle && bundle->num_connections > (size_t)max_concurrent) {
       close_bundle_idle_conn(multi, data, bundle, &iter, connc);
     }
   }
@@ -4083,4 +4085,9 @@ static void multi_xfer_bufs_free(struct Curl_multi *multi)
   Curl_safefree(multi->xfer_ulbuf);
   multi->xfer_ulbuf_len = 0;
   multi->xfer_ulbuf_borrowed = FALSE;
+}
+
+bool Curl_is_connecting(struct Curl_easy *data)
+{
+  return data->mstate < MSTATE_DO;
 }

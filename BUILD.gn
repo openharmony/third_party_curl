@@ -14,6 +14,8 @@ import("//build/ohos.gni")
 
 declare_args() {
   netstack_feature_http3 = false
+  curl_feature_use_lwip =  false
+  curl_feature_log_trimming = false
 }
 
 curl_source = [
@@ -203,11 +205,21 @@ print("Build curl support_gmssl: $support_gmssl")
 
 if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
-
+  defines = []
   config("curl_config") {
-    include_dirs = [ "lib" ]
+    include_dirs = [ 
+      "lib",
+      "//third_party/cares/include",
+    ]
     if (ohos_kernel_type == "liteos_m") {
       include_dirs += [ "//kernel/liteos_m/kal/posix/include" ]
+    }
+    if (curl_feature_log_trimming) {
+      defines += [ "LOG_TRIMMING" ]
+    }
+    if (curl_feature_use_lwip) {
+      include_dirs += [ "//third_party/lwip/src/include" ]
+      defines += [ "USE_LWIP" ]
     }
     cflags = [
       "-DBUILDING_LIBCURL",
@@ -248,7 +260,11 @@ if (defined(ohos_lite)) {
       "-Wimplicit-fallthrough",
     ]
     if (ohos_kernel_type == "liteos_m") {
-      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
+      if(curl_feature_use_lwip) {
+        cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_w.h\"" ]
+      } else {
+        cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
+      }
     } else {
       cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_a.h\"" ]
     }
@@ -269,7 +285,11 @@ if (defined(ohos_lite)) {
     static_library("libcurl_static") {
       sources = curl_source
       deps = [ "//third_party/mbedtls" ]
-      deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
+      if (defined(global_parts_info.thirdparty_nghttp2) &&
+        global_parts_info.thirdparty_nghttp2) {
+          deps += [ "//third_party/nghttp2/lib:nghttp2_lib_static" ]
+          defines += [ "HAVE_THIRDPARTY_NGHTTP2" ]
+      }
       configs += [
         ":curl_config",
         ":curl_config_public",

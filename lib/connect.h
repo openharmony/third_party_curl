@@ -32,6 +32,20 @@
 struct Curl_dns_entry;
 struct ip_quadruple;
 
+/* generic function that returns how much time there is left to run, according
+   to the timeouts set */
+timediff_t Curl_timeleft_ms(struct Curl_easy *data);
+
+
+/* TRUE iff shutdown has been started */
+bool Curl_shutdown_started(struct Curl_easy *data, int sockindex);
+
+/* return how much time there is left to shutdown the connection at
+ * sockindex. Returns 0 if there is no limit or shutdown has not started. */
+timediff_t Curl_shutdown_timeleft(struct Curl_easy *data,
+                                  struct connectdata *conn,
+                                  int sockindex);
+
 /* generic function that returns how much time there's left to run, according
    to the timeouts set */
 timediff_t Curl_timeleft(struct Curl_easy *data,

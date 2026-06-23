@@ -129,12 +129,6 @@
 #define ARRAYSIZE(A) (sizeof(A)/sizeof((A)[0]))
 #endif
 
-#ifdef USE_NGHTTP2
-static void data_priority_cleanup(struct Curl_easy *data);
-#else
-#define data_priority_cleanup(x)
-#endif
-
 /* Some parts of the code (e.g. chunked encoding) assume this buffer has at
  * more than just a few bytes to play with. Don't let it become too small or
  * bad things will happen.
@@ -297,8 +291,6 @@ CURLcode Curl_close(struct Curl_easy **datap)
   /* this destroys the channel and we cannot use it anymore after this */
   Curl_resolver_cancel(data);
   Curl_resolver_cleanup(data->state.async.resolver);
-
-  data_priority_cleanup(data);
 
   /* No longer a dirty share, if it exists */
   if(data->share) {
@@ -501,7 +493,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->usertimeout_userp = ZERO_NULL;
 #endif
 #ifdef HAS_NETMANAGER_BASE
-  set->use_dns_interceptor = 0;
+  set->use_dns_interceptor = 1;
 #endif
   return result;
 }
@@ -514,7 +506,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
  * @return CURLcode
  */
 
-CURLcode Curl_open(struct Curl_easy **curl)
+CURLcode Curl_open_with_netid(struct Curl_easy **curl, int netid)
 {
   CURLcode result;
   struct Curl_easy *data;
@@ -556,6 +548,32 @@ CURLcode Curl_open(struct Curl_easy **curl)
   memset(data->last_ssl_send_err, 0, sizeof(data->last_ssl_send_err));
   data->last_recv_errno = 0;
   data->last_send_errno = 0;
+  
+#ifdef USE_ARES
+  memset(data->cert_issuer_names, 0, sizeof(data->cert_issuer_names));
+  data->cert_num = 0;
+
+  data->try_connect_ipv4 = 0;
+  data->try_connect_ipv6 = 0;
+  
+  memset(data->connected_ip, 0, sizeof(data->connected_ip));
+  memset(data->connected_port, 0, sizeof(data->connected_port));
+  data->connected_ip_num = 0;
+  data->dns_status = CURL_DNS_STATUS_GET_INIT;
+  data->is_dns_from_netsys_cache = 0;
+  data->set.enable_cookie_value_change = 0;
+  data->set.cookies_line_max_size_multiplier = 1;
+  data->set.cookies_encode = NULL;
+  data->set.cookies_encode_data = NULL;
+  data->set.cookies_decode = NULL;
+  data->set.cookies_decode_data = NULL;
+  data->set.cookies_encode_free = NULL;
+  data->set.cookies_encode_free_data = NULL;
+  data->set.cookies_decode_free = NULL;
+  data->set.cookies_decode_free_data = NULL;
+  data->netid = netid;
+
+#endif
 
   Curl_req_init(&data->req);
 
@@ -627,12 +645,15 @@ static void conn_free(struct Curl_easy *data, struct connectdata *conn)
   Curl_safefree(conn->socks_proxy.user);
   Curl_safefree(conn->http_proxy.passwd);
   Curl_safefree(conn->socks_proxy.passwd);
+  Curl_safefree(conn->http_proxy.sasl_service);
+  Curl_safefree(conn->socks_proxy.sasl_service);
   Curl_safefree(conn->http_proxy.host.rawalloc); /* http proxy name buffer */
   Curl_safefree(conn->socks_proxy.host.rawalloc); /* socks proxy name buffer */
 #endif
   Curl_safefree(conn->user);
   Curl_safefree(conn->passwd);
   Curl_safefree(conn->sasl_authzid);
+  Curl_safefree(conn->sasl_service);
   Curl_safefree(conn->options);
   Curl_safefree(conn->oauth_bearer);
   Curl_safefree(conn->host.rawalloc); /* host name buffer */
@@ -753,12 +774,38 @@ proxy_info_matches(const struct proxy_info *data,
      (data->port == needle->port) &&
      strcasecompare(data->host.name, needle->host.name)) {
     if(Curl_timestrcmp(data->user, needle->user) ||
-       Curl_timestrcmp(data->passwd, needle->passwd))
+       Curl_timestrcmp(data->passwd, needle->passwd) ||
+       Curl_timestrcmp(data->sasl_service, needle->sasl_service))
       return FALSE;
     return TRUE;
   }
   return FALSE;
 }
+
+
+static bool
+socks_proxy_info_matches(const struct proxy_info *data,
+                         const struct proxy_info *needle)
+{
+  if(!proxy_info_matches(data, needle))
+    return FALSE;
+
+  /* the user information is case-sensitive
+     or at least it is not defined as case-insensitive
+     see https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1 */
+
+  /* curl_strequal does a case insensitive comparison,
+     so do not use it here! */
+  if(Curl_timestrcmp(data->user, needle->user) ||
+       Curl_timestrcmp(data->passwd, needle->passwd) ||
+       Curl_timestrcmp(data->sasl_service, needle->sasl_service))
+    return FALSE;
+  return TRUE;
+}
+#else
+/* disabled, won't get called */
+#define proxy_info_matches(x,y) FALSE
+#define socks_proxy_info_matches(x,y) FALSE
 #endif
 
 /* A connection has to have been idle for a shorter time than 'maxage_conn'
@@ -944,6 +991,9 @@ ConnectionExists(struct Curl_easy *data,
   bool canmultiplex = FALSE;
   struct connectbundle *bundle;
   struct Curl_llist_element *curr;
+#ifdef USE_ARES
+  uint min_inuse = UINT_MAX;
+#endif
 
 #ifdef USE_NTLM
   bool wantNTLMhttp = ((data->state.authhost.want & CURLAUTH_NTLM) &&
@@ -1048,8 +1098,10 @@ ConnectionExists(struct Curl_easy *data,
       else {
         /* Could multiplex, but not when check belongs to another multi */
         struct Curl_llist_element *e = check->easyq.head;
+        if(!e)
+          continue;
         struct Curl_easy *entry = e->ptr;
-        if(entry->multi != data->multi)
+        if(!entry || entry->multi != data->multi)
           continue;
       }
     }
@@ -1169,7 +1221,8 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->user, check->user) ||
          Curl_timestrcmp(needle->passwd, check->passwd) ||
          Curl_timestrcmp(needle->sasl_authzid, check->sasl_authzid) ||
-         Curl_timestrcmp(needle->oauth_bearer, check->oauth_bearer)) {
+         Curl_timestrcmp(needle->oauth_bearer, check->oauth_bearer) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service)) {
         /* one of them was different */
         continue;
       }
@@ -1209,7 +1262,7 @@ ConnectionExists(struct Curl_easy *data,
 
     /* Additional match requirements if talking TLS OR
      * not talking to a HTTP proxy OR using a tunnel through a proxy */
-    if((needle->handler->flags&PROTOPT_SSL)
+    if((needle->handler->flags&PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE)
 #ifndef CURL_DISABLE_PROXY
        || !needle->bits.httpproxy || needle->bits.tunnel_proxy
 #endif
@@ -1239,7 +1292,7 @@ ConnectionExists(struct Curl_easy *data,
         continue;
 
       /* If talking TLS, check needs to use the same SSL options. */
-      if((needle->handler->flags & PROTOPT_SSL) &&
+      if(((needle->handler->flags & PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE)) &&
          !Curl_ssl_conn_config_match(data, check, FALSE)) {
         DEBUGF(infof(data,
                      "Connection #%" CURL_FORMAT_CURL_OFF_T
@@ -1257,7 +1310,8 @@ ConnectionExists(struct Curl_easy *data,
        partway through a handshake!) */
     if(wantNTLMhttp) {
       if(Curl_timestrcmp(needle->user, check->user) ||
-         Curl_timestrcmp(needle->passwd, check->passwd)) {
+         Curl_timestrcmp(needle->passwd, check->passwd) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service)) {
 
         /* we prefer a credential match, but this is at least a connection
            that can be reused and "upgraded" to NTLM */
@@ -1282,8 +1336,10 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->http_proxy.user,
                          check->http_proxy.user) ||
          Curl_timestrcmp(needle->http_proxy.passwd,
-                         check->http_proxy.passwd))
-        continue;
+                         check->http_proxy.passwd) ||
+          Curl_timestrcmp(needle->http_proxy.sasl_service,
+                         check->http_proxy.sasl_service))
+         continue;
     }
     else if(check->proxy_ntlm_state != NTLMSTATE_NONE) {
       /* Proxy connection is using NTLM auth but we don't want NTLM */
@@ -1316,7 +1372,8 @@ ConnectionExists(struct Curl_easy *data,
        so that we can reuse Negotiate connections if possible. */
     if(wantNegotiateHttp) {
       if(Curl_timestrcmp(needle->user, check->user) ||
-         Curl_timestrcmp(needle->passwd, check->passwd))
+         Curl_timestrcmp(needle->passwd, check->passwd) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service))
         continue;
     }
     else if(check->http_negotiate_state != GSS_AUTHNONE) {
@@ -1335,8 +1392,10 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->http_proxy.user,
                          check->http_proxy.user) ||
          Curl_timestrcmp(needle->http_proxy.passwd,
-                         check->http_proxy.passwd))
-        continue;
+                         check->http_proxy.passwd) ||
+          Curl_timestrcmp(needle->http_proxy.sasl_service,
+                         check->http_proxy.sasl_service))
+         continue;
     }
     else if(check->proxy_negotiate_state != GSS_AUTHNONE) {
       /* Proxy connection is using Negotiate auth but we do not want Negotiate */
@@ -1395,9 +1454,22 @@ ConnectionExists(struct Curl_easy *data,
       continue;
     }
 #endif
+
+#ifdef USE_ARES
     /* We have found a connection. Let's stop searching. */
-    chosen = check;
-    break;
+    if(data->set.http_balanced_connection) {
+      if(CONN_INUSE(check) < min_inuse) {
+        chosen = check;
+        min_inuse = CONN_INUSE(check);
+      }
+    } else {
+#endif
+      chosen = check;
+      break;
+#ifdef USE_ARES
+    }
+#endif
+
   } /* loop over connection bundle */
 
   if(chosen) {
@@ -2031,6 +2103,10 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
     }
     else if(uc != CURLUE_NO_USER)
       return Curl_uc_to_curlcode(uc);
+    else if(data->state.aptr.passwd) {
+      /* no user was set but a password, set a blank user */
+      result = Curl_setstropt(&data->state.aptr.user, "");
+    }
     if(result)
       return result;
   }
@@ -2451,13 +2527,22 @@ static CURLcode parse_proxy_auth(struct Curl_easy *data,
     data->state.aptr.proxypasswd : "";
   CURLcode result = CURLE_OUT_OF_MEMORY;
 
+  conn->http_proxy.sasl_service = NULL;
+  if(data->set.str[STRING_PROXY_SERVICE_NAME]) {
+    conn->http_proxy.sasl_service = strdup(data->set.str[STRING_PROXY_SERVICE_NAME]);
+    if (!conn->http_proxy.sasl_service)
+      return CURLE_OUT_OF_MEMORY;
+  }
+
   conn->http_proxy.user = strdup(proxyuser);
   if(conn->http_proxy.user) {
     conn->http_proxy.passwd = strdup(proxypasswd);
     if(conn->http_proxy.passwd)
       result = CURLE_OK;
-    else
+    else {
       Curl_safefree(conn->http_proxy.user);
+      Curl_safefree(conn->http_proxy.sasl_service);
+    }
   }
   return result;
 }
@@ -2607,6 +2692,9 @@ static CURLcode create_conn_helper_init_proxy(struct Curl_easy *data,
           Curl_safefree(conn->socks_proxy.passwd);
           conn->socks_proxy.passwd = conn->http_proxy.passwd;
           conn->http_proxy.passwd = NULL;
+          Curl_safefree(conn->socks_proxy.sasl_service);
+          conn->socks_proxy.sasl_service = conn->http_proxy.sasl_service;
+          conn->http_proxy.sasl_service = NULL;
         }
       }
       conn->bits.socksproxy = TRUE;
@@ -3415,6 +3503,10 @@ static void reuse_conn(struct Curl_easy *data,
     temp->passwd = NULL;
   }
 
+  Curl_safefree(existing->sasl_service);
+  existing->sasl_service = temp->sasl_service;
+  temp->sasl_service = NULL;
+
 #ifndef CURL_DISABLE_PROXY
   existing->bits.proxy_user_passwd = temp->bits.proxy_user_passwd;
   if(existing->bits.proxy_user_passwd) {
@@ -3423,14 +3515,20 @@ static void reuse_conn(struct Curl_easy *data,
     Curl_safefree(existing->socks_proxy.user);
     Curl_safefree(existing->http_proxy.passwd);
     Curl_safefree(existing->socks_proxy.passwd);
+    Curl_safefree(existing->http_proxy.sasl_service);
+    Curl_safefree(existing->socks_proxy.sasl_service);
     existing->http_proxy.user = temp->http_proxy.user;
     existing->socks_proxy.user = temp->socks_proxy.user;
     existing->http_proxy.passwd = temp->http_proxy.passwd;
     existing->socks_proxy.passwd = temp->socks_proxy.passwd;
+    existing->http_proxy.sasl_service = temp->http_proxy.sasl_service;
+    existing->socks_proxy.sasl_service = temp->socks_proxy.sasl_service;
     temp->http_proxy.user = NULL;
     temp->socks_proxy.user = NULL;
     temp->http_proxy.passwd = NULL;
     temp->socks_proxy.passwd = NULL;
+    temp->http_proxy.sasl_service = NULL;
+    temp->socks_proxy.sasl_service = NULL;
   }
 #endif
 
@@ -3527,6 +3625,21 @@ static CURLcode create_conn(struct Curl_easy *data,
   if(data->set.str[STRING_SASL_AUTHZID]) {
     conn->sasl_authzid = strdup(data->set.str[STRING_SASL_AUTHZID]);
     if(!conn->sasl_authzid) {
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    }
+  }
+  if (data->set.str[STRING_SERVICE_NAME]) {
+    conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
+    if (!conn->sasl_service) {
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    }
+  }
+
+  if (data->set.str[STRING_SERVICE_NAME]) {
+    conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
+    if (!conn->sasl_service) {
       result = CURLE_OUT_OF_MEMORY;
       goto out;
     }
@@ -3714,7 +3827,7 @@ static CURLcode create_conn(struct Curl_easy *data,
      already (which happens due to follow-location or during an HTTP
      authentication phase). CONNECT_ONLY transfers also refuse reuse. */
   if((data->set.reuse_fresh && !data->state.followlocation) ||
-     data->set.connect_only)
+     data->set.connect_only || data->set.connect_only_for_http_reuse)
     reuse = FALSE;
   else
     reuse = ConnectionExists(data, conn, &existing, &force_reuse, &waitpipe);
@@ -3997,96 +4110,6 @@ CURLcode Curl_init_do(struct Curl_easy *data, struct connectdata *conn)
 }
 
 #if defined(USE_HTTP2) || defined(USE_HTTP3)
-
-#ifdef USE_NGHTTP2
-
-static void priority_remove_child(struct Curl_easy *parent,
-                                  struct Curl_easy *child)
-{
-  struct Curl_data_prio_node **pnext = &parent->set.priority.children;
-  struct Curl_data_prio_node *pnode = parent->set.priority.children;
-
-  DEBUGASSERT(child->set.priority.parent == parent);
-  while(pnode && pnode->data != child) {
-    pnext = &pnode->next;
-    pnode = pnode->next;
-  }
-
-  DEBUGASSERT(pnode);
-  if(pnode) {
-    *pnext = pnode->next;
-    free(pnode);
-  }
-
-  child->set.priority.parent = 0;
-  child->set.priority.exclusive = FALSE;
-}
-
-CURLcode Curl_data_priority_add_child(struct Curl_easy *parent,
-                                      struct Curl_easy *child,
-                                      bool exclusive)
-{
-  if(child->set.priority.parent) {
-    priority_remove_child(child->set.priority.parent, child);
-  }
-
-  if(parent) {
-    struct Curl_data_prio_node **tail;
-    struct Curl_data_prio_node *pnode;
-
-    pnode = calloc(1, sizeof(*pnode));
-    if(!pnode)
-      return CURLE_OUT_OF_MEMORY;
-    pnode->data = child;
-
-    if(parent->set.priority.children && exclusive) {
-      /* exclusive: move all existing children underneath the new child */
-      struct Curl_data_prio_node *node = parent->set.priority.children;
-      while(node) {
-        node->data->set.priority.parent = child;
-        node = node->next;
-      }
-
-      tail = &child->set.priority.children;
-      while(*tail)
-        tail = &(*tail)->next;
-
-      DEBUGASSERT(!*tail);
-      *tail = parent->set.priority.children;
-      parent->set.priority.children = 0;
-    }
-
-    tail = &parent->set.priority.children;
-    while(*tail) {
-      (*tail)->data->set.priority.exclusive = FALSE;
-      tail = &(*tail)->next;
-    }
-
-    DEBUGASSERT(!*tail);
-    *tail = pnode;
-  }
-
-  child->set.priority.parent = parent;
-  child->set.priority.exclusive = exclusive;
-  return CURLE_OK;
-}
-
-#endif /* USE_NGHTTP2 */
-
-#ifdef USE_NGHTTP2
-static void data_priority_cleanup(struct Curl_easy *data)
-{
-  while(data->set.priority.children) {
-    struct Curl_easy *tmp = data->set.priority.children->data;
-    priority_remove_child(data, tmp);
-    if(data->set.priority.parent)
-      Curl_data_priority_add_child(data->set.priority.parent, tmp, FALSE);
-  }
-
-  if(data->set.priority.parent)
-    priority_remove_child(data->set.priority.parent, data);
-}
-#endif
 
 void Curl_data_priority_clear_state(struct Curl_easy *data)
 {

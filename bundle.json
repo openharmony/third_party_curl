@@ -14,7 +14,10 @@
         "name": "curl",
         "subsystem": "thirdparty",
         "syscap": [],
-        "features": [],
+        "features": [
+            "curl_feature_use_lwip",
+            "curl_feature_log_trimming"
+        ],
         "adapted_system_type": [
             "small",
             "standard"

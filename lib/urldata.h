@@ -301,9 +301,14 @@ struct ssl_primary_config {
   char *cipher_list13;   /* list of TLS 1.3 cipher suites to use */
   char *pinned_key;
   char *CRLfile;         /* CRL to check certificate revocation */
+  char *cert_type; /* format for certificate (default: PEM)*/
+  char *key; /* private key file name */
+  char *key_type; /* format for private key (default: PEM) */
+  char *key_passwd; /* plain text private key password */
   struct curl_blob *cert_blob;
   struct curl_blob *ca_info_blob;
   struct curl_blob *issuercert_blob;
+  struct curl_blob *key_blob;
 #ifdef USE_TLS_SRP
   char *username; /* TLS username (for, e.g., SRP) */
   char *password; /* TLS password (for, e.g., SRP) */
@@ -322,13 +327,9 @@ struct ssl_config_data {
   struct ssl_primary_config primary;
   long certverifyresult; /* result from the certificate verification */
   curl_ssl_ctx_callback fsslctx; /* function to initialize ssl ctx */
+  curl_ssl_ctx_callback fhitlsctx; /* function to initialize ssl ctx */
   void *fsslctxp;        /* parameter for call back */
-  char *cert_type; /* format for certificate (default: PEM)*/
-  char *key; /* private key file name */
   char *encKey; /* encryption private key file name */
-  struct curl_blob *key_blob;
-  char *key_type; /* format for private key (default: PEM) */
-  char *key_passwd; /* plain text private key password */
   BIT(certinfo);     /* gather lots of certificate info */
   BIT(falsestart);
   BIT(enable_beast); /* allow this flaw for interoperability's sake */
@@ -370,14 +371,14 @@ struct Curl_ssl_session {
 #ifndef CURL_DISABLE_DIGEST_AUTH
 /* Struct used for Digest challenge-response authentication */
 struct digestdata {
+  char *origin_host;
+  int origin_port;
+  char *user;
+  char *passwd;
 #if defined(USE_WINDOWS_SSPI)
   BYTE *input_token;
   size_t input_token_len;
   CtxtHandle *http_context;
-  /* copy of user/passwd used to make the identity for http_context.
-     either may be NULL. */
-  char *user;
-  char *passwd;
 #else
   char *nonce;
   char *cnonce;
@@ -796,10 +797,11 @@ struct ip_quadruple {
 struct proxy_info {
   struct hostname host;
   int port;
-  unsigned char proxytype; /* curl_proxytype: what kind of proxy that is in
-                              use */
+  unsigned char proxytype; /* curl_proxytype: what kind of proxy that is
+                               in use */
   char *user;    /* proxy user name string, allocated */
   char *passwd;  /* proxy password string, allocated */
+  char *sasl_service; /* proxy SASL service name, allocated */
 };
 
 struct ldapconninfo;
@@ -814,6 +816,11 @@ struct ldapconninfo;
  * unique for an entire connection.
  */
 struct connectdata {
+  struct {
+    struct curltime start[2]; /* when filter shutdown started */
+    timediff_t timeout_ms; /* 0 means no timeout */
+  } shutdown;
+  
   struct Curl_llist_element bundle_node; /* conncache */
 
   curl_closesocket_callback fclosesocket; /* function closing the socket(s) */
@@ -860,6 +867,7 @@ struct connectdata {
   char *options; /* options string, allocated */
   char *sasl_authzid;     /* authorization identity string, allocated */
   char *oauth_bearer; /* OAUTH2 bearer, allocated */
+  char *sasl_service; /* SASL service name, allocated */
   struct curltime now;     /* "current" time */
   struct curltime created; /* creation time */
   struct curltime lastused; /* when returned to the connection cache */
@@ -1084,6 +1092,7 @@ struct PureInfo {
 
 
 struct Progress {
+  struct curltime now; /* current time of processing */
   time_t lastshow; /* time() of the last displayed progress meter or NULL to
                       force redraw at next call */
   curl_off_t size_dl; /* total expected size */
@@ -1629,6 +1638,18 @@ struct UserDefined {
                                     in case the 'localport' one can't be
                                     bind()ed */
 #endif
+#ifdef USE_ARES
+  long cookies_line_max_size_multiplier;
+  cookies_encode_function cookies_encode;
+  void *cookies_encode_data;
+  cookies_decode_function cookies_decode;
+  void *cookies_decode_data;
+  cookies_encode_free_function cookies_encode_free;
+  void *cookies_encode_free_data;
+  cookies_decode_free_function cookies_decode_free;
+  void *cookies_decode_free_data;
+#endif
+
   curl_write_callback fwrite_func;   /* function that stores the output */
   curl_write_callback fwrite_header; /* function that stores headers */
   curl_write_callback fwrite_rtp;    /* function that stores interleaved RTP */
@@ -1803,6 +1824,7 @@ struct UserDefined {
                               IMAP or POP3 or others! (type: curl_usessl)*/
   unsigned char connect_only; /* make connection/request, then let
                                  application use the socket */
+  unsigned char connect_only_for_http_reuse;
 #ifndef CURL_DISABLE_MIME
   BIT(mime_formescape);
 #endif
@@ -1916,6 +1938,12 @@ struct UserDefined {
 #endif
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
+#endif
+
+#ifdef USE_ARES
+  BIT(http_balanced_connection); /* balanced HTTP connection */
+  BIT(enable_cookie_value_change); /* user defined cookie file */
+  BIT(get_issuer_name); /* user defined cookie file */
 #endif
 
   BIT(mms_reserved_default_port);
@@ -2034,7 +2062,20 @@ struct Curl_easy {
   long last_send_errno;
   long ssl_connect_errno;
   long tcp_connect_errno;
+  int netid;
   const char *sni_hostname;
+#ifdef USE_ARES
+  char cert_issuer_names[CURL_MAX_CERT_NUM][CURL_MAX_ISSUER_NAME];
+  long cert_num;
+  long try_connect_ipv4;
+  long try_connect_ipv6;
+  char connected_ip[CURL_MAX_CONNECTED_IP_NUM][CURL_MAX_IP_LENGTH];
+  uint16_t connected_port[CURL_MAX_CONNECTED_IP_NUM];
+  long connected_ip_num;
+  curl_dns_status_type dns_status;
+  long is_dns_from_netsys_cache;
+  curl_socket_t used_socket_fd;
+#endif
 };
 
 #define LIBCURL_NAME "libcurl"

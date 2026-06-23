@@ -91,6 +91,7 @@ CURLcode Curl_initinfo(struct Curl_easy *data)
   return CURLE_OK;
 }
 
+#ifdef USE_ARES
 static CURLcode getinfo_pchar(struct Curl_easy *data, CURLINFO info,
                               const char ***param_pcharp) {
   switch (info) {
@@ -103,10 +104,31 @@ static CURLcode getinfo_pchar(struct Curl_easy *data, CURLINFO info,
   return CURLE_OK;
 }
 
+static CURLcode getinfo_puint16(struct Curl_easy *data, CURLINFO info,
+                              uint16_t **param_puint16) {
+  switch (info) {
+    case CURLINFO_CONNECTED_PORT:
+      *param_puint16 = data->connected_port;
+      break;
+    default:
+      break;
+  }
+  return CURLE_OK;
+}
+#endif
+
 static CURLcode getinfo_char(struct Curl_easy *data, CURLINFO info,
                              const char **param_charp)
 {
   switch(info) {
+  #ifdef USE_ARES
+  case CURLINFO_CONNECTED_IP:
+    memcpy(param_charp, data->connected_ip, sizeof(data->connected_ip));
+    break;
+  case CURLINFO_ISSUER_NAMES:
+    memcpy(param_charp, data->cert_issuer_names, sizeof(data->cert_issuer_names));
+    break;
+  #endif
   case CURLINFO_LAST_RECV_SSL_ERROR:
     *param_charp = data->last_ssl_recv_err;
     break;
@@ -212,6 +234,14 @@ static CURLcode getinfo_char(struct Curl_easy *data, CURLINFO info,
   return CURLE_OK;
 }
 
+static inline long convert_time(time_t t)
+{
+  if (t >= INT_MAX) {
+    return INT_MAX;
+  }
+  return t;
+}
+
 static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
                              long *param_longp)
 {
@@ -250,6 +280,26 @@ static CURLcode getinfo_long(struct Curl_easy *data, CURLINFO info,
 #endif
 
   switch(info) {
+  #ifdef USE_ARES
+  case CURLINFO_IS_DNS_FROM_NETSYS_CACHE:
+    *param_longp = (long) data->is_dns_from_netsys_cache;
+    break;
+  case CURLINFO_DNS_STATUS:
+    *param_longp = (long) data->dns_status;
+    break;
+  case CURLINFO_CONNECTED_IP_NUM:
+    *param_longp = data->connected_ip_num;
+    break;
+  case CURLINFO_TRY_CONN_IPV4:
+    *param_longp = data->try_connect_ipv4;
+    break;
+  case CURLINFO_TRY_CONN_IPV6:
+    *param_longp = data->try_connect_ipv6;
+    break;
+  case CURLINFO_CERT_NUM:
+    *param_longp = data->cert_num;
+    break;
+  #endif
   case CURLINFO_TCP_CONNECT_ERRNO:
     *param_longp = data->tcp_connect_errno;
     break;
@@ -654,7 +704,10 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
   double *param_doublep = NULL;
   curl_off_t *param_offt = NULL;
   const char **param_charp = NULL;
+#ifdef USE_ARES
   const char ***param_pcharp = NULL;
+  uint16_t **param_puint16 = NULL;
+#endif
   struct curl_slist **param_slistp = NULL;
   curl_socket_t *param_socketp = NULL;
   int type;
@@ -667,11 +720,18 @@ CURLcode Curl_getinfo(struct Curl_easy *data, CURLINFO info, ...)
 
   type = CURLINFO_TYPEMASK & (int)info;
   switch(type) {
+#ifdef USE_ARES
   case CURLINFO_P_STRING:
     param_pcharp = va_arg(arg, const char ***);
     if(param_pcharp)
       result = getinfo_pchar(data, info, param_pcharp);
     break;
+  case CURLINFO_P_UINT16:
+    param_puint16 = va_arg(arg, uint16_t **);
+    if(param_puint16)
+      result = getinfo_puint16(data, info, param_puint16);
+    break;
+#endif
   case CURLINFO_STRING:
     param_charp = va_arg(arg, const char **);
     if(param_charp)

@@ -773,6 +773,21 @@ static void addrinfo_cb(void *arg, int status, int timeouts,
   struct Curl_easy *data = (struct Curl_easy *)arg;
   struct thread_data *res = data->state.async.tdata;
   (void)timeouts;
+  if (result) {
+    if (result->nodes) {
+      data->dns_status = CURL_DNS_STATUS_GET_IP;
+      // when result is read from cache, cares does not add name filed in result.
+      if (result->name == NULL) {
+        data->is_dns_from_netsys_cache = 1;
+      }
+    } else if (result->cnames) {
+      data->dns_status = CURL_DNS_STATUS_GET_CNAME;
+    } else {
+      data->dns_status = CURL_DNS_STATUS_GET_INVALID;
+    }
+  } else {
+    data->dns_status = CURL_DNS_STATUS_GET_INVALID;
+  }
   if(ARES_SUCCESS == status) {
     res->temp_ai = ares2addr(result->nodes);
     res->last_status = CURL_ASYNC_SUCCESS;

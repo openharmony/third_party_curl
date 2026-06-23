@@ -86,6 +86,7 @@ static HITLS_CERT_Store *BuildCertStoreFromList(BslList *certList, struct Curl_e
     return x509Store;
 exit:
     HITLS_X509_StoreCtxFree(x509Store);
+    HITLS_X509_CertFree(cert);
     return NULL;
 }
 
@@ -351,7 +352,7 @@ static CURLcode hitls_connect_nonblocking_step2(struct hitls_ssl_backend_data *b
     char *const sslCafile = sslConfig->primary.CAfile;
     char *const sslSignCert = sslConfig->primary.clientcert;
     char *const sslEncCert = sslConfig->primary.clientcertEnc;
-    char *const sslSignKey = sslConfig->key;
+    char *const sslSignKey = sslConfig->primary.key;
     char *const sslEncKey = sslConfig->encKey;
     const long int sslVersion = sslConfig->primary.version;
     uint32_t depth = 20;
@@ -476,7 +477,6 @@ static ssize_t hitls_recv(struct Curl_cfilter *cf, struct Curl_easy *data, char 
 
     ret = HITLS_Read(backend->ctx, buf, bufferSize, &readLen);
     if (ret == HITLS_SUCCESS) {
-        buf[readLen] = '\0'; // Ensure null-termination
         return readLen;
     } else if (ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY) {
         *curlCode = CURLE_AGAIN;
