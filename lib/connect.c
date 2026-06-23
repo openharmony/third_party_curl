@@ -1444,3 +1444,77 @@ CURLcode Curl_conn_setup(struct Curl_easy *data,
 out:
   return result;
 }
+
+/*
+ * timeleft_now_ms() returns the amount of milliseconds left allowed for the
+ * transfer/connection. If the value is 0, there is no timeout (ie there is
+ * infinite time left). If the value is negative, the timeout time has already
+ * elapsed.
+ *
+ * @unittest 1303
+ */
+UNITTEST timediff_t timeleft_now_ms(struct Curl_easy *data,
+                                    const struct curltime *pnow);
+UNITTEST timediff_t timeleft_now_ms(struct Curl_easy *data,
+                                    const struct curltime *pnow)
+{
+  timediff_t timeleft_ms = 0;
+  timediff_t ctimeleft_ms = 0;
+
+  if(Curl_shutdown_started(data, FIRSTSOCKET))
+    return Curl_shutdown_timeleft(data, data->conn, FIRSTSOCKET);
+  else if(Curl_is_connecting(data)) {
+    timediff_t ctimeout_ms = (data->set.connecttimeout > 0) ?
+      data->set.connecttimeout : DEFAULT_CONNECT_TIMEOUT;
+    ctimeleft_ms = ctimeout_ms -
+      curlx_ptimediff_ms(pnow, &data->progress.t_startsingle);
+    if(!ctimeleft_ms)
+      ctimeleft_ms = -1; /* 0 is "no limit", fake 1 ms expiry */
+  }
+  else if(!data->set.timeout || data->set.connect_only) {
+    return 0; /* no timeout in place or checked, return "no limit" */
+  }
+
+  if(data->set.timeout) {
+    timeleft_ms = data->set.timeout -
+      curlx_ptimediff_ms(pnow, &data->progress.t_startop);
+    if(!timeleft_ms)
+      timeleft_ms = -1; /* 0 is "no limit", fake 1 ms expiry */
+  }
+
+  if(!ctimeleft_ms)
+    return timeleft_ms;
+  else if(!timeleft_ms)
+    return ctimeleft_ms;
+  return CURLMIN(ctimeleft_ms, timeleft_ms);
+}
+
+timediff_t Curl_timeleft_ms(struct Curl_easy *data)
+{
+  return timeleft_now_ms(data, Curl_pgrs_now(data));
+}
+
+bool Curl_shutdown_started(struct Curl_easy *data, int sockindex)
+{
+  if(data->conn) {
+    struct curltime *pt = &data->conn->shutdown.start[sockindex];
+    return (pt->tv_sec > 0) || (pt->tv_usec > 0);
+  }
+  return FALSE;
+}
+
+timediff_t Curl_shutdown_timeleft(struct Curl_easy *data,
+                                  struct connectdata *conn,
+                                  int sockindex)
+{
+  timediff_t left_ms;
+
+  if(!conn->shutdown.start[sockindex].tv_sec ||
+     (conn->shutdown.timeout_ms <= 0))
+    return 0; /* not started or no limits */
+
+  left_ms = conn->shutdown.timeout_ms -
+            curlx_ptimediff_ms(Curl_pgrs_now(data),
+                               &conn->shutdown.start[sockindex]);
+  return left_ms ? left_ms : -1;
+}

@@ -28,12 +28,26 @@
 
 #include "timediff.h"
 
+#define TIMEDIFF_T_MAX CURL_OFF_T_MAX
+#define TIMEDIFF_T_MIN CURL_OFF_T_MIN
+
 struct curltime {
   time_t tv_sec; /* seconds */
   int tv_usec;   /* microseconds */
 };
 
 struct curltime Curl_now(void);
+void curlx_pnow(struct curltime *pnow);
+
+/*
+ * Make sure that the first argument (newer) is the more recent time and older
+ * is the older time, as otherwise you get a weird negative time-diff back...
+ *
+ * Returns: the time difference in number of milliseconds.
+ */
+timediff_t curlx_timediff_ms(struct curltime newer, struct curltime older);
+timediff_t curlx_ptimediff_ms(const struct curltime *newer,
+                              const struct curltime *older);
 
 /*
  * Make sure that the first argument (newer) is the more recent time and older
