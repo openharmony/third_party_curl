@@ -501,7 +501,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
   set->usertimeout_userp = ZERO_NULL;
 #endif
 #ifdef HAS_NETMANAGER_BASE
-  set->use_dns_interceptor = 0;
+  set->use_dns_interceptor = 1;
 #endif
   return result;
 }
