@@ -187,6 +187,7 @@ match_ssl_primary_config(struct Curl_easy *data,
      blobcmp(c1->cert_blob, c2->cert_blob) &&
      blobcmp(c1->ca_info_blob, c2->ca_info_blob) &&
      blobcmp(c1->issuercert_blob, c2->issuercert_blob) &&
+     blobcmp(c1->key_blob, c2->key_blob) &&
      Curl_safecmp(c1->CApath, c2->CApath) &&
      Curl_safecmp(c1->CAfile, c2->CAfile) &&
      Curl_safecmp(c1->issuercert, c2->issuercert) &&
@@ -199,7 +200,11 @@ match_ssl_primary_config(struct Curl_easy *data,
      strcasecompare(c1->cipher_list13, c2->cipher_list13) &&
      strcasecompare(c1->curves, c2->curves) &&
      strcasecompare(c1->CRLfile, c2->CRLfile) &&
-     strcasecompare(c1->pinned_key, c2->pinned_key))
+     strcasecompare(c1->pinned_key, c2->pinned_key) &&
+     strcasecompare(c1->cert_type, c2->cert_type) &&
+     strcasecompare(c1->key, c2->key) &&
+     strcasecompare(c1->key_type, c2->key_type) &&
+     !Curl_timestrcmp(c1->key_passwd, c2->key_passwd))
     return TRUE;
 
   return FALSE;
@@ -234,6 +239,7 @@ static bool clone_ssl_primary_config(struct ssl_primary_config *source,
   CLONE_BLOB(cert_blob);
   CLONE_BLOB(ca_info_blob);
   CLONE_BLOB(issuercert_blob);
+  CLONE_BLOB(key_blob);
   CLONE_STRING(CApath);
   CLONE_STRING(CAfile);
   CLONE_STRING(issuercert);
@@ -244,6 +250,10 @@ static bool clone_ssl_primary_config(struct ssl_primary_config *source,
   CLONE_STRING(pinned_key);
   CLONE_STRING(curves);
   CLONE_STRING(CRLfile);
+  CLONE_STRING(cert_type);
+  CLONE_STRING(key);
+  CLONE_STRING(key_type);
+  CLONE_STRING(key_passwd);
 #ifdef USE_TLS_SRP
   CLONE_STRING(username);
   CLONE_STRING(password);
@@ -265,8 +275,13 @@ static void Curl_free_primary_ssl_config(struct ssl_primary_config *sslc)
   Curl_safefree(sslc->cert_blob);
   Curl_safefree(sslc->ca_info_blob);
   Curl_safefree(sslc->issuercert_blob);
+  Curl_safefree(sslc->key_blob);
   Curl_safefree(sslc->curves);
   Curl_safefree(sslc->CRLfile);
+  Curl_safefree(sslc->cert_type);
+  Curl_safefree(sslc->key);
+  Curl_safefree(sslc->key_type);
+  Curl_safefree(sslc->key_passwd);
 #ifdef USE_TLS_SRP
   Curl_safefree(sslc->username);
   Curl_safefree(sslc->password);
@@ -293,14 +308,14 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
   data->set.ssl.primary.username = data->set.str[STRING_TLSAUTH_USERNAME];
   data->set.ssl.primary.password = data->set.str[STRING_TLSAUTH_PASSWORD];
 #endif
-  data->set.ssl.cert_type = data->set.str[STRING_CERT_TYPE];
-  data->set.ssl.key = data->set.str[STRING_KEY];
+  data->set.ssl.primary.cert_type = data->set.str[STRING_CERT_TYPE];
+  data->set.ssl.primary.key = data->set.str[STRING_KEY];
   data->set.ssl.encKey = data->set.str[STRING_ENCKEY];
-  data->set.ssl.key_type = data->set.str[STRING_KEY_TYPE];
-  data->set.ssl.key_passwd = data->set.str[STRING_KEY_PASSWD];
+  data->set.ssl.primary.key_type = data->set.str[STRING_KEY_TYPE];
+  data->set.ssl.primary.key_passwd = data->set.str[STRING_KEY_PASSWD];
   data->set.ssl.primary.clientcert = data->set.str[STRING_CERT];
   data->set.ssl.primary.clientcertEnc = data->set.str[STRING_ENCCERT];
-  data->set.ssl.key_blob = data->set.blobs[BLOB_KEY];
+  data->set.ssl.primary.key_blob = data->set.blobs[BLOB_KEY];
 
 #ifndef CURL_DISABLE_PROXY
   data->set.proxy_ssl.primary.CApath = data->set.str[STRING_SSL_CAPATH_PROXY];
@@ -320,12 +335,12 @@ CURLcode Curl_ssl_easy_config_complete(struct Curl_easy *data)
     data->set.blobs[BLOB_SSL_ISSUERCERT_PROXY];
   data->set.proxy_ssl.primary.CRLfile =
     data->set.str[STRING_SSL_CRLFILE_PROXY];
-  data->set.proxy_ssl.cert_type = data->set.str[STRING_CERT_TYPE_PROXY];
-  data->set.proxy_ssl.key = data->set.str[STRING_KEY_PROXY];
-  data->set.proxy_ssl.key_type = data->set.str[STRING_KEY_TYPE_PROXY];
-  data->set.proxy_ssl.key_passwd = data->set.str[STRING_KEY_PASSWD_PROXY];
+  data->set.proxy_ssl.primary.cert_type = data->set.str[STRING_CERT_TYPE_PROXY];
+  data->set.proxy_ssl.primary.key = data->set.str[STRING_KEY_PROXY];
+  data->set.proxy_ssl.primary.key_type = data->set.str[STRING_KEY_TYPE_PROXY];
+  data->set.proxy_ssl.primary.key_passwd = data->set.str[STRING_KEY_PASSWD_PROXY];
   data->set.proxy_ssl.primary.clientcert = data->set.str[STRING_CERT_PROXY];
-  data->set.proxy_ssl.key_blob = data->set.blobs[BLOB_KEY_PROXY];
+  data->set.proxy_ssl.primary.key_blob = data->set.blobs[BLOB_KEY_PROXY];
 #ifdef USE_TLS_SRP
   data->set.proxy_ssl.primary.username =
     data->set.str[STRING_TLSAUTH_USERNAME_PROXY];
