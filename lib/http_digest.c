@@ -104,6 +104,23 @@ CURLcode Curl_output_digest(struct Curl_easy *data,
 #endif
   }
   else {
+    bool flush = FALSE;
+    if(data->state.digest.origin_host &&
+       ((data->state.digest.origin_port != data->conn->remote_port) ||
+        !curl_strequal(data->state.digest.origin_host, data->conn->host.name)))
+      flush = TRUE;
+    else if(Curl_timestrcmp(data->state.aptr.user, data->state.digest.user) ||
+            Curl_timestrcmp(data->state.aptr.passwd, data->state.digest.passwd))
+      flush = TRUE;
+    
+    if(flush)
+      /* flush host Digest state */
+      Curl_auth_digest_cleanup(&data->state.digest);
+    
+    data->state.digest.origin_host = strdup(data->conn->host.name);
+    data->state.digest.origin_port = data->conn->remote_port;
+    data->state.digest.user = strdup(data->state.aptr.user);
+    data->state.digest.passwd = strdup(data->state.aptr.passwd);
     digest = &data->state.digest;
     allocuserpwd = &data->state.aptr.userpwd;
     userp = data->state.aptr.user;

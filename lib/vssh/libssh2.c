@@ -1142,7 +1142,7 @@ static CURLcode ssh_statemach_act(struct Curl_easy *data, bool *block)
           break;
         }
 
-        sshc->passphrase = data->set.ssl.key_passwd;
+        sshc->passphrase = data->set.ssl.primary.key_passwd;
         if(!sshc->passphrase)
           sshc->passphrase = "";
 
