@@ -1601,9 +1601,13 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     result = setstropt_userpwd(va_arg(param, char *), &u, &p);
 
     /* URL decode the components */
-    if(!result && u)
-      result = Curl_urldecode(u, 0, &data->set.str[STRING_PROXYUSERNAME], NULL,
-                              REJECT_ZERO);
+    if(!result) {
+      Curl_safefree(data->set.str[STRING_PROXYUSERNAME]);
+      Curl_safefree(data->set.str[STRING_PROXYPASSWORD]);
+      if(u)
+        result = Curl_urldecode(u, 0, &data->set.str[STRING_PROXYUSERNAME], NULL,
+                                REJECT_ZERO);
+    }
     if(!result && p)
       result = Curl_urldecode(p, 0, &data->set.str[STRING_PROXYPASSWORD], NULL,
                               REJECT_ZERO);
@@ -2993,14 +2997,9 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #endif
   case CURLOPT_STREAM_DEPENDS:
   case CURLOPT_STREAM_DEPENDS_E:
-  {
-    struct Curl_easy *dep = va_arg(param, struct Curl_easy *);
-    if(!dep || GOOD_EASY_HANDLE(dep)) {
-      return Curl_data_priority_add_child(dep, data,
-                                          option == CURLOPT_STREAM_DEPENDS_E);
-    }
+    /* not doing stream dependencies any longer, but accept options
+     * for backward compatibility */
     break;
-  }
   case CURLOPT_CONNECT_TO:
     data->set.connect_to = va_arg(param, struct curl_slist *);
     break;
