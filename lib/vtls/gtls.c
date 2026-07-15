@@ -768,7 +768,7 @@ static CURLcode gtls_client_init(struct Curl_cfilter *cf,
       if(result)
         return result;
     }
-    if(ssl_config->key_passwd) {
+    if(ssl_config->primary.key_passwd) {
       const unsigned int supported_key_encryption_algorithms =
         GNUTLS_PKCS_USE_PKCS12_3DES | GNUTLS_PKCS_USE_PKCS12_ARCFOUR |
         GNUTLS_PKCS_USE_PKCS12_RC2_40 | GNUTLS_PKCS_USE_PBES2_3DES |
@@ -777,9 +777,9 @@ static CURLcode gtls_client_init(struct Curl_cfilter *cf,
       rc = gnutls_certificate_set_x509_key_file2(
            gtls->cred,
            config->clientcert,
-           ssl_config->key ? ssl_config->key : config->clientcert,
-           do_file_type(ssl_config->cert_type),
-           ssl_config->key_passwd,
+           ssl_config->primary.key ? ssl_config->primary.key : config->clientcert,
+           do_file_type(ssl_config->primary.cert_type),
+           ssl_config->primary.key_passwd,
            supported_key_encryption_algorithms);
       if(rc != GNUTLS_E_SUCCESS) {
         failf(data,
@@ -792,8 +792,8 @@ static CURLcode gtls_client_init(struct Curl_cfilter *cf,
       if(gnutls_certificate_set_x509_key_file(
            gtls->cred,
            config->clientcert,
-           ssl_config->key ? ssl_config->key : config->clientcert,
-           do_file_type(ssl_config->cert_type) ) !=
+           ssl_config->primary.key ? ssl_config->primary.key : config->clientcert,
+           do_file_type(ssl_config->primary.cert_type) ) !=
          GNUTLS_E_SUCCESS) {
         failf(data, "error reading X.509 key or certificate file");
         return CURLE_SSL_CONNECT_ERROR;
