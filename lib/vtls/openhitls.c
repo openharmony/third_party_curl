@@ -351,7 +351,7 @@ static CURLcode hitls_connect_nonblocking_step2(struct hitls_ssl_backend_data *b
     char *const sslCafile = sslConfig->primary.CAfile;
     char *const sslSignCert = sslConfig->primary.clientcert;
     char *const sslEncCert = sslConfig->primary.clientcertEnc;
-    char *const sslSignKey = sslConfig->key;
+    char *const sslSignKey = sslConfig->primary.key;
     char *const sslEncKey = sslConfig->encKey;
     const long int sslVersion = sslConfig->primary.version;
     uint32_t depth = 20;
