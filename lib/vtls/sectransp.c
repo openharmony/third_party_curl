@@ -1844,7 +1844,7 @@ static CURLcode sectransp_connect_step1(struct Curl_cfilter *cf,
   }
 #endif
 
-  if(ssl_config->key) {
+  if(ssl_config->primary.key) {
     infof(data, "WARNING: SSL: CURLOPT_SSLKEY is ignored by Secure "
           "Transport. The private key must be in the Keychain.");
   }
@@ -1863,17 +1863,17 @@ static CURLcode sectransp_connect_step1(struct Curl_cfilter *cf,
     else
       err = !noErr;
     if((err != noErr) && (is_cert_file || is_cert_data)) {
-      if(!ssl_config->cert_type)
+      if(!ssl_config->primary.cert_type)
         infof(data, "SSL: Certificate type not set, assuming "
               "PKCS#12 format.");
-      else if(!strcasecompare(ssl_config->cert_type, "P12")) {
+      else if(!strcasecompare(ssl_config->primary.cert_type, "P12")) {
         failf(data, "SSL: The Security framework only supports "
               "loading identities that are in PKCS#12 format.");
         return CURLE_SSL_CERTPROBLEM;
       }
 
       err = CopyIdentityFromPKCS12File(ssl_cert, ssl_cert_blob,
-                                       ssl_config->key_passwd,
+                                       ssl_config->primary.key_passwd,
                                        &cert_and_key);
     }
 
