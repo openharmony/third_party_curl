@@ -1,6 +1,15 @@
 /* Define cpu-machine-OS */
 #define OS "liteOS"
 
+#ifdef USE_LWIP
+/* Replace the POSIX poll with lwip_poll when the POSIX poll is unavailable. */
+#define poll lwip_poll
+/* The POSIX select is replaced with select when the POSIX select implementation is unavailable */
+#define select lwip_select
+/* Replace the POSIX if_nametoindex function with the lwip_if_nametoindex function when the POSIX if_nametoindex function is unavailable */
+#define if_nametoindex lwip_if_nametoindex
+#endif
+
 /* to enable curl debug memory tracking */
 /* #undef CURLDEBUG */
 
@@ -1021,8 +1030,10 @@
 /* Define to enable metalink support */
 /* #undef USE_METALINK */
 
+#ifdef HAVE_THIRDPARTY_NGHTTP2
 /* if nghttp2 is in use */
 #define USE_NGHTTP2 1
+#endif
 
 /* if NSS is enabled */
 /* #undef USE_NSS */
