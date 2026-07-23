@@ -253,7 +253,11 @@ if (defined(ohos_lite)) {
       "-Wimplicit-fallthrough",
     ]
     if (ohos_kernel_type == "liteos_m") {
-      cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
+      if(curl_feature_use_lwip) {
+        cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_w.h\"" ]
+      } else {
+        cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_m.h\"" ]
+      }
     } else {
       cflags += [ "-DOHOS_CURL_CONFIG_H=\"curl_config_liteos_a.h\"" ]
     }
