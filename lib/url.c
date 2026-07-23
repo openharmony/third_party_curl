@@ -1040,8 +1040,10 @@ ConnectionExists(struct Curl_easy *data,
       else {
         /* Could multiplex, but not when check belongs to another multi */
         struct Curl_llist_element *e = check->easyq.head;
+        if(!e)
+          continue;
         struct Curl_easy *entry = e->ptr;
-        if(entry->multi != data->multi)
+        if(!entry || entry->multi != data->multi)
           continue;
       }
     }
