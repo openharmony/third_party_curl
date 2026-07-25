@@ -796,10 +796,11 @@ struct ip_quadruple {
 struct proxy_info {
   struct hostname host;
   int port;
-  unsigned char proxytype; /* curl_proxytype: what kind of proxy that is in
-                              use */
+  unsigned char proxytype; /* curl_proxytype: what kind of proxy that is
+                               in use */
   char *user;    /* proxy user name string, allocated */
   char *passwd;  /* proxy password string, allocated */
+  char *sasl_service; /* proxy SASL service name, allocated */
 };
 
 struct ldapconninfo;
@@ -865,6 +866,7 @@ struct connectdata {
   char *options; /* options string, allocated */
   char *sasl_authzid;     /* authorization identity string, allocated */
   char *oauth_bearer; /* OAUTH2 bearer, allocated */
+  char *sasl_service; /* SASL service name, allocated */
   struct curltime now;     /* "current" time */
   struct curltime created; /* creation time */
   struct curltime lastused; /* when returned to the connection cache */

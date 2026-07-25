@@ -619,12 +619,15 @@ static void conn_free(struct Curl_easy *data, struct connectdata *conn)
   Curl_safefree(conn->socks_proxy.user);
   Curl_safefree(conn->http_proxy.passwd);
   Curl_safefree(conn->socks_proxy.passwd);
+  Curl_safefree(conn->http_proxy.sasl_service);
+  Curl_safefree(conn->socks_proxy.sasl_service);
   Curl_safefree(conn->http_proxy.host.rawalloc); /* http proxy name buffer */
   Curl_safefree(conn->socks_proxy.host.rawalloc); /* socks proxy name buffer */
 #endif
   Curl_safefree(conn->user);
   Curl_safefree(conn->passwd);
   Curl_safefree(conn->sasl_authzid);
+  Curl_safefree(conn->sasl_service);
   Curl_safefree(conn->options);
   Curl_safefree(conn->oauth_bearer);
   Curl_safefree(conn->host.rawalloc); /* host name buffer */
@@ -745,7 +748,8 @@ proxy_info_matches(const struct proxy_info *data,
      (data->port == needle->port) &&
      strcasecompare(data->host.name, needle->host.name)) {
     if(Curl_timestrcmp(data->user, needle->user) ||
-       Curl_timestrcmp(data->passwd, needle->passwd))
+       Curl_timestrcmp(data->passwd, needle->passwd) ||
+       Curl_timestrcmp(data->sasl_service, needle->sasl_service))
       return FALSE;
     return TRUE;
   }
@@ -1163,7 +1167,8 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->user, check->user) ||
          Curl_timestrcmp(needle->passwd, check->passwd) ||
          Curl_timestrcmp(needle->sasl_authzid, check->sasl_authzid) ||
-         Curl_timestrcmp(needle->oauth_bearer, check->oauth_bearer)) {
+         Curl_timestrcmp(needle->oauth_bearer, check->oauth_bearer) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service)) {
         /* one of them was different */
         continue;
       }
@@ -1251,7 +1256,8 @@ ConnectionExists(struct Curl_easy *data,
        partway through a handshake!) */
     if(wantNTLMhttp) {
       if(Curl_timestrcmp(needle->user, check->user) ||
-         Curl_timestrcmp(needle->passwd, check->passwd)) {
+         Curl_timestrcmp(needle->passwd, check->passwd) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service)) {
 
         /* we prefer a credential match, but this is at least a connection
            that can be reused and "upgraded" to NTLM */
@@ -1276,8 +1282,10 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->http_proxy.user,
                          check->http_proxy.user) ||
          Curl_timestrcmp(needle->http_proxy.passwd,
-                         check->http_proxy.passwd))
-        continue;
+                         check->http_proxy.passwd) ||
+          Curl_timestrcmp(needle->http_proxy.sasl_service,
+                         check->http_proxy.sasl_service))
+         continue;
     }
     else if(check->proxy_ntlm_state != NTLMSTATE_NONE) {
       /* Proxy connection is using NTLM auth but we don't want NTLM */
@@ -1310,7 +1318,8 @@ ConnectionExists(struct Curl_easy *data,
        so that we can reuse Negotiate connections if possible. */
     if(wantNegotiateHttp) {
       if(Curl_timestrcmp(needle->user, check->user) ||
-         Curl_timestrcmp(needle->passwd, check->passwd))
+         Curl_timestrcmp(needle->passwd, check->passwd) ||
+         Curl_timestrcmp(needle->sasl_service, check->sasl_service))
         continue;
     }
     else if(check->http_negotiate_state != GSS_AUTHNONE) {
@@ -1329,8 +1338,10 @@ ConnectionExists(struct Curl_easy *data,
       if(Curl_timestrcmp(needle->http_proxy.user,
                          check->http_proxy.user) ||
          Curl_timestrcmp(needle->http_proxy.passwd,
-                         check->http_proxy.passwd))
-        continue;
+                         check->http_proxy.passwd) ||
+          Curl_timestrcmp(needle->http_proxy.sasl_service,
+                         check->http_proxy.sasl_service))
+         continue;
     }
     else if(check->proxy_negotiate_state != GSS_AUTHNONE) {
       /* Proxy connection is using Negotiate auth but we do not want Negotiate */
@@ -2445,13 +2456,22 @@ static CURLcode parse_proxy_auth(struct Curl_easy *data,
     data->state.aptr.proxypasswd : "";
   CURLcode result = CURLE_OUT_OF_MEMORY;
 
+  conn->http_proxy.sasl_service = NULL;
+  if(data->set.str[STRING_PROXY_SERVICE_NAME]) {
+    conn->http_proxy.sasl_service = strdup(data->set.str[STRING_PROXY_SERVICE_NAME]);
+    if (!conn->http_proxy.sasl_service)
+      return CURLE_OUT_OF_MEMORY;
+  }
+
   conn->http_proxy.user = strdup(proxyuser);
   if(conn->http_proxy.user) {
     conn->http_proxy.passwd = strdup(proxypasswd);
     if(conn->http_proxy.passwd)
       result = CURLE_OK;
-    else
+    else {
       Curl_safefree(conn->http_proxy.user);
+      Curl_safefree(conn->http_proxy.sasl_service);
+    }
   }
   return result;
 }
@@ -2601,6 +2621,9 @@ static CURLcode create_conn_helper_init_proxy(struct Curl_easy *data,
           Curl_safefree(conn->socks_proxy.passwd);
           conn->socks_proxy.passwd = conn->http_proxy.passwd;
           conn->http_proxy.passwd = NULL;
+          Curl_safefree(conn->socks_proxy.sasl_service);
+          conn->socks_proxy.sasl_service = conn->http_proxy.sasl_service;
+          conn->http_proxy.sasl_service = NULL;
         }
       }
       conn->bits.socksproxy = TRUE;
@@ -3409,6 +3432,10 @@ static void reuse_conn(struct Curl_easy *data,
     temp->passwd = NULL;
   }
 
+  Curl_safefree(existing->sasl_service);
+  existing->sasl_service = temp->sasl_service;
+  temp->sasl_service = NULL;
+
 #ifndef CURL_DISABLE_PROXY
   existing->bits.proxy_user_passwd = temp->bits.proxy_user_passwd;
   if(existing->bits.proxy_user_passwd) {
@@ -3417,14 +3444,20 @@ static void reuse_conn(struct Curl_easy *data,
     Curl_safefree(existing->socks_proxy.user);
     Curl_safefree(existing->http_proxy.passwd);
     Curl_safefree(existing->socks_proxy.passwd);
+    Curl_safefree(existing->http_proxy.sasl_service);
+    Curl_safefree(existing->socks_proxy.sasl_service);
     existing->http_proxy.user = temp->http_proxy.user;
     existing->socks_proxy.user = temp->socks_proxy.user;
     existing->http_proxy.passwd = temp->http_proxy.passwd;
     existing->socks_proxy.passwd = temp->socks_proxy.passwd;
+    existing->http_proxy.sasl_service = temp->http_proxy.sasl_service;
+    existing->socks_proxy.sasl_service = temp->socks_proxy.sasl_service;
     temp->http_proxy.user = NULL;
     temp->socks_proxy.user = NULL;
     temp->http_proxy.passwd = NULL;
     temp->socks_proxy.passwd = NULL;
+    temp->http_proxy.sasl_service = NULL;
+    temp->socks_proxy.sasl_service = NULL;
   }
 #endif
 
@@ -3521,6 +3554,14 @@ static CURLcode create_conn(struct Curl_easy *data,
   if(data->set.str[STRING_SASL_AUTHZID]) {
     conn->sasl_authzid = strdup(data->set.str[STRING_SASL_AUTHZID]);
     if(!conn->sasl_authzid) {
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    }
+  }
+
+  if (data->set.str[STRING_SERVICE_NAME]) {
+    conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
+    if (!conn->sasl_service) {
       result = CURLE_OUT_OF_MEMORY;
       goto out;
     }
