@@ -1208,7 +1208,7 @@ ConnectionExists(struct Curl_easy *data,
 
     /* Additional match requirements if talking TLS OR
      * not talking to a HTTP proxy OR using a tunnel through a proxy */
-    if(((needle->handler->flags&PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE))
+    if((needle->handler->flags&PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE)
 #ifndef CURL_DISABLE_PROXY
        || !needle->bits.httpproxy || needle->bits.tunnel_proxy
 #endif
@@ -1238,7 +1238,7 @@ ConnectionExists(struct Curl_easy *data,
         continue;
 
       /* If talking TLS, check needs to use the same SSL options. */
-      if(((needle->handler->flags & PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE)) &&
+      if((needle->handler->flags & PROTOPT_SSL) || (data->set.use_ssl > CURLUSESSL_NONE) &&
          !Curl_ssl_conn_config_match(data, check, FALSE)) {
         DEBUGF(infof(data,
                      "Connection #%" CURL_FORMAT_CURL_OFF_T
