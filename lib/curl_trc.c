@@ -53,7 +53,7 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
-
+#ifndef LOG_TRIMMING
 void Curl_debug(struct Curl_easy *data, curl_infotype type,
                 char *ptr, size_t size)
 {
@@ -105,6 +105,17 @@ void Curl_failf(struct Curl_easy *data, const char *fmt, ...)
     va_end(ap);
   }
 }
+#else
+void Curl_debug(struct Curl_easy *data, curl_infotype type, char *ptr, size_t size)
+{
+  (void)data; (void)type; (void)ptr; (void)size;
+}
+ 
+void Curl_failf(struct Curl_easy *data, const char *fmt, ...)
+{
+  (void)data; (void)fmt;
+}
+#endif
 
 #if !defined(CURL_DISABLE_VERBOSE_STRINGS)
 

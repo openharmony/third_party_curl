@@ -15,6 +15,7 @@ import("//build/ohos.gni")
 declare_args() {
   netstack_feature_http3 = false
   curl_feature_use_lwip =  false
+  curl_feature_log_trimming = false
 }
 
 curl_source = [
@@ -210,7 +211,10 @@ if (defined(ohos_lite)) {
     if (ohos_kernel_type == "liteos_m") {
       include_dirs += [ "//kernel/liteos_m/kal/posix/include" ]
     }
-    if (curl_feature_use_lwip ) {
+    if (curl_feature_log_trimming) {
+      defines += [ "LOG_TRIMMING" ]
+    }
+    if (curl_feature_use_lwip) {
       include_dirs += [ "//third_party/lwip/src/include" ]
       defines += [ "USE_LWIP" ]
     }
