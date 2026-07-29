@@ -89,7 +89,7 @@
 #define CURL_DISABLE_TLS_SRP 1
 
 /* to disable verbose strings */
-/* #undef CURL_DISABLE_VERBOSE_STRINGS */
+#define  CURL_DISABLE_VERBOSE_STRINGS
 
 /* Definition to make a library symbol externally visible. */
 /* #undef CURL_EXTERN_SYMBOL */
@@ -100,8 +100,8 @@
 /* built with multiple SSL backends */
 /* #undef CURL_WITH_MULTI_SSL */
 
-/* enable debug build options */
-#define DEBUGBUILD 1
+/* disable debug build options */
+#undef  DEBUGBUILD
 
 /* your Entropy Gathering Daemon socket pathname */
 /* #undef EGD_SOCKET */
