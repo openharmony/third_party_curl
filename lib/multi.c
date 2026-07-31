@@ -3387,11 +3387,7 @@ static void close_bundle_idle_conn(struct Curl_multi *multi,
   struct connectdata *conn = find_idle_connection(bundle);
 
   if(conn) {
-    bool was_closing = conn->bits.close;
-
-    Curl_llist_remove(&bundle->conn_list, &conn->bundle_node, NULL);
-    bundle->num_connections--;
-    conn->bundle = NULL;
+    Curl_conncache_remove_conn(data, conn, FALSE);
 
     CONNCACHE_UNLOCK(data);
     Curl_disconnect(data, conn, FALSE);
@@ -3404,7 +3400,6 @@ static void close_bundle_idle_conn(struct Curl_multi *multi,
     if(!conn->bits.close) {
       connclose(conn, "max_concurrent reduced");
     }
-    bundle->num_connections--;
   }
 }
 
@@ -3429,7 +3424,7 @@ static void reduce_connections_by_concurrent(struct Curl_multi *multi)
     if(!bundle) {
       continue;
     }
-    while(bundle->num_connections > (size_t)max_concurrent) {
+    while(bundle && bundle->num_connections > (size_t)max_concurrent) {
       close_bundle_idle_conn(multi, data, bundle, &iter, connc);
     }
   }
@@ -4088,4 +4083,4 @@ static void multi_xfer_bufs_free(struct Curl_multi *multi)
 bool Curl_is_connecting(struct Curl_easy *data)
 {
   return data->mstate < MSTATE_DO;
-}
+}
