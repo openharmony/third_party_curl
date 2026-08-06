@@ -388,8 +388,8 @@ static CURLcode ldap_do(struct Curl_easy *data, bool *done)
     if(conn->ssl_config.verifypeer) {
       /* Novell SDK supports DER or BASE64 files. */
       int cert_type = LDAPSSL_CERT_FILETYPE_B64;
-      if((data->set.ssl.cert_type) &&
-         (strcasecompare(data->set.ssl.cert_type, "DER")))
+      if((data->set.ssl.primary.cert_type) &&
+         (strcasecompare(data->set.ssl.primary.cert_type, "DER")))
         cert_type = LDAPSSL_CERT_FILETYPE_DER;
       if(!ldap_ca) {
         failf(data, "LDAP local: ERROR %s CA cert not set",
@@ -429,8 +429,8 @@ static CURLcode ldap_do(struct Curl_easy *data, bool *done)
 #elif defined(LDAP_OPT_X_TLS)
     if(conn->ssl_config.verifypeer) {
       /* OpenLDAP SDK supports BASE64 files. */
-      if((data->set.ssl.cert_type) &&
-         (!strcasecompare(data->set.ssl.cert_type, "PEM"))) {
+      if((data->set.ssl.primary.cert_type) &&
+         (!strcasecompare(data->set.ssl.primary.cert_type, "PEM"))) {
         failf(data, "LDAP local: ERROR OpenLDAP only supports PEM cert-type");
         result = CURLE_SSL_CERTPROBLEM;
         goto quit;
