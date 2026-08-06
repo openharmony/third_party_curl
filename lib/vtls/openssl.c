@@ -359,7 +359,7 @@ static CURLcode hitls_connect_nonblocking_step2(struct hitls_ssl_backend_data *b
     char *const sslCafile = sslConfig->primary.CAfile;
     char *const sslSignCert = sslConfig->primary.clientcert;
     char *const sslEncCert = sslConfig->primary.clientcertEnc;
-    char *const sslSignKey = sslConfig->key;
+    char *const sslSignKey = sslConfig->primary.key;
     char *const sslEncKey = sslConfig->encKey;
     const long int sslVersion = sslConfig->primary.version;
     uint32_t depth = 20;
@@ -4100,7 +4100,7 @@ CURLcode Curl_ossl_ctx_init(struct ossl_ctx *octx,
   const long int ssl_version = conn_config->version;
   char * const ssl_cert = ssl_config->primary.clientcert;
   const struct curl_blob *ssl_cert_blob = ssl_config->primary.cert_blob;
-  const char * const ssl_cert_type = ssl_config->cert_type;
+  const char * const ssl_cert_type = ssl_config->primary.cert_type;
   const bool verifypeer = conn_config->verifypeer;
   char error_buffer[256];
 #ifdef USE_ECH
@@ -4289,8 +4289,8 @@ CURLcode Curl_ossl_ctx_init(struct ossl_ctx *octx,
     if(!result &&
        !cert_stuff(data, octx->ssl_ctx,
                    ssl_cert, ssl_cert_blob, ssl_cert_type,
-                   ssl_config->key, ssl_config->key_blob,
-                   ssl_config->key_type, ssl_config->key_passwd))
+                   ssl_config->primary.key, ssl_config->primary.key_blob,
+                   ssl_config->primary.key_type, ssl_config->primary.key_passwd))
       result = CURLE_SSL_CERTPROBLEM;
     if(result)
       /* failf() is already done in cert_stuff() */

@@ -1016,6 +1016,9 @@ CURLcode Curl_auth_create_digest_http_message(struct Curl_easy *data,
  */
 void Curl_auth_digest_cleanup(struct digestdata *digest)
 {
+  Curl_safefree(digest->origin_host);
+  Curl_safefree(digest->user);
+  Curl_safefree(digest->passwd);
   Curl_safefree(digest->nonce);
   Curl_safefree(digest->cnonce);
   Curl_safefree(digest->realm);
@@ -1023,6 +1026,7 @@ void Curl_auth_digest_cleanup(struct digestdata *digest)
   Curl_safefree(digest->qop);
   Curl_safefree(digest->algorithm);
 
+  digest->origin_port = 0;
   digest->nc = 0;
   digest->algo = ALGO_MD5; /* default algorithm */
   digest->stale = FALSE; /* default means normal, not stale */
