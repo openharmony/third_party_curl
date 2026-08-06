@@ -657,6 +657,7 @@ void Curl_auth_digest_cleanup(struct digestdata *digest)
 
   /* Reset any variables */
   digest->input_token_len = 0;
+  digest->origin_port = 0;
 
   /* Delete security context */
   if(digest->http_context) {
@@ -667,6 +668,7 @@ void Curl_auth_digest_cleanup(struct digestdata *digest)
   /* Free the copy of user/passwd used to make the identity for http_context */
   Curl_safefree(digest->user);
   Curl_safefree(digest->passwd);
+  Curl_safefree(digest->origin_host);
 }
 
 #endif /* USE_WINDOWS_SSPI && !CURL_DISABLE_DIGEST_AUTH */
