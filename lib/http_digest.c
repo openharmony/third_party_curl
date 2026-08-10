@@ -109,8 +109,9 @@ CURLcode Curl_output_digest(struct Curl_easy *data,
        ((data->state.digest.origin_port != data->conn->remote_port) ||
         !curl_strequal(data->state.digest.origin_host, data->conn->host.name)))
       flush = TRUE;
-    else if(Curl_timestrcmp(data->state.aptr.user, data->state.digest.user) ||
-            Curl_timestrcmp(data->state.aptr.passwd, data->state.digest.passwd))
+    else if(data->state.digest.user && data->state.digest.passwd &&
+            (Curl_timestrcmp(data->state.aptr.user, data->state.digest.user) ||
+             Curl_timestrcmp(data->state.aptr.passwd, data->state.digest.passwd)))
       flush = TRUE;
     
     if(flush)
