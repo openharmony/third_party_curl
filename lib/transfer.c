@@ -1175,6 +1175,8 @@ CURLcode Curl_xfer_write_resp(struct Curl_easy *data,
 {
   CURLcode result = CURLE_OK;
 
+  if (!data || !data->conn || !data->conn->handler)
+    return CURLE_FAILED_INIT;
   if(data->conn->handler->write_resp) {
     /* protocol handlers offering this function take full responsibility
      * for writing all received download data to the client. */
@@ -1212,6 +1214,8 @@ CURLcode Curl_xfer_write_resp(struct Curl_easy *data,
 CURLcode Curl_xfer_write_resp_hd(struct Curl_easy *data,
                                  const char *hd0, size_t hdlen, bool is_eos)
 {
+  if (!data || !data->conn || !data->conn->handler)
+    return CURLE_FAILED_INIT;
   if(data->conn->handler->write_resp_hd) {
     /* protocol handlers offering this function take full responsibility
      * for writing all received download data to the client. */
