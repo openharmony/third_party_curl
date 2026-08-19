@@ -802,6 +802,9 @@ static bool conn_maxage(struct Curl_easy *data,
 static bool prune_if_dead(struct connectdata *conn,
                           struct Curl_easy *data)
 {
+  if(!conn)
+    return FALSE;
+
   if(!CONN_INUSE(conn)) {
     /* The check for a dead socket makes sense only if the connection isn't in
        use */
@@ -811,7 +814,7 @@ static bool prune_if_dead(struct connectdata *conn,
       /* avoid check if already too old */
       dead = TRUE;
     }
-    else if(conn->handler->connection_check) {
+    else if(conn->handler && conn->handler->connection_check) {
       /* The protocol has a special method for checking the state of the
          connection. Use it to check if the connection is dead. */
       unsigned int state;
