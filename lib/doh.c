@@ -265,7 +265,7 @@ static CURLcode dohprobe(struct Curl_easy *data,
     goto error;
   }
   /* Curl_open() is the internal version of curl_easy_init() */
-  result = Curl_open(&doh);
+  result = Curl_open_with_netid(&doh, data->netid);
   if(!result) {
     /* pass in the struct pointer via a local variable to please coverity and
        the gcc typecheck helpers */
@@ -273,6 +273,14 @@ static CURLcode dohprobe(struct Curl_easy *data,
     doh->state.internal = true;
 #ifndef CURL_DISABLE_VERBOSE_STRINGS
     doh->state.feat = &Curl_doh_trc;
+#endif
+#ifdef USE_ARES
+    if (data->netid && data->set.str[STRING_DNS_INTERFACE]) {
+        ERROR_CHECK_SETOPT(CURLOPT_DNS_INTERFACE, data->set.str[STRING_DNS_INTERFACE]);
+    }
+    if (data->netid && data->set.str[STRING_DEVICE]) {
+        ERROR_CHECK_SETOPT(CURLOPT_INTERFACE, data->set.str[STRING_DEVICE]);
+    }
 #endif
     ERROR_CHECK_SETOPT(CURLOPT_URL, url);
     ERROR_CHECK_SETOPT(CURLOPT_DEFAULT_PROTOCOL, "https");

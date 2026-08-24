@@ -52,10 +52,10 @@ UNITTEST_START
   bool async = FALSE;
   bool protocol_connect = FALSE;
 
-  rc = Curl_open(&empty);
+  rc = Curl_open_with_netid(&empty, 0);
   if(rc)
     goto unit_test_abort;
-  fail_unless(rc == CURLE_OK, "Curl_open() failed");
+  fail_unless(rc == CURLE_OK, "Curl_open_with_netid() failed");
 
   rc = Curl_connect(empty, &async, &protocol_connect);
   fail_unless(rc == CURLE_URL_MALFORMAT,

@@ -52,6 +52,13 @@ struct Cookie {
 
 #define COOKIE_HASH_SIZE 63
 
+#ifdef USE_ARES
+typedef char *(*cookies_encode_function)(char *, void *user_ptr);
+typedef char *(*cookies_decode_function)(char *, void *user_ptr);
+typedef void (*cookies_encode_free_function)(char *, void *user_ptr);
+typedef void (*cookies_decode_free_function)(char *, void *user_ptr);
+#endif
+
 struct CookieInfo {
   /* linked list of cookies we know of */
   struct Cookie *cookies[COOKIE_HASH_SIZE];

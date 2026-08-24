@@ -145,6 +145,17 @@ typedef int curl_socket_t;
 #define curl_socket_typedef
 #endif /* curl_socket_typedef */
 
+#ifdef USE_ARES
+
+#include "../../../cares/include/ares.h"
+
+#define CURL_USE_ARES 1
+typedef struct {
+  struct ares_socket_functions *functions;
+  void *userp;
+} curl_ares_socket_functions;
+#endif
+
 /* enum for the different supported SSL backends */
 typedef enum {
   CURLSSLBACKEND_NONE = 0,
@@ -380,6 +391,18 @@ typedef int (*curl_seek_callback)(void *instream,
 #define CURL_READFUNC_ABORT 0x10000000
 #define CURL_MAX_SSL_ERR_LEN 512
 #define CURL_MAX_CIPHER_NUM 512
+#ifdef USE_ARES
+#define CURL_MAX_ISSUER_NAME 256
+#define CURL_MAX_CERT_NUM 4
+#define CURL_MAX_IP_LENGTH INET6_ADDRSTRLEN
+#define CURL_MAX_CONNECTED_IP_NUM 8
+typedef enum {
+  CURL_DNS_STATUS_GET_INIT,
+  CURL_DNS_STATUS_GET_IP,
+  CURL_DNS_STATUS_GET_CNAME,
+  CURL_DNS_STATUS_GET_INVALID,
+} curl_dns_status_type;
+#endif
 /* This is a return code for the read callback that, when returned, will
    signal libcurl to pause sending data on the current transfer. */
 #define CURL_READFUNC_PAUSE 0x10000001
@@ -1109,6 +1132,25 @@ typedef CURLSTScode (*curl_hstswrite_callback)(CURL *easy,
  */
 
 typedef enum {
+#ifdef USE_ARES
+  CURLOPT(CURLOPT_BALANCED_CONNECTION, CURLOPTTYPE_LONG, 2000),
+  CURLOPT(CURLOPT_ENABLE_COOKIE_VALUE_CHANGE, CURLOPTTYPE_LONG, 2001),
+  CURLOPT(CURLOPT_COOKIES_LINE_MAX_SIZE_MULTIPLIER, CURLOPTTYPE_LONG, 2002),
+  CURLOPT(CURLOPT_COOKIES_ENCODER, CURLOPTTYPE_FUNCTIONPOINT, 2003),
+  CURLOPT(CURLOPT_COOKIES_ENCODER_DATA, CURLOPTTYPE_CBPOINT, 2004),
+  CURLOPT(CURLOPT_COOKIES_DECODER, CURLOPTTYPE_FUNCTIONPOINT, 2005),
+  CURLOPT(CURLOPT_COOKIES_DECODER_DATA, CURLOPTTYPE_CBPOINT, 2006),
+  CURLOPT(CURLOPT_COOKIES_ENCODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2007),
+  CURLOPT(CURLOPT_COOKIES_ENCODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2008),
+  CURLOPT(CURLOPT_COOKIES_DECODER_FREE, CURLOPTTYPE_FUNCTIONPOINT, 2009),
+  CURLOPT(CURLOPT_COOKIES_DECODER_FREE_DATA, CURLOPTTYPE_CBPOINT, 2010),
+  CURLOPT(CURLOPT_CONNECT_ONLY_FOR_HTTP_REUSE, CURLOPTTYPE_LONG, 2011),
+  CURLOPT(CURLOPT_GET_ISSUER_NAME, CURLOPTTYPE_LONG, 2012),
+  CURLOPT(CURLOPT_SSL_CTX_UNIFIED_USERDATA, CURLOPTTYPE_OBJECTPOINT, 2013),
+  CURLOPT(CURLOPT_SSL_CTX_UNIFIED_PROXY_USERDATA, CURLOPTTYPE_OBJECTPOINT, 2014),
+  CURLOPT(CURLOPT_HITLS_CTX_FUNCTION, CURLOPTTYPE_FUNCTIONPOINT, 2015),
+#endif
+
   /* This is the FILE * or void * the regular output should be written to. */
   CURLOPT(CURLOPT_WRITEDATA, CURLOPTTYPE_CBPOINT, 1),
 
@@ -2242,9 +2284,11 @@ typedef enum {
 
   /* name of the file keeping your private encryption SSL-key */
   CURLOPT(CURLOPT_SSLENCKEY, CURLOPTTYPE_STRINGPOINT, 1005),
-
+  
   /* SNI domain name to include the SNI field during the TLS connection process */
   CURLOPT(CURLOPT_SNI_HOSTNAME, CURLOPTTYPE_STRINGPOINT, 1006),
+  
+  CURLOPT(CURLOPT_ARES_SOCKET_FUNCTION, CURLOPTTYPE_OBJECTPOINT, 999),
 
 #ifdef HTTP_DEADFLOWRESET_FEATURE
   /* Set TCP_USER_TIMEOUT if conn is reused */
@@ -2444,6 +2488,26 @@ typedef struct curl_mimepart  curl_mimepart;  /* Mime part context. */
  * target handle.
  */
 CURL_EXTERN curl_mime *curl_mime_init(CURL *easy);
+
+/*
+ * NAME curl_mime_init_with_boundary()
+ *
+ * DESCRIPTION
+ *
+ * Create a mime context and return its handle. The easy parameter is the
+ * target handle. The boundary parameter is a user-defined boundary to separate
+ * the multi-part formdata. the length parameter is the length of boundary.
+ */
+CURL_EXTERN curl_mime *curl_mime_init_with_boundary(CURL *easy, const char *boundary, size_t length);
+
+/*
+ * NAME curl_boundary_max_length()
+ *
+ * DESCRIPTION
+ *
+ * Return the max length of boundary.
+ */
+CURL_EXTERN size_t curl_boundary_max_length(void);
 
 /*
  * NAME curl_mime_init_with_boundary()
@@ -2922,6 +2986,7 @@ struct curl_tlssessioninfo {
 #define CURLINFO_SOCKET   0x500000
 #define CURLINFO_OFF_T    0x600000
 #define CURLINFO_P_STRING 0xe00000
+#define CURLINFO_P_UINT16 0xd00000
 #define CURLINFO_MASK     0x0fffff
 #define CURLINFO_TYPEMASK 0xf00000
 
@@ -3035,6 +3100,17 @@ typedef enum {
   CURLINFO_SSL_CONNECT_ERRNO          = CURLINFO_LONG + 1016,
   CURLINFO_TCP_CONNECT_ERRNO          = CURLINFO_LONG + 1017,
   CURLINFO_USED_PROXY       = CURLINFO_LONG + 66,
+#ifdef USE_ARES
+  CURLINFO_ISSUER_NAMES               = CURLINFO_STRING + 1018,
+  CURLINFO_CERT_NUM                   = CURLINFO_LONG + 1019,
+  CURLINFO_TRY_CONN_IPV4              = CURLINFO_LONG + 1020,
+  CURLINFO_TRY_CONN_IPV6              = CURLINFO_LONG + 1021,
+  CURLINFO_CONNECTED_IP               = CURLINFO_STRING + 1022,
+  CURLINFO_CONNECTED_PORT             = CURLINFO_P_UINT16 + 1023,
+  CURLINFO_CONNECTED_IP_NUM           = CURLINFO_LONG + 1024,
+  CURLINFO_DNS_STATUS                 = CURLINFO_LONG + 1025,
+  CURLINFO_IS_DNS_FROM_NETSYS_CACHE   = CURLINFO_LONG + 1026,
+#endif
   CURLINFO_LASTONE          = 66
 } CURLINFO;
 

@@ -4164,6 +4164,37 @@ static void ossl_trace_ech_retry_configs(struct Curl_easy *data, SSL* ssl,
 
 #endif
 
+#ifdef USE_ARES
+static void ossl_get_issuer_names(struct Curl_cfilter *cf, struct Curl_easy *data)
+{
+  if (cf == NULL || data == NULL) {
+    return;
+  }
+  struct ssl_connect_data *connssl = cf->ctx;
+  if (connssl == NULL) {
+    return;
+  }
+  struct ossl_ctx *octx = (struct ossl_ctx *)connssl->backend;
+  if (octx == NULL) {
+    return;
+  }
+  STACK_OF(X509) *certs = SSL_get_peer_cert_chain(octx->ssl);
+  data->cert_num = 0;
+  if (certs) {
+    size_t cert_num = sk_X509_num(certs);
+    if (cert_num > CURL_MAX_CERT_NUM) {
+      cert_num = CURL_MAX_CERT_NUM;
+    }
+    for (size_t i = 0; i < cert_num; ++i) {
+      X509 *cert = sk_X509_value(certs, i);
+      X509_NAME *issuer_name = X509_get_issuer_name(cert);
+      (void) X509_NAME_oneline(issuer_name, data->cert_issuer_names[data->cert_num], CURL_MAX_ISSUER_NAME);
+      ++data->cert_num;
+    }
+  }
+}
+#endif
+
 static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
                                    struct Curl_easy *data)
 {
@@ -4244,6 +4275,43 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
       /* Get the earliest error code from the thread's error queue and remove
          the entry. */
       errdetail = ERR_get_error();
+#ifdef USE_ARES
+      if (octx) {
+        if (octx->ssl_ctx && data) {
+          struct stack_st_SSL_CIPHER *ciphers = SSL_CTX_get_ciphers(octx->ssl_ctx);
+          data->cipher_num = 0;
+          if (ciphers) {
+            size_t num_ciphers = sk_SSL_CIPHER_num(ciphers);
+            for (size_t i = 0; i < num_ciphers; ++i) {
+              const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+              const char *cipher_name = SSL_CIPHER_get_name(cipher);
+              if (data->cipher_num < CURL_MAX_CIPHER_NUM) {
+                data->ciphers[data->cipher_num] = cipher_name;
+                ++data->cipher_num;
+              }
+            }
+          }
+          data->min_tls_version = (long) SSL_CTX_get_min_proto_version(octx->ssl_ctx);
+          data->max_tls_version = (long) SSL_CTX_get_max_proto_version(octx->ssl_ctx);
+        }
+        if (octx->ssl && data) {
+          STACK_OF(X509) *certs = SSL_get_peer_cert_chain(octx->ssl);
+          data->cert_num = 0;
+          if (certs) {
+            size_t cert_num = sk_X509_num(certs);
+            if (cert_num > CURL_MAX_CERT_NUM) {
+              cert_num = CURL_MAX_CERT_NUM;
+            }
+            for (size_t i = 0; i < cert_num; ++i) {
+              X509 *cert = sk_X509_value(certs, i);
+              X509_NAME *issuer_name = X509_get_issuer_name(cert);
+              (void)X509_NAME_oneline(issuer_name, data->cert_issuer_names[data->cert_num], CURL_MAX_ISSUER_NAME);
+              ++data->cert_num;
+            }
+          }
+        }
+      }
+#endif
       if (data) {
         ERR_error_string_n(errdetail, data->ssl_err, sizeof(data->ssl_err));
         data->ssl_connect_errno = errno;
@@ -4326,6 +4394,11 @@ static CURLcode ossl_connect_step2(struct Curl_cfilter *cf,
     }
   }
   else {
+#ifdef USE_ARES
+    if (data->set.get_issuer_name) {
+      ossl_get_issuer_names(cf, data);
+    }
+#endif
     int psigtype_nid = NID_undef;
     const char *negotiated_group_name = NULL;
 
@@ -5135,6 +5208,12 @@ static ssize_t ossl_recv(struct Curl_cfilter *cf,
         goto out;
       }
       sslerror = ERR_get_error();
+#ifdef USE_ARES
+      if (data) {
+        ERR_error_string_n(sslerror, data->last_ssl_recv_err, sizeof(data->last_ssl_recv_err));
+        data->last_recv_errno = errno;
+      }
+#endif
       if((nread < 0) || sslerror) {
         /* If the return code was negative or there actually is an error in the
            queue */

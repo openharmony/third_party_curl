@@ -638,4 +638,4 @@ const struct curltime *Curl_pgrs_now(struct Curl_easy *data)
                           &data->multi->now : &data->progress.now;
   curlx_pnow(pnow);
   return pnow;
-}
+}

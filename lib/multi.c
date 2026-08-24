@@ -2221,7 +2221,7 @@ static CURLMcode multi_runsingle(struct Curl_multi *multi,
         }
       }
 
-      if(data->set.connect_only == 1) {
+      if(data->set.connect_only == 1 || data->set.connect_only_for_http_reuse) {
         /* keep connection open for application to use the socket */
         connkeep(data->conn, "CONNECT_ONLY");
         multistate(data, MSTATE_DONE);
@@ -2846,6 +2846,13 @@ static void unlink_all_msgsent_handles(struct Curl_multi *multi)
     struct Curl_easy *data = e->ptr;
     DEBUGASSERT(data->mstate == MSTATE_MSGSENT);
     data->multi = NULL;
+  }
+}
+
+void curl_multi_clear_dns_cache(CURLM *multi)
+{
+  if (GOOD_MULTI_HANDLE(multi)) {
+    Curl_hash_clean(&multi->hostcache);
   }
 }
 

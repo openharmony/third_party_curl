@@ -327,6 +327,7 @@ struct ssl_config_data {
   struct ssl_primary_config primary;
   long certverifyresult; /* result from the certificate verification */
   curl_ssl_ctx_callback fsslctx; /* function to initialize ssl ctx */
+  curl_ssl_ctx_callback fhitlsctx; /* function to initialize ssl ctx */
   void *fsslctxp;        /* parameter for call back */
   char *encKey; /* encryption private key file name */
   BIT(certinfo);     /* gather lots of certificate info */
@@ -1637,6 +1638,18 @@ struct UserDefined {
                                     in case the 'localport' one can't be
                                     bind()ed */
 #endif
+#ifdef USE_ARES
+  long cookies_line_max_size_multiplier;
+  cookies_encode_function cookies_encode;
+  void *cookies_encode_data;
+  cookies_decode_function cookies_decode;
+  void *cookies_decode_data;
+  cookies_encode_free_function cookies_encode_free;
+  void *cookies_encode_free_data;
+  cookies_decode_free_function cookies_decode_free;
+  void *cookies_decode_free_data;
+#endif
+
   curl_write_callback fwrite_func;   /* function that stores the output */
   curl_write_callback fwrite_header; /* function that stores headers */
   curl_write_callback fwrite_rtp;    /* function that stores interleaved RTP */
@@ -1811,6 +1824,7 @@ struct UserDefined {
                               IMAP or POP3 or others! (type: curl_usessl)*/
   unsigned char connect_only; /* make connection/request, then let
                                  application use the socket */
+  unsigned char connect_only_for_http_reuse;
 #ifndef CURL_DISABLE_MIME
   BIT(mime_formescape);
 #endif
@@ -1924,6 +1938,12 @@ struct UserDefined {
 #endif
 #ifdef USE_ECH
   int tls_ech;      /* TLS ECH configuration  */
+#endif
+
+#ifdef USE_ARES
+  BIT(http_balanced_connection); /* balanced HTTP connection */
+  BIT(enable_cookie_value_change); /* user defined cookie file */
+  BIT(get_issuer_name); /* user defined cookie file */
 #endif
 
   BIT(mms_reserved_default_port);
@@ -2042,7 +2062,20 @@ struct Curl_easy {
   long last_send_errno;
   long ssl_connect_errno;
   long tcp_connect_errno;
+  int netid;
   const char *sni_hostname;
+#ifdef USE_ARES
+  char cert_issuer_names[CURL_MAX_CERT_NUM][CURL_MAX_ISSUER_NAME];
+  long cert_num;
+  long try_connect_ipv4;
+  long try_connect_ipv6;
+  char connected_ip[CURL_MAX_CONNECTED_IP_NUM][CURL_MAX_IP_LENGTH];
+  uint16_t connected_port[CURL_MAX_CONNECTED_IP_NUM];
+  long connected_ip_num;
+  curl_dns_status_type dns_status;
+  long is_dns_from_netsys_cache;
+  curl_socket_t used_socket_fd;
+#endif
 };
 
 #define LIBCURL_NAME "libcurl"

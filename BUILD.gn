@@ -207,7 +207,10 @@ if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
   defines = []
   config("curl_config") {
-    include_dirs = [ "lib" ]
+    include_dirs = [ 
+      "lib",
+      "//third_party/cares/include",
+    ]
     if (ohos_kernel_type == "liteos_m") {
       include_dirs += [ "//kernel/liteos_m/kal/posix/include" ]
     }

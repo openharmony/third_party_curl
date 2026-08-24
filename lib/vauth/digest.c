@@ -811,7 +811,7 @@ static CURLcode auth_create_digest_http_message(
   free(hashthis);
   if(result)
     return result;
-  free(hashthis);
+  // free(hashthis);
   convert_to_ascii(hashbuf, ha2);
 
   if(digest->qop) {
@@ -829,7 +829,7 @@ static CURLcode auth_create_digest_http_message(
   free(hashthis);
   if(result)
     return result;
-  free(hashthis);
+  // free(hashthis);
   convert_to_ascii(hashbuf, request_digest);
 
   /* For test case 64 (snooped from a Mozilla 1.3a request)

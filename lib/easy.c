@@ -341,11 +341,7 @@ CURLsslset curl_global_sslset(curl_sslbackend id, const char *name,
   return rc;
 }
 
-/*
- * curl_easy_init() is the external interface to alloc, setup and init an
- * easy handle that is returned. If anything goes wrong, NULL is returned.
- */
-struct Curl_easy *curl_easy_init(void)
+struct Curl_easy *curl_easy_init_with_netid(int netid)
 {
   CURLcode result;
   struct Curl_easy *data;
@@ -365,13 +361,21 @@ struct Curl_easy *curl_easy_init(void)
   global_init_unlock();
 
   /* We use curl_open() with undefined URL so far */
-  result = Curl_open(&data);
+  result = Curl_open_with_netid(&data, netid);
   if(result) {
-    DEBUGF(fprintf(stderr, "Error: Curl_open failed\n"));
+    DEBUGF(fprintf(stderr, "Error: Curl_open_with_netid failed\n"));
     return NULL;
   }
 
   return data;
+}
+/*
+ * curl_easy_init() is the external interface to alloc, setup and init an
+ * easy handle that is returned. If anything goes wrong, NULL is returned.
+ */
+struct Curl_easy *curl_easy_init(void)
+{
+  return curl_easy_init_with_netid(0);
 }
 
 #ifdef CURLDEBUG
@@ -936,6 +940,32 @@ struct Curl_easy *curl_easy_duphandle(struct Curl_easy *data)
   memset(outcurl->last_ssl_send_err, 0, sizeof(outcurl->last_ssl_send_err));
   outcurl->last_recv_errno = 0;
   outcurl->last_send_errno = 0;
+  
+#ifdef USE_ARES
+  memset(outcurl->cert_issuer_names, 0, sizeof(outcurl->cert_issuer_names));
+  outcurl->cert_num = 0;
+
+  outcurl->try_connect_ipv4 = 0;
+  outcurl->try_connect_ipv6 = 0;
+
+  memset(outcurl->connected_ip, 0, sizeof(outcurl->connected_ip));
+  memset(outcurl->connected_port, 0, sizeof(outcurl->connected_port));
+  outcurl->connected_ip_num = 0;
+
+  outcurl->dns_status = CURL_DNS_STATUS_GET_INIT;
+  outcurl->is_dns_from_netsys_cache = 0;
+
+  outcurl->set.enable_cookie_value_change = 0;
+  outcurl->set.cookies_line_max_size_multiplier = 1;
+  outcurl->set.cookies_encode = NULL;
+  outcurl->set.cookies_encode_data = NULL;
+  outcurl->set.cookies_decode = NULL;
+  outcurl->set.cookies_decode_data = NULL;
+  outcurl->set.cookies_encode_free = NULL;
+  outcurl->set.cookies_encode_free_data = NULL;
+  outcurl->set.cookies_decode_free = NULL;
+  outcurl->set.cookies_decode_free_data = NULL;
+#endif
 
   /* copy all userdefined values */
   if(dupset(outcurl, data))

@@ -227,6 +227,8 @@ CURL_EXTERN CURLMcode curl_multi_wakeup(CURLM *multi_handle);
 CURL_EXTERN CURLMcode curl_multi_perform(CURLM *multi_handle,
                                          int *running_handles);
 
+CURL_EXTERN void curl_multi_clear_dns_cache(CURLM *multi_handle);
+
  /*
   * Name:    curl_multi_cleanup()
   *

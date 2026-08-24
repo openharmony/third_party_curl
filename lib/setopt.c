@@ -60,6 +60,10 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+#ifdef USE_ARES
+#include "ares.h"
+#endif
+
 CURLcode Curl_setstropt(char **charp, const char *s)
 {
   /* Release the previous storage at `charp' and replace by a dynamic storage
@@ -209,6 +213,56 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
   size_t sniLen;
 
   switch(option) {
+#ifdef USE_ARES
+  case CURLOPT_CONNECT_ONLY_FOR_HTTP_REUSE:
+    arg = va_arg(param, long);
+    if(arg != 1)
+      return CURLE_BAD_FUNCTION_ARGUMENT;
+    data->set.connect_only_for_http_reuse = (unsigned char)arg;
+    break;
+  case CURLOPT_ENABLE_COOKIE_VALUE_CHANGE:
+    data->set.enable_cookie_value_change = (0 != va_arg(param, long));
+    break;
+  case CURLOPT_COOKIES_LINE_MAX_SIZE_MULTIPLIER:
+    arg = va_arg(param, long);
+    if(arg < 0)
+      return CURLE_BAD_FUNCTION_ARGUMENT;
+    data->set.cookies_line_max_size_multiplier = arg;
+    break;
+  case CURLOPT_COOKIES_ENCODER:
+    data->set.cookies_encode = va_arg(param, cookies_encode_function);
+    break;
+  case CURLOPT_COOKIES_ENCODER_DATA:
+    data->set.cookies_encode_data = va_arg(param, void *);
+    break;
+  case CURLOPT_COOKIES_DECODER:
+    data->set.cookies_decode = va_arg(param, cookies_decode_function);
+    break;
+  case CURLOPT_COOKIES_DECODER_DATA:
+    data->set.cookies_decode_data = va_arg(param, void *);
+    break;
+  case CURLOPT_COOKIES_ENCODER_FREE:
+    data->set.cookies_encode_free = va_arg(param, cookies_encode_free_function);
+    break;
+  case CURLOPT_COOKIES_ENCODER_FREE_DATA:
+    data->set.cookies_encode_free_data = va_arg(param, void *);
+    break;
+  case CURLOPT_COOKIES_DECODER_FREE:
+    data->set.cookies_decode_free = va_arg(param, cookies_decode_free_function);
+    break;
+  case CURLOPT_COOKIES_DECODER_FREE_DATA:
+    data->set.cookies_decode_free_data = va_arg(param, void *);
+    break;
+#endif
+
+  case CURLOPT_ARES_SOCKET_FUNCTION:
+#ifdef USE_ARES
+    {
+      curl_ares_socket_functions *funcs = va_arg(param, curl_ares_socket_functions *);
+      ares_set_socket_functions((ares_channel) data->state.async.resolver, funcs->functions, funcs->userp);
+    }
+#endif
+  break;
   case CURLOPT_DNS_CACHE_TIMEOUT:
     arg = va_arg(param, long);
     if(arg < -1)
@@ -2049,6 +2103,19 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
 #endif
       result = CURLE_NOT_BUILT_IN;
     break;
+#ifdef USE_ARES
+  case CURLOPT_HITLS_CTX_FUNCTION:
+    /*
+     * Set a HITLS_CTX callback
+     */
+#ifdef USE_SSL
+    if(Curl_ssl_supports(data, SSLSUPP_SSL_CTX))
+      data->set.ssl.fhitlsctx = va_arg(param, curl_ssl_ctx_callback);
+    else
+#endif
+      result = CURLE_NOT_BUILT_IN;
+    break;
+#endif
   case CURLOPT_SSL_CTX_DATA:
     /*
      * Set a SSL_CTX callback parameter pointer
@@ -2933,6 +3000,12 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     if(result)
       return result;
     result = Curl_set_dns_local_ip6(data, data->set.str[STRING_DNS_LOCAL_IP6]);
+    break;
+  case CURLOPT_BALANCED_CONNECTION:
+    data->set.http_balanced_connection = (0 != va_arg(param, long));
+    break;
+  case CURLOPT_GET_ISSUER_NAME:
+    data->set.get_issuer_name = (0 != va_arg(param, long));
     break;
 #endif
   case CURLOPT_TCP_KEEPALIVE:

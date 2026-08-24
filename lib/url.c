@@ -506,7 +506,7 @@ CURLcode Curl_init_userdefined(struct Curl_easy *data)
  * @return CURLcode
  */
 
-CURLcode Curl_open(struct Curl_easy **curl)
+CURLcode Curl_open_with_netid(struct Curl_easy **curl, int netid)
 {
   CURLcode result;
   struct Curl_easy *data;
@@ -548,6 +548,32 @@ CURLcode Curl_open(struct Curl_easy **curl)
   memset(data->last_ssl_send_err, 0, sizeof(data->last_ssl_send_err));
   data->last_recv_errno = 0;
   data->last_send_errno = 0;
+  
+#ifdef USE_ARES
+  memset(data->cert_issuer_names, 0, sizeof(data->cert_issuer_names));
+  data->cert_num = 0;
+
+  data->try_connect_ipv4 = 0;
+  data->try_connect_ipv6 = 0;
+  
+  memset(data->connected_ip, 0, sizeof(data->connected_ip));
+  memset(data->connected_port, 0, sizeof(data->connected_port));
+  data->connected_ip_num = 0;
+  data->dns_status = CURL_DNS_STATUS_GET_INIT;
+  data->is_dns_from_netsys_cache = 0;
+  data->set.enable_cookie_value_change = 0;
+  data->set.cookies_line_max_size_multiplier = 1;
+  data->set.cookies_encode = NULL;
+  data->set.cookies_encode_data = NULL;
+  data->set.cookies_decode = NULL;
+  data->set.cookies_decode_data = NULL;
+  data->set.cookies_encode_free = NULL;
+  data->set.cookies_encode_free_data = NULL;
+  data->set.cookies_decode_free = NULL;
+  data->set.cookies_decode_free_data = NULL;
+  data->netid = netid;
+
+#endif
 
   Curl_req_init(&data->req);
 
@@ -755,6 +781,31 @@ proxy_info_matches(const struct proxy_info *data,
   }
   return FALSE;
 }
+
+
+static bool
+socks_proxy_info_matches(const struct proxy_info *data,
+                         const struct proxy_info *needle)
+{
+  if(!proxy_info_matches(data, needle))
+    return FALSE;
+
+  /* the user information is case-sensitive
+     or at least it is not defined as case-insensitive
+     see https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.1 */
+
+  /* curl_strequal does a case insensitive comparison,
+     so do not use it here! */
+  if(Curl_timestrcmp(data->user, needle->user) ||
+       Curl_timestrcmp(data->passwd, needle->passwd) ||
+       Curl_timestrcmp(data->sasl_service, needle->sasl_service))
+    return FALSE;
+  return TRUE;
+}
+#else
+/* disabled, won't get called */
+#define proxy_info_matches(x,y) FALSE
+#define socks_proxy_info_matches(x,y) FALSE
 #endif
 
 /* A connection has to have been idle for a shorter time than 'maxage_conn'
@@ -943,6 +994,9 @@ ConnectionExists(struct Curl_easy *data,
   bool canmultiplex = FALSE;
   struct connectbundle *bundle;
   struct Curl_llist_element *curr;
+#ifdef USE_ARES
+  uint min_inuse = UINT_MAX;
+#endif
 
 #ifdef USE_NTLM
   bool wantNTLMhttp = ((data->state.authhost.want & CURLAUTH_NTLM) &&
@@ -1403,9 +1457,22 @@ ConnectionExists(struct Curl_easy *data,
       continue;
     }
 #endif
+
+#ifdef USE_ARES
     /* We have found a connection. Let's stop searching. */
-    chosen = check;
-    break;
+    if(data->set.http_balanced_connection) {
+      if(CONN_INUSE(check) < min_inuse) {
+        chosen = check;
+        min_inuse = CONN_INUSE(check);
+      }
+    } else {
+#endif
+      chosen = check;
+      break;
+#ifdef USE_ARES
+    }
+#endif
+
   } /* loop over connection bundle */
 
   if(chosen) {
@@ -2039,6 +2106,10 @@ static CURLcode parseurlandfillconn(struct Curl_easy *data,
     }
     else if(uc != CURLUE_NO_USER)
       return Curl_uc_to_curlcode(uc);
+    else if(data->state.aptr.passwd) {
+      /* no user was set but a password, set a blank user */
+      result = Curl_setstropt(&data->state.aptr.user, "");
+    }
     if(result)
       return result;
   }
@@ -3561,6 +3632,21 @@ static CURLcode create_conn(struct Curl_easy *data,
       goto out;
     }
   }
+  if (data->set.str[STRING_SERVICE_NAME]) {
+    conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
+    if (!conn->sasl_service) {
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    }
+  }
+
+  if (data->set.str[STRING_SERVICE_NAME]) {
+    conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
+    if (!conn->sasl_service) {
+      result = CURLE_OUT_OF_MEMORY;
+      goto out;
+    }
+  }
 
   if (data->set.str[STRING_SERVICE_NAME]) {
     conn->sasl_service = strdup(data->set.str[STRING_SERVICE_NAME]);
@@ -3752,7 +3838,7 @@ static CURLcode create_conn(struct Curl_easy *data,
      already (which happens due to follow-location or during an HTTP
      authentication phase). CONNECT_ONLY transfers also refuse reuse. */
   if((data->set.reuse_fresh && !data->state.followlocation) ||
-     data->set.connect_only)
+     data->set.connect_only || data->set.connect_only_for_http_reuse)
     reuse = FALSE;
   else
     reuse = ConnectionExists(data, conn, &existing, &force_reuse, &waitpipe);

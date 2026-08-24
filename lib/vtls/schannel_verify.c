@@ -76,6 +76,11 @@ struct cert_chain_engine_config_win7 {
   HCERTSTORE hExclusiveTrustedPeople;
 };
 
+static int is_cr_or_lf(char c)
+{
+  return c == '\r' || c == '\n';
+}
+
 /* Search the substring needle,needlelen into string haystack,haystacklen
  * Strings don't need to be terminated by a '\0'.
  * Similar of OSX/Linux memmem (not available on Visual Studio).

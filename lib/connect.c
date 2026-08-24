@@ -1517,4 +1517,4 @@ timediff_t Curl_shutdown_timeleft(struct Curl_easy *data,
             curlx_ptimediff_ms(Curl_pgrs_now(data),
                                &conn->shutdown.start[sockindex]);
   return left_ms ? left_ms : -1;
-}
+}

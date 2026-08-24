@@ -1195,6 +1195,7 @@ CURLcode Curl_http_done(struct Curl_easy *data,
                       entire operation is complete */
      !conn->bits.retry &&
      !data->set.connect_only &&
+     !data->set.connect_only_for_http_reuse &&
      (data->req.bytecount +
       data->req.headerbytecount -
       data->req.deductheadercount) <= 0) {

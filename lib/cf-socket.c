@@ -1101,6 +1101,31 @@ out:
   return result;
 }
 
+#ifdef USE_ARES
+static void record_connected_ip_and_port(struct cf_socket_ctx *ctx, struct Curl_easy *data)
+{
+  if (0 <= data->connected_ip_num && data->connected_ip_num < CURL_MAX_CONNECTED_IP_NUM) {
+    void *address = NULL;
+    uint16_t port = 0;
+    if (ctx->addr.sa_addr.sa_family == AF_INET) {
+      struct sockaddr_in *addr4 = (struct sockaddr_in *) (void *) (&ctx->addr.sa_addr);
+      address = &addr4->sin_addr;
+      port = addr4->sin_port;
+    } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
+      struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) (void *) (&ctx->addr.sa_addr);
+      address = &addr6->sin6_addr;
+      port = addr6->sin6_port;
+    }
+    if (address) {
+      inet_ntop(ctx->addr.sa_addr.sa_family, address, data->connected_ip[data->connected_ip_num],
+                sizeof(data->connected_ip[data->connected_ip_num]));
+      data->connected_port[data->connected_ip_num] = ntohs(port);
+      ++data->connected_ip_num;
+    }
+  }
+}
+#endif
+
 static int do_connect(struct Curl_cfilter *cf, struct Curl_easy *data,
                       bool is_tcp_fastopen)
 {
@@ -1141,6 +1166,14 @@ static int do_connect(struct Curl_cfilter *cf, struct Curl_easy *data,
       infof(data, "Failed to enable TCP Fast Open on fd %"
             CURL_FORMAT_SOCKET_T, ctx->sock);
 
+#ifdef USE_ARES
+    if (ctx->addr.sa_addr.sa_family == AF_INET) {
+      data->try_connect_ipv4 = 1;
+    } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
+      data->try_connect_ipv6 = 1;
+    }
+    record_connected_ip_and_port(ctx, data);
+#endif
     rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
 #elif defined(MSG_FASTOPEN) /* old Linux */
     if(cf->conn->given->flags & PROTOPT_SSL)
@@ -1150,6 +1183,14 @@ static int do_connect(struct Curl_cfilter *cf, struct Curl_easy *data,
 #endif
   }
   else {
+#ifdef USE_ARES
+    if (ctx->addr.sa_addr.sa_family == AF_INET) {
+      data->try_connect_ipv4 = 1;
+    } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
+      data->try_connect_ipv6 = 1;
+    }
+    record_connected_ip_and_port(ctx, data);
+#endif
     rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
   }
   return rc;
@@ -1658,8 +1699,19 @@ static CURLcode cf_udp_setup_quic(struct Curl_cfilter *cf,
   /* On macOS OpenSSL QUIC fails on connected sockets.
    * see: <https://github.com/openssl/openssl/issues/23251> */
 #else
+#ifdef USE_ARES
+  if (ctx->addr.sa_addr.sa_family == AF_INET) {
+    data->try_connect_ipv4 = 1;
+  } else if (ctx->addr.sa_addr.sa_family == AF_INET6) {
+    data->try_connect_ipv6 = 1;
+  }
+  record_connected_ip_and_port(ctx, data);
+#endif
   rc = connect(ctx->sock, &ctx->addr.sa_addr, ctx->addr.addrlen);
   if(-1 == rc) {
+#ifdef USE_ARES
+      data->tcp_connect_errno = SOCKERRNO;
+#endif
     return socket_connect_result(data, ctx->ip.remote_ip, SOCKERRNO);
   }
   ctx->sock_connected = TRUE;
