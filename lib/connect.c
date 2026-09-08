@@ -256,7 +256,7 @@ static int conn_is_conn(struct Curl_easy *data,
 {
   struct connfind *f = (struct connfind *)param;
   (void)data;
-  if(conn->connection_id == f->id_tofind) {
+  if(f && conn && conn->connection_id == f->id_tofind) {
     f->found = conn;
     return 1;
   }

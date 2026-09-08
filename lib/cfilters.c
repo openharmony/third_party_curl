@@ -303,7 +303,7 @@ CURLcode Curl_conn_cf_connect(struct Curl_cfilter *cf,
                               struct Curl_easy *data,
                               bool blocking, bool *done)
 {
-  if(cf)
+  if(cf && cf->cft)
     return cf->cft->do_connect(cf, data, blocking, done);
   return CURLE_FAILED_INIT;
 }
@@ -504,7 +504,7 @@ CURLcode Curl_conn_cf_cntrl(struct Curl_cfilter *cf,
   CURLcode result = CURLE_OK;
 
   for(; cf; cf = cf->next) {
-    if(Curl_cf_def_cntrl == cf->cft->cntrl)
+    if(cf->cft == NULL || Curl_cf_def_cntrl == cf->cft->cntrl)
       continue;
     result = cf->cft->cntrl(cf, data, event, arg1, arg2);
     if(!ignore_result && result)

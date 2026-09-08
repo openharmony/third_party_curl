@@ -166,6 +166,10 @@ struct Curl_tree *Curl_splaygetbest(struct curltime i,
 
   /* find smallest */
   t = Curl_splay(tv_zero, t);
+  if(!t) {
+    *removed = NULL;
+    return NULL;
+  }
   if(compare(i, t->key) < 0) {
     /* even the smallest is too big */
     *removed = NULL;
