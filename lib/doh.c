@@ -217,6 +217,9 @@ static int doh_done(struct Curl_easy *doh, CURLcode result)
   struct Curl_easy *data = doh->set.dohfor;
   struct dohdata *dohp = data->req.doh;
   /* so one of the DoH request done for the 'data' transfer is now complete! */
+  if (!dohp) {
+    return 0;
+  }
   dohp->pending--;
   infof(doh, "a DoH request is completed, %u to go", dohp->pending);
   if(result)
