@@ -809,6 +809,8 @@ static struct Curl_easy *h2_duphandle(struct Curl_cfilter *cf,
       second->req.p.http = http;
       http2_data_setup(cf, second, &second_stream);
       second->state.priority.weight = data->state.priority.weight;
+      if(data->share)
+        (void)curl_easy_setopt(second, CURLOPT_SHARE, data->share);
     }
   }
   return second;
