@@ -4628,6 +4628,17 @@ static void infof_certstack(struct Curl_easy *data, const SSL *ssl)
 #define infof_certstack(data, ssl)
 #endif
 
+static const char *pinned(struct Curl_cfilter *cf,
+                          struct Curl_easy *data)
+{
+  return
+#ifndef CURL_DISABLE_PROXY
+    Curl_ssl_cf_is_proxy(cf) ?
+    data->set.str[STRING_SSL_PINNEDPUBLICKEY_PROXY] :
+#endif
+    data->set.str[STRING_SSL_PINNEDPUBLICKEY];
+}
+
 CURLcode Curl_oss_check_peer_cert(struct Curl_cfilter *cf,
                                   struct Curl_easy *data,
                                   struct ossl_ctx *octx,
@@ -4665,7 +4676,7 @@ CURLcode Curl_oss_check_peer_cert(struct Curl_cfilter *cf,
   octx->server_cert = SSL_get1_peer_certificate(octx->ssl);
   if(!octx->server_cert) {
     BIO_free(mem);
-    if(!strict)
+    if(!strict && !pinned(cf, data))
       return CURLE_OK;
 
     failf(data, "SSL: couldn't get peer certificate");
@@ -4837,17 +4848,7 @@ CURLcode Curl_oss_check_peer_cert(struct Curl_cfilter *cf,
   }
 #endif
 
-  if(!strict)
-    /* when not strict, we don't bother about the verify cert problems */
-    result = CURLE_OK;
-
-#ifndef CURL_DISABLE_PROXY
-  ptr = Curl_ssl_cf_is_proxy(cf)?
-    data->set.str[STRING_SSL_PINNEDPUBLICKEY_PROXY]:
-    data->set.str[STRING_SSL_PINNEDPUBLICKEY];
-#else
-  ptr = data->set.str[STRING_SSL_PINNEDPUBLICKEY];
-#endif
+  ptr = pinned(cf, data);
   if(!result && ptr) {
     result = ossl_pkp_pin_peer_pubkey(data, octx->server_cert, ptr);
     if(result)
